@@ -2,7 +2,7 @@
 #define SIM_STRUCTS_H
 
 struct parameters {
-	double num_z, num_p, num_test_part;
+	int total_test_part, test_part_per_nucleon, z, n;
 	double r;
 };
 
