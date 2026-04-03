@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 	struct woods_saxon ws;
 	struct parameters param;
 	struct fermi fermi_levels;
-	struct test_particles part_init_p, part_init_n;
+	struct test_particles part_p, part_n;
 	
 	set_fermi_levels(&fermi_levels, epsilon_p, epsilon_n);
 	set_parameters(&param, z, n, num_test_part, sigma_k);
@@ -33,17 +33,17 @@ int main(int argc, char **argv) {
 	
 	printf("%i\n", param.max_test_part);
 	
-	create_particles(&part_init_p,  param.max_test_part);
-	create_particles(&part_init_n,  param.max_test_part);
-	initialize_particles(&part_init_p, &part_init_n, param, ws, skm, &fermi_levels);
+	initialize_particles(&part_p, &part_n, param, ws, skm, &fermi_levels);
 	
-	//output_centroids(out, part_init_p, param.max_test_part);
-	//output_centroids(out, part_init_n, param.max_test_part);
-	//fwrite(part_init_p.energy, sizeof(double), param.max_test_part, out);
-	fwrite(part_init_n.energy, sizeof(double), param.max_test_part, out);
+	//output_centroids(out, part_p, param.max_test_part);
+	//output_centroids(out, part_n, param.max_test_part);
+	//fwrite(part_p.energy, sizeof(double), z * num_test_part, out);
+	fwrite(part_n.energy, sizeof(double), n * num_test_part, out);
 	
-	free_particles(&part_init_p);
-	free_particles(&part_init_n);
+	printf("%lf %lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
+	
+	free_particles(&part_p);
+	free_particles(&part_n);
 	printf("Done\n");
 	fclose(out);
 	return 0;

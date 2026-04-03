@@ -10,7 +10,7 @@
 #define H_BAR_C 197.33
 
 struct parameters {
-	int total_test_part, test_part_per_nucleon, max_test_part, z, n;
+	int test_part_per_nucleon, max_test_part, z, n;
 	double r_max, sigma_k;
 };
 

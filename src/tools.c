@@ -1,11 +1,17 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include "tools.h"
 #include "sim_structs.h"
 
 double rand_val(double min, double max) {
 	double s = (double)rand() / (double)RAND_MAX;
 	return min + s * (max - min);
+}
+
+void random_vec(double *v, double max) {
+	for(int i = 0; i < 3; i++)
+		v[i] = rand_val(-max, max);
 }
 
 double nuclear_radius(unsigned short a) {

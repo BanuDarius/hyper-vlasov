@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "init.h"
 #include "tools.h"
 #include "math_tools.h"
 #include "sim_structs.h"
@@ -14,7 +15,6 @@ void set_parameters(struct parameters *param, int z, int n, int test_part_per_nu
 	param->sigma_k = sigma_k;
 	
 	param->test_part_per_nucleon = test_part_per_nucleon;
-	param->total_test_part = (z + n) * test_part_per_nucleon;
 	param->r_max = nuclear_radius(z + n);
 	
 	param->max_test_part = max_particles(param->r_max, K_MAX, param->test_part_per_nucleon);
@@ -47,12 +47,34 @@ void create_particles(struct test_particles *part, int num) {
 	part->energy = malloc(num * sizeof(double));
 }
 
+double compute_energy(struct test_particles *part, struct woods_saxon ws, double sigma_k, int z, int type, int i) {
+	double energy = 0.0, r_vec[3], k_vec[3], r, k;
+	copy_particle_pos(*part, r_vec, i);
+	copy_particle_vel(*part, k_vec, i);
+	
+	r = magnitude(r_vec);
+	k = magnitude(k_vec);
+	
+	energy += woods_saxon_potential(ws, r);
+	energy += (k * k) * kinetic_energy();
+	
+	if(type == PROTONS)
+		energy += coulomb_potential(ws, z, r);
+	
+	energy += fluctuation_energy(sigma_k);
+	return energy;
+}
+
+void compute_particle_energies(struct test_particles *part, struct woods_saxon ws, double sigma_k, int z, int type, int num) {
+	for(int i = 0; i < num; i++)
+		part->energy[i] = compute_energy(part, ws, sigma_k, z, type, i);
+}
+
 void generate_random_particles(struct test_particles *part, double r_max, int num) {
+	double r_new[3], k_new[3];
 	int i = 0;
 	while(i < num) {
-		double r_new[3];
-		for(int j = 0; j < 3; j++)
-			r_new[j] = rand_val(-r_max, r_max);
+		random_vec(r_new, r_max);
 		if(dot(r_new, r_new) < r_max * r_max) {
 			copy_vector_to_particle_pos(*part, r_new, i);
 			i++;
@@ -60,34 +82,30 @@ void generate_random_particles(struct test_particles *part, double r_max, int nu
 	}
 	i = 0;
 	while(i < num) {
-		double p_new[3];
-		for(int j = 0; j < 3; j++)
-			p_new[j] = rand_val(-K_MAX, K_MAX);
-		if(dot(p_new, p_new) < K_MAX * K_MAX) {
-			copy_vector_to_particle_vel(*part, p_new, i);
+		random_vec(k_new, K_MAX);
+		if(dot(k_new, k_new) < K_MAX * K_MAX) {
+			copy_vector_to_particle_vel(*part, k_new, i);
 			i++;
 		}
 	}
 }
 
-void compute_particle_energies(struct test_particles *part, struct woods_saxon ws, double sigma_k, int num, int z, int type) {
-	double energy, r_vec[3], k_vec[3], r, k;
-	for(int i = 0; i < num; i++) {
-		energy = 0.0;
-		copy_particle_pos(*part, r_vec, i);
-		copy_particle_vel(*part, k_vec, i);
-		
-		r = magnitude(r_vec);
-		k = magnitude(k_vec);
-		
-		energy += woods_saxon_potential(ws, r);
-		energy += (k * k) * kinetic_energy();
-		
-		if(type == PROTONS)
-			energy += coulomb_potential(ws, z, r);
-		
-		energy += fluctuation_energy(sigma_k);
-		part->energy[i] = energy;
+void generate_checking_particles(struct test_particles *part, struct woods_saxon ws, double sigma_k, int z, double r_max, double epsilon, int type, int num) {
+	double r_new[3], k_new[3], energy;
+	int i = 0;
+	while(i < num) {
+		random_vec(r_new, r_max);
+		random_vec(k_new, K_MAX);
+		copy_vector_to_particle_pos(*part, r_new, i);
+		copy_vector_to_particle_vel(*part, k_new, i);
+		energy = compute_energy(part, ws, sigma_k, z, type, i);
+		if(energy < epsilon) {
+			mult_vec(r_new, r_new, -1.0);
+			mult_vec(k_new, k_new, -1.0);
+			copy_vector_to_particle_pos(*part, r_new, i + 1);
+			copy_vector_to_particle_vel(*part, k_new, i + 1);
+			i+=2;
+		}
 	}
 }
 
@@ -95,10 +113,12 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 	double r_max = param.r_max, sigma_k = param.sigma_k, total_delta_epsilon;
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
 	
+	create_particles(part_p,  param.max_test_part);
+	create_particles(part_n,  param.max_test_part);
 	generate_random_particles(part_p, r_max, max_part);
 	generate_random_particles(part_n, r_max, max_part);
-	compute_particle_energies(part_p, ws, sigma_k, max_part, z, PROTONS);
-	compute_particle_energies(part_n, ws, sigma_k, max_part, z, NEUTRONS);
+	compute_particle_energies(part_p, ws, sigma_k, z, PROTONS, max_part);
+	compute_particle_energies(part_n, ws, sigma_k, z, NEUTRONS, max_part);
 	
 	do {
 		int check_less_p = 0, check_equal_p = 0, check_more_p = 0;
@@ -137,6 +157,17 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 		printf("%lf\n", total_delta_epsilon);
 		it++;
 	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_ITERATIONS);
+	
+	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
+	free_particles(part_p);
+	free_particles(part_n);
+	create_particles(part_p, total_p);
+	create_particles(part_n, total_n);
+	
+	generate_checking_particles(part_p, ws, sigma_k, z, r_max, fermi_levels->epsilon_p, PROTONS, total_p);
+	generate_checking_particles(part_n, ws, sigma_k, z, r_max, fermi_levels->epsilon_n, NEUTRONS, total_n);
+	compute_particle_energies(part_p, ws, sigma_k, z, PROTONS, total_p);
+	compute_particle_energies(part_n, ws, sigma_k, z, NEUTRONS, total_n);
 }
 
 void output_centroids(FILE *out, struct test_particles part, int num) {

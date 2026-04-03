@@ -4,6 +4,7 @@
 #include "sim_structs.h"
 
 double rand_val(double min, double max);
+void random_vec(double *v, double max);
 double nuclear_radius(unsigned short a);
 int max_particles(double r_max, double k_max, int total_test_part);
 double woods_saxon_potential(struct woods_saxon ws, double r);
