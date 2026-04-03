@@ -1,5 +1,5 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "tools.h"
 #include "math_tools.h"
@@ -13,7 +13,7 @@ void set_parameters(struct parameters *param, int z, int n, int test_part_per_nu
 	param->test_part_per_nucleon = test_part_per_nucleon;
 	param->total_test_part = (z + n) * test_part_per_nucleon;
 	param->r_max = nuclear_radius(z + n);
-	param->max_test_part = max_particles(param->r_max, K_MAX, param->total_test_part);
+	param->max_test_part = max_particles(param->r_max, K_MAX, param->test_part_per_nucleon);
 }
 
 void set_woods_saxon(struct woods_saxon *ws, struct parameters param, double V0, double a) {
@@ -26,6 +26,11 @@ void set_skyrme(struct skyrme *skm, double A, double B, double gamma) {
 	skm->A = A;
 	skm->B = B;
 	skm->gamma = gamma;
+}
+
+void set_fermi_levels(struct fermi *fermi, double epsilon_p, double epsilon_n) {
+	fermi->epsilon_p = epsilon_p;
+	fermi->epsilon_n = epsilon_n;
 }
 
 void create_particles(struct test_particles *part, int num) {
@@ -60,24 +65,23 @@ void generate_random_particles(struct test_particles *part, double r_max, int nu
 	}
 }
 
-void initialize_particles(struct test_particles *part, struct parameters param, struct woods_saxon ws, struct skyrme skm) {
-	generate_random_particles(part, param.r_max, param.max_test_part);
+void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm) {
+	generate_random_particles(part_p, param.r_max, param.max_test_part);
+	generate_random_particles(part_n, param.r_max, param.max_test_part);
 }
 
-void output_centroids(FILE *out, struct test_particles *part, struct parameters param) {
-	int num = param.total_test_part;
+void output_centroids(FILE *out, struct test_particles part, int num) {
 	for(int i = 0; i < num; i++) {
-		fwrite(&part->x[i], sizeof(double), 1, out);
-		fwrite(&part->y[i], sizeof(double), 1, out);
-		fwrite(&part->z[i], sizeof(double), 1, out);
-		fwrite(&part->kx[i], sizeof(double), 1, out);
-		fwrite(&part->ky[i], sizeof(double), 1, out);
-		fwrite(&part->kz[i], sizeof(double), 1, out);
+		fwrite(&part.x[i], sizeof(double), 1, out);
+		fwrite(&part.y[i], sizeof(double), 1, out);
+		fwrite(&part.z[i], sizeof(double), 1, out);
+		fwrite(&part.kx[i], sizeof(double), 1, out);
+		fwrite(&part.ky[i], sizeof(double), 1, out);
+		fwrite(&part.kz[i], sizeof(double), 1, out);
 	}
 }
 
 void free_particles(struct test_particles *part) {
 	free(part->x); free(part->y); free(part->z);
 	free(part->kx); free(part->ky); free(part->kz);
-	free(part);
 }
