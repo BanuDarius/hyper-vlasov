@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 	}
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 50, n = 82, num_test_part = 200;
+	int z = 10, n = 15, num_test_part = 100;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;

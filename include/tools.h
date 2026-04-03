@@ -12,6 +12,7 @@ double coulomb_potential(struct woods_saxon ws, double z, double r);
 double kinetic_energy();
 double fluctuation_energy(double sigma_k);
 double calc_sigma(double fwhm);
+void copy_particle(struct test_particles *part_a, struct test_particles *part_b, int i);
 void copy_particle_pos_to_vector(double *v, struct test_particles part, int i);
 void copy_particle_vel_to_vector(double *v, struct test_particles part, int i);
 void copy_vector_to_particle_pos(struct test_particles part, double *v, int i);

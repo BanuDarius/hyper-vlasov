@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Iinclude -march=x86-64 -MMD -MP
+CFLAGS = -fopenmp -Iinclude -march=x86-64 -MMD -MP
 LDLIBS = -lm
 
 SRC_DIR = src

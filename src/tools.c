@@ -57,6 +57,17 @@ double calc_sigma(double fwhm) {
 	return sigma;
 }
 
+void copy_particle(struct test_particles *part_a, struct test_particles *part_b, int i) {
+	part_a->x[i] = part_b->x[i];
+	part_a->y[i] = part_b->y[i];
+	part_a->z[i] = part_b->z[i];
+	part_a->kx[i] = part_b->kx[i];
+	part_a->ky[i] = part_b->ky[i];
+	part_a->kz[i] = part_b->kz[i];
+	part_a->energy[i] = part_b->energy[i];
+	part_a->density[i] = part_b->density[i];
+}
+
 void copy_particle_pos_to_vector(double *v, struct test_particles part, int i) {
 	v[0] = part.x[i];
 	v[1] = part.y[i];
