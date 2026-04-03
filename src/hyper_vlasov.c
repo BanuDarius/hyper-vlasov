@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 	}
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 10, n = 14, num_test_part = 100;
+	int z = 10, n = 14, num_test_part = 2000;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 	printf("%i\n", param.max_test_part);
 	printf("%lf %lf\n", param.sigma_k, param.sigma_r);
 	
-	initialize_particles(&part_p, &part_n, param, ws, skm, &fermi_levels);
+	initialize_particles(&part_p, &part_n, param, &ws, skm, &fermi_levels);
 	
 	output_centroids(out, part_n, n * num_test_part);
 	//output_centroids(out, part_n, param.max_test_part);

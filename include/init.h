@@ -13,9 +13,9 @@ void compute_particle_energies(struct test_particles *part, struct woods_saxon w
 void compute_particle_densities(struct test_particles *part_p, struct test_particles *part_n, double sigma_r, double part_per_nucleon, int total_p, int total_n);
 void generate_random_particles(struct test_particles *part, double r_max, int num);
 void generate_checking_particles(struct test_particles *part, struct woods_saxon ws, struct parameters param, double epsilon, int type, int num);
-void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm, struct fermi *fermi_levels);
+void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon *ws, struct skyrme skm, struct fermi *fermi_levels);
 void copy_accepted_particles(struct test_particles *part_accepted, struct test_particles *part_all, double epsilon, int num);
-void fit_woods_saxon_param(struct woods_saxon *ws, struct test_particles *part_p, struct test_particles *part_n, struct skyrme skm, int total_p, int total_n);
+void fit_woods_saxon_param(struct woods_saxon *ws, struct test_particles *part, struct skyrme skm, int total_part);
 void output_centroids(FILE *out, struct test_particles part, int num);
 void free_particles(struct test_particles *part);
 
