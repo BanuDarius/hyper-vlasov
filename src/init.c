@@ -1,6 +1,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "init.h"
 #include "tools.h"
@@ -9,10 +10,11 @@
 
 #define K_MAX 1.5
 
-void set_parameters(struct parameters *param, int z, int n, int test_part_per_nucleon, double sigma_k) {
+void set_parameters(struct parameters *param, int z, int n, int test_part_per_nucleon, double sigma_k, double sigma_r) {
 	param->z = z;
 	param->n = n;
 	param->sigma_k = sigma_k;
+	param->sigma_r = sigma_r;
 	
 	param->test_part_per_nucleon = test_part_per_nucleon;
 	param->r_max = nuclear_radius(z + n);
@@ -45,6 +47,7 @@ void create_particles(struct test_particles *part, int num) {
 	part->ky = malloc(num * sizeof(double));
 	part->kz = malloc(num * sizeof(double));
 	part->energy = malloc(num * sizeof(double));
+	part->density = malloc(num * sizeof(double));
 }
 
 double compute_energy(struct test_particles *part, struct woods_saxon ws, double sigma_k, int z, int type, int i) {
@@ -70,6 +73,11 @@ void compute_particle_energies(struct test_particles *part, struct woods_saxon w
 		part->energy[i] = compute_energy(part, ws, sigma_k, z, type, i);
 }
 
+void compute_particle_densities(struct test_particles *part, double sigma_r, int num) {
+	double one = 1.0;
+	memcpy(part->density, &one, num * sizeof(double));
+}
+
 void generate_random_particles(struct test_particles *part, double r_max, int num) {
 	double r_new[3], k_new[3];
 	int i = 0;
@@ -90,8 +98,9 @@ void generate_random_particles(struct test_particles *part, double r_max, int nu
 	}
 }
 
-void generate_checking_particles(struct test_particles *part, struct woods_saxon ws, double sigma_k, int z, double r_max, double epsilon, int type, int num) {
+void generate_checking_particles(struct test_particles *part, struct woods_saxon ws, struct parameters param, double epsilon, int type, int num) {
 	double r_new[3], k_new[3], energy;
+	double r_max = param.r_max, sigma_k = param.sigma_k, z = param.z;
 	int i = 0;
 	while(i < num) {
 		random_vec(r_new, r_max);
@@ -164,8 +173,8 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 	create_particles(part_p, total_p);
 	create_particles(part_n, total_n);
 	
-	generate_checking_particles(part_p, ws, sigma_k, z, r_max, fermi_levels->epsilon_p, PROTONS, total_p);
-	generate_checking_particles(part_n, ws, sigma_k, z, r_max, fermi_levels->epsilon_n, NEUTRONS, total_n);
+	generate_checking_particles(part_p, ws, param, fermi_levels->epsilon_p, PROTONS, total_p);
+	generate_checking_particles(part_n, ws, param, fermi_levels->epsilon_n, NEUTRONS, total_n);
 	compute_particle_energies(part_p, ws, sigma_k, z, PROTONS, total_p);
 	compute_particle_energies(part_n, ws, sigma_k, z, NEUTRONS, total_n);
 }
@@ -184,5 +193,5 @@ void output_centroids(FILE *out, struct test_particles part, int num) {
 void free_particles(struct test_particles *part) {
 	free(part->x); free(part->y); free(part->z);
 	free(part->kx); free(part->ky); free(part->kz);
-	free(part->energy);
+	free(part->energy); free(part->density);
 }

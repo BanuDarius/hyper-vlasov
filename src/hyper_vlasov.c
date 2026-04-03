@@ -17,8 +17,8 @@ int main(int argc, char **argv) {
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
-	double k_fwhm = 0.346;
-	double sigma_k = calc_sigma_k(k_fwhm);
+	double k_fwhm = 0.346, r_fwhm = 1.444;
+	double sigma_k = calc_sigma(k_fwhm), sigma_r = calc_sigma(r_fwhm);
 	
 	struct skyrme skm;
 	struct woods_saxon ws;
@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
 	struct test_particles part_p, part_n;
 	
 	set_fermi_levels(&fermi_levels, epsilon_p, epsilon_n);
-	set_parameters(&param, z, n, num_test_part, sigma_k);
+	set_parameters(&param, z, n, num_test_part, sigma_k, sigma_r);
 	set_woods_saxon(&ws, param, V0, a);
 	set_skyrme(&skm, A, B, gamma);
 	

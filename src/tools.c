@@ -51,10 +51,10 @@ double fluctuation_energy(double sigma_k) {
 	return e_fluc;
 }
 
-double calc_sigma_k(double k_fwhm) {
+double calc_sigma(double fwhm) {
 	double t = 2.0 * sqrt(2.0 * log(2.0));
-	double sigma_k = k_fwhm / t;
-	return sigma_k;
+	double sigma = fwhm / t;
+	return sigma;
 }
 
 void copy_particle_pos(struct test_particles part, double *v, int i) {

@@ -11,16 +11,12 @@
 
 struct parameters {
 	int test_part_per_nucleon, max_test_part, z, n;
-	double r_max, sigma_k;
+	double sigma_k, sigma_r, r_max;
 };
 
 struct test_particles {
 	double *x, *y, *z, *kx, *ky, *kz;
-	double *energy;
-};
-
-struct energies {
-	double *e_gauss;
+	double *energy, *density;
 };
 
 struct woods_saxon {
