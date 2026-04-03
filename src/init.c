@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -7,12 +8,15 @@
 
 #define K_MAX 1.5
 
-void set_parameters(struct parameters *param, int z, int n, int test_part_per_nucleon) {
+void set_parameters(struct parameters *param, int z, int n, int test_part_per_nucleon, double sigma_k) {
 	param->z = z;
 	param->n = n;
+	param->sigma_k = sigma_k;
+	
 	param->test_part_per_nucleon = test_part_per_nucleon;
 	param->total_test_part = (z + n) * test_part_per_nucleon;
 	param->r_max = nuclear_radius(z + n);
+	
 	param->max_test_part = max_particles(param->r_max, K_MAX, param->test_part_per_nucleon);
 }
 
@@ -40,6 +44,7 @@ void create_particles(struct test_particles *part, int num) {
 	part->kx = malloc(num * sizeof(double));
 	part->ky = malloc(num * sizeof(double));
 	part->kz = malloc(num * sizeof(double));
+	part->energy = malloc(num * sizeof(double));
 }
 
 void generate_random_particles(struct test_particles *part, double r_max, int num) {
@@ -49,7 +54,7 @@ void generate_random_particles(struct test_particles *part, double r_max, int nu
 		for(int j = 0; j < 3; j++)
 			r_new[j] = rand_val(-r_max, r_max);
 		if(dot(r_new, r_new) < r_max * r_max) {
-			copy_vector_to_particle_pos(part, r_new, i);
+			copy_vector_to_particle_pos(*part, r_new, i);
 			i++;
 		}
 	}
@@ -59,15 +64,41 @@ void generate_random_particles(struct test_particles *part, double r_max, int nu
 		for(int j = 0; j < 3; j++)
 			p_new[j] = rand_val(-K_MAX, K_MAX);
 		if(dot(p_new, p_new) < K_MAX * K_MAX) {
-			copy_vector_to_particle_vel(part, p_new, i);
+			copy_vector_to_particle_vel(*part, p_new, i);
 			i++;
 		}
 	}
 }
 
+void compute_particle_energies(struct test_particles *part, struct woods_saxon ws, double sigma_k, int num, int z, int type) {
+	double energy, r_vec[3], k_vec[3], r, k;
+	for(int i = 0; i < num; i++) {
+		energy = 0.0;
+		copy_particle_pos(*part, r_vec, i);
+		copy_particle_vel(*part, k_vec, i);
+		
+		r = magnitude(r_vec);
+		k = magnitude(k_vec);
+		
+		energy += woods_saxon_potential(ws, r);
+		energy += (k * k) * kinetic_energy();
+		
+		if(type == PROTONS)
+			energy += coulomb_potential(ws, z, r);
+		
+		energy += fluctuation_energy(sigma_k);
+		part->energy[i] = energy;
+	}
+}
+
 void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm) {
-	generate_random_particles(part_p, param.r_max, param.max_test_part);
-	generate_random_particles(part_n, param.r_max, param.max_test_part);
+	double r_max = param.r_max, sigma_k = param.sigma_k;
+	int max_part = param.max_test_part, z = param.z;
+	
+	generate_random_particles(part_p, r_max, max_part);
+	generate_random_particles(part_n, r_max, max_part);
+	compute_particle_energies(part_p, ws, sigma_k, max_part, z, PROTONS);
+	compute_particle_energies(part_n, ws, sigma_k, max_part, z, NEUTRONS);
 }
 
 void output_centroids(FILE *out, struct test_particles part, int num) {
@@ -84,4 +115,5 @@ void output_centroids(FILE *out, struct test_particles part, int num) {
 void free_particles(struct test_particles *part) {
 	free(part->x); free(part->y); free(part->z);
 	free(part->kx); free(part->ky); free(part->kz);
+	free(part->energy);
 }

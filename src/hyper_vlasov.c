@@ -17,16 +17,17 @@ int main(int argc, char **argv) {
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
+	double k_fwhm = 0.346;
+	double sigma_k = calc_sigma_k(k_fwhm);
 	
 	struct skyrme skm;
 	struct woods_saxon ws;
 	struct parameters param;
 	struct fermi fermi_init;
 	struct test_particles part_init_p, part_init_n;
-	struct energies en_p, en_n;
 	
 	set_fermi_levels(&fermi_init, epsilon_p, epsilon_n);
-	set_parameters(&param, z, n, num_test_part);
+	set_parameters(&param, z, n, num_test_part, sigma_k);
 	set_woods_saxon(&ws, param, V0, a);
 	set_skyrme(&skm, A, B, gamma);
 	
@@ -36,8 +37,10 @@ int main(int argc, char **argv) {
 	create_particles(&part_init_n,  param.max_test_part);
 	initialize_particles(&part_init_p, &part_init_n, param, ws, skm);
 	
-	output_centroids(out, part_init_p, param.max_test_part);
-	output_centroids(out, part_init_n, param.max_test_part);
+	//output_centroids(out, part_init_p, param.max_test_part);
+	//output_centroids(out, part_init_n, param.max_test_part);
+	//fwrite(part_init_p.energy, sizeof(double), param.max_test_part, out);
+	fwrite(part_init_n.energy, sizeof(double), param.max_test_part, out);
 	
 	free_particles(&part_init_p);
 	free_particles(&part_init_n);
