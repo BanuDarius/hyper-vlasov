@@ -158,16 +158,37 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 	}
 }
 
+void chi_squared(struct test_particles *part_p, struct test_particles *part_n, struct woods_saxon ws, struct skyrme skm, int total_p, int total_n) {
+	double chi_squared = 0.0;
+	for(int i = 0; i < total_p + total_n; i++) {
+		double r_vec[3], density;
+		if(i < total_p) {
+			copy_particle_pos_to_vector(r_vec, *part_p, i);
+			density = part_p->density[i];
+		}
+		else {
+			copy_particle_pos_to_vector(r_vec, *part_n, i - total_p);
+			density = part_n->density[i - total_p];
+		}
+		double r = magnitude(r_vec);
+		double v_ws = woods_saxon_potential(ws, r);
+		double v_skyrme = skyrme_potential(skm, density);
+		double diff = v_ws - v_skyrme;
+		chi_squared += diff * diff;
+	}
+	printf("CHI SQUARED %lf\n", chi_squared);
+}
+
 void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon *ws, struct skyrme skm, struct fermi *fermi_levels) {
+	double delta_part_p, delta_part_n, delta_epsilon_p, delta_epsilon_n;
 	double r_max = param.r_max, sigma_k = param.sigma_k, sigma_r = param.sigma_r, total_delta_epsilon;
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
-	double delta_part_p, delta_part_n, delta_epsilon_p, delta_epsilon_n;
+	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
 	
 	create_particles(part_p, param.max_test_part);
 	create_particles(part_n, param.max_test_part);
 	generate_random_particles(part_p, r_max, max_part);
 	generate_random_particles(part_n, r_max, max_part);
-	
 	struct woods_saxon ws_p = *ws, ws_n = *ws;
 	do {
 		compute_particle_energies(part_p, ws_p, param, PROTONS, max_part);
@@ -190,7 +211,6 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 			if(part_n->energy[i] < fermi_levels->epsilon_n - 0.5)
 				check_less_n += 2;
 		}
-		
 		/*struct test_particles part_p_accepted, part_n_accepted;
 		create_particles(&part_p_accepted, check_equal_p);
 		create_particles(&part_n_accepted, check_equal_n);
@@ -206,8 +226,8 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 		free_particles(&part_p_accepted);
 		free_particles(&part_n_accepted);*/
 		
-		delta_part_n = n * part_per_nucleon - check_equal_n;
-		delta_part_p = z * part_per_nucleon - check_equal_p;
+		delta_part_n = total_n - check_equal_n;
+		delta_part_p = total_p - check_equal_p;
 		delta_epsilon_n = 0.5 * delta_part_n / (check_more_n - check_less_n);
 		delta_epsilon_p = 0.5 * delta_part_p / (check_more_p - check_less_p);
 		
@@ -225,7 +245,6 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 		it++;
 	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_ITERATIONS);
 	
-	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
 	free_particles(part_p);
 	free_particles(part_n);
 	create_particles(part_p, total_p);
@@ -247,6 +266,8 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 	printf("WS PARAM %lf %lf %lf\n", ws_n.V0, ws_n.R12, ws_n.a);
 	
 	compute_particle_densities(part_p, part_n, sigma_r, (double)part_per_nucleon, total_p, total_n);
+	
+	chi_squared(part_p, part_n, *ws, skm, total_p, total_n);
 }
 
 void copy_accepted_particles(struct test_particles *part_accepted, struct test_particles *part_all, double epsilon, int num) {
