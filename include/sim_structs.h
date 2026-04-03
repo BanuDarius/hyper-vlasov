@@ -2,12 +2,20 @@
 #define SIM_STRUCTS_H
 
 struct parameters {
-	int total_test_part, test_part_per_nucleon, z, n;
-	double r;
+	int total_test_part, test_part_per_nucleon, max_test_part, z, n;
+	double r_max;
 };
 
 struct test_particles {
-	double *x, *y, *z, *px, *py, *pz;
+	double *x, *y, *z, *kx, *ky, *kz;
+};
+
+struct woods_saxon {
+	double V0, R12, a;
+};
+
+struct skyrme {
+	double A, B, gamma;
 };
 
 #endif
