@@ -23,10 +23,10 @@ void set_parameters(struct parameters *param, int z, int n, int test_part_per_nu
 	param->max_test_part = max_particles(param->r_max, K_MAX, param->test_part_per_nucleon);
 }
 
-void set_woods_saxon(struct woods_saxon *ws, struct parameters param, double V0, double a) {
-	ws->V0 = V0;
+void set_woods_saxon(struct woods_saxon *ws, double V0, double R12, double a) {
 	ws->a = a;
-	ws->R12 = 0.8 * param.r_max;
+	ws->V0 = V0;
+	ws->R12 = R12;
 }
 
 void set_skyrme(struct skyrme *skm, double A, double B, double gamma) {
@@ -75,7 +75,7 @@ void compute_particle_energies(struct test_particles *part, struct woods_saxon w
 		part->energy[i] = compute_energy(part, ws, sigma_k, z, type, i);
 }
 
-void compute_particle_densities(struct test_particles *part_p, struct test_particles *part_n, double sigma_r, int total_p, int total_n) {
+void compute_particle_densities(struct test_particles *part_p, struct test_particles *part_n, double sigma_r, double part_per_nucleon, int total_p, int total_n) {
 	int total = total_p + total_n;
 	for(int i = 0; i < total_p; i++)
 		part_p->density[i] = 1.0;
@@ -83,7 +83,7 @@ void compute_particle_densities(struct test_particles *part_p, struct test_parti
 		part_n->density[i] = 1.0;
 	
 	double sigma_sqr_4 = 4.0 * sigma_r * sigma_r;
-	double term = (1.0 / (double)(total)) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
+	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
 	double r_i[3], r_j[3], diff[3], dist_squared, fact;
 	for(int i = 0; i < total; i++) {
 		if(i % 1000 == 0)
@@ -124,7 +124,7 @@ void generate_random_particles(struct test_particles *part, double r_max, int nu
 	while(i < num) {
 		random_vec(r_new, r_max);
 		if(dot(r_new, r_new) < r_max * r_max) {
-			copy_vector_to_particle_pos(*part, r_new, i);
+			copy_vector_to_particle_pos(part, r_new, i);
 			i++;
 		}
 	}
@@ -132,7 +132,7 @@ void generate_random_particles(struct test_particles *part, double r_max, int nu
 	while(i < num) {
 		random_vec(k_new, K_MAX);
 		if(dot(k_new, k_new) < K_MAX * K_MAX) {
-			copy_vector_to_particle_vel(*part, k_new, i);
+			copy_vector_to_particle_vel(part, k_new, i);
 			i++;
 		}
 	}
@@ -145,14 +145,14 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 	while(i < num) {
 		random_vec(r_new, r_max);
 		random_vec(k_new, K_MAX);
-		copy_vector_to_particle_pos(*part, r_new, i);
-		copy_vector_to_particle_vel(*part, k_new, i);
+		copy_vector_to_particle_pos(part, r_new, i);
+		copy_vector_to_particle_vel(part, k_new, i);
 		energy = compute_energy(part, ws, sigma_k, z, type, i);
 		if(energy < epsilon) {
 			mult_vec(r_new, r_new, -1.0);
 			mult_vec(k_new, k_new, -1.0);
-			copy_vector_to_particle_pos(*part, r_new, i + 1);
-			copy_vector_to_particle_vel(*part, k_new, i + 1);
+			copy_vector_to_particle_pos(part, r_new, i + 1);
+			copy_vector_to_particle_vel(part, k_new, i + 1);
 			i+=2;
 		}
 	}
@@ -201,16 +201,22 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 		fermi_levels->epsilon_p += delta_epsilon_p;
 		fermi_levels->epsilon_n += delta_epsilon_n;
 		
-		struct test_particles *part_p_accepted, *part_n_accepted;
-		create_particles(part_p_accepted, check_equal_p);
-		create_particles(part_n_accepted, check_equal_n);
+		/*struct test_particles part_p_accepted, part_n_accepted;
+		create_particles(&part_p_accepted, check_equal_p);
+		create_particles(&part_n_accepted, check_equal_n);
 		
-		copy_accepted_particles(part_p_accepted, part_p, fermi_levels->epsilon_p, max_part);
-		copy_accepted_particles(part_n_accepted, part_n, fermi_levels->epsilon_n, max_part);
+		copy_accepted_particles(&part_p_accepted, part_p, fermi_levels->epsilon_p, max_part);
+		copy_accepted_particles(&part_n_accepted, part_n, fermi_levels->epsilon_n, max_part);
 		
-		compute_particle_densities(part_p_accepted, part_n_accepted, sigma_r, check_equal_p, check_equal_n);
+		compute_particle_densities(&part_p_accepted, &part_n_accepted, sigma_r, (double)part_per_nucleon, check_equal_p, check_equal_n);
 		
-		fit_woods_saxon_param(&ws, part_p, part_n, skm);
+		fit_woods_saxon_param(&ws, &part_p_accepted, &part_n_accepted, skm, check_equal_p, check_equal_n);
+		
+		compute_particle_energies(part_p, ws, param, PROTONS, max_part);
+		compute_particle_energies(part_n, ws, param, NEUTRONS, max_part);
+		
+		free_particles(&part_p_accepted);
+		free_particles(&part_n_accepted);*/
 		
 		total_delta_epsilon = fabs(delta_epsilon_n) + fabs(delta_epsilon_p);
 		
@@ -226,17 +232,79 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 	
 	generate_checking_particles(part_p, ws, param, fermi_levels->epsilon_p, PROTONS, total_p);
 	generate_checking_particles(part_n, ws, param, fermi_levels->epsilon_n, NEUTRONS, total_n);
+	
+	compute_particle_energies(part_p, ws, param, PROTONS, total_p);
+	compute_particle_energies(part_n, ws, param, NEUTRONS, total_n);
+	
+	compute_particle_densities(part_p, part_n, sigma_r, (double)part_per_nucleon, total_p, total_n);
 }
 
 void copy_accepted_particles(struct test_particles *part_accepted, struct test_particles *part_all, double epsilon, int num) {
+	int idx = 0;
+	double r[3], r_sym[3];
 	for(int i = 0; i < num; i++) {
-		if(part_all->energy[i] < epsilon)
-			copy_particle(part_accepted, part_all, i);
+		if(part_all->energy[i] < epsilon) {
+			copy_particle_pos_to_vector(r, *part_all, i);
+			mult_vec(r_sym, r, -1.0);
+			copy_vector_to_particle_pos(part_accepted, r, idx);
+			copy_vector_to_particle_pos(part_accepted, r_sym, idx);
+			idx++;
+		}
 	}
 }
 
-void fit_woods_saxon_param(struct woods_saxon *ws, struct test_particles *part_p, struct test_particles *part_n, struct skyrme skm) {
+void fit_woods_saxon_param(struct woods_saxon *ws, struct test_particles *part_p, struct test_particles *part_n, struct skyrme skm, int total_p, int total_n) {
+	double p[3] = {ws->V0, ws->R12, ws->a};
+	double h[3] = {0.01, 0.01, 0.01};
+	struct woods_saxon ws_new;
+	int max_it = 15;
+	double tol = 0.01;
 	
+	for(int it = 0; it < max_it; it++) {
+		double A[3][3] = {{0.0}}, b[3] = {0.0};
+		double chi_squared = 0.0;
+		
+		for(int i = 0; i < total_p + total_n; i++) {
+			double r_vec[3], density, r;
+			if(i < total_p) {
+				copy_particle_pos_to_vector(r_vec, *part_p, i);
+				density = part_p->density[i];
+			}
+			else {
+				copy_particle_pos_to_vector(r_vec, *part_n, i - total_p);
+				density = part_n->density[i - total_p];
+			}
+			r = magnitude(r_vec);
+			set_woods_saxon(&ws_new, p[0], p[1], p[2]);
+			double v_skyrme = skyrme_potential(skm, density);
+			double v_woods_saxon = woods_saxon_potential(ws_new, r);
+			double t = v_woods_saxon - v_skyrme;
+			chi_squared += t * t;
+			double J[3];
+			for(int x = 0; x < 3; x++) {
+				struct woods_saxon ws_plus = ws_new;
+				struct woods_saxon ws_minus = ws_new;
+				if(x == 0) { ws_plus.V0 += h[0]; ws_minus.V0 -= h[0]; }
+				if(x == 1) { ws_plus.R12 += h[1]; ws_minus.R12 -= h[1]; }
+				if(x == 2) { ws_plus.a += h[2]; ws_minus.a -= h[2]; }
+				
+				double v_plus = woods_saxon_potential(ws_plus, r);
+				double v_minus = woods_saxon_potential(ws_minus, r);
+				J[x] = (v_plus - v_minus) / (2.0 * h[x]);
+			}
+			for(int row = 0; row < 3; row++) {
+				b[row] -= J[row] * t;
+				for(int col = 0; col < 3; col++)
+					A[row][col] += J[row] * J[col];
+			}
+		}
+	double delta[3] = {0.0};
+	solve_3x3(A, b, delta);
+	add_vec(p, p, delta);
+	if(magnitude(delta) < tol)
+		break;
+	}
+	ws->V0 = p[0]; ws->R12 = p[1]; ws->a = p[2];
 }
 
 void output_centroids(FILE *out, struct test_particles part, int num) {

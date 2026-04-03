@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
 	}
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 10, n = 15, num_test_part = 100;
+	int z = 10, n = 14, num_test_part = 100;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 	
 	set_fermi_levels(&fermi_levels, epsilon_p, epsilon_n);
 	set_parameters(&param, z, n, num_test_part, sigma_k, sigma_r);
-	set_woods_saxon(&ws, param, V0, a);
+	set_woods_saxon(&ws, V0, 0.8 * param.r_max, a);
 	set_skyrme(&skm, A, B, gamma);
 	
 	printf("%i\n", param.max_test_part);

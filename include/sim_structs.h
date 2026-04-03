@@ -8,6 +8,7 @@
 
 #define MC2 935.0
 #define H_BAR_C 197.33
+#define RHO_0 0.16
 
 struct parameters {
 	int test_part_per_nucleon, max_test_part, z, n;

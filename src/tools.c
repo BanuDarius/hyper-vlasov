@@ -31,6 +31,12 @@ double woods_saxon_potential(struct woods_saxon ws, double r) {
 	return v;
 }
 
+double skyrme_potential(struct skyrme skm, double rho) {
+	double t = rho / RHO_0;
+	double v = skm.A * t + skm.B * pow(t, skm.gamma);
+	return v;
+}
+
 double coulomb_potential(struct woods_saxon ws, double z, double r) {
 	double R12 = ws.R12, v;
 	if(r <= ws.R12)
@@ -57,15 +63,15 @@ double calc_sigma(double fwhm) {
 	return sigma;
 }
 
-void copy_particle(struct test_particles *part_a, struct test_particles *part_b, int i) {
-	part_a->x[i] = part_b->x[i];
-	part_a->y[i] = part_b->y[i];
-	part_a->z[i] = part_b->z[i];
-	part_a->kx[i] = part_b->kx[i];
-	part_a->ky[i] = part_b->ky[i];
-	part_a->kz[i] = part_b->kz[i];
-	part_a->energy[i] = part_b->energy[i];
-	part_a->density[i] = part_b->density[i];
+void copy_particle(struct test_particles *part_a, struct test_particles *part_b, int idx, int i) {
+	part_a->x[idx] = part_b->x[i];
+	part_a->y[idx] = part_b->y[i];
+	part_a->z[idx] = part_b->z[i];
+	part_a->kx[idx] = part_b->kx[i];
+	part_a->ky[idx] = part_b->ky[i];
+	part_a->kz[idx] = part_b->kz[i];
+	part_a->energy[idx] = part_b->energy[i];
+	part_a->density[idx] = part_b->density[i];
 }
 
 void copy_particle_pos_to_vector(double *v, struct test_particles part, int i) {
@@ -80,14 +86,36 @@ void copy_particle_vel_to_vector(double *v, struct test_particles part, int i) {
 	v[2] = part.kz[i];
 }
 
-void copy_vector_to_particle_pos(struct test_particles part, double *v, int i) {
-	part.x[i] = v[0];
-	part.y[i] = v[1];
-	part.z[i] = v[2];
+void copy_vector_to_particle_pos(struct test_particles *part, double *v, int i) {
+	part->x[i] = v[0];
+	part->y[i] = v[1];
+	part->z[i] = v[2];
 }
 
-void copy_vector_to_particle_vel(struct test_particles part, double *v, int i) {
-	part.kx[i] = v[0];
-	part.ky[i] = v[1];
-	part.kz[i] = v[2];
+void copy_vector_to_particle_vel(struct test_particles *part, double *v, int i) {
+	part->kx[i] = v[0];
+	part->ky[i] = v[1];
+	part->kz[i] = v[2];
+}
+
+void solve_3x3(double A[3][3], double b[3], double x[3]) {
+	double detA = A[0][0]*(A[1][1]*A[2][2] - A[1][2]*A[2][1]) - A[0][1]*(A[1][0]*A[2][2] - A[1][2]*A[2][0]) + A[0][2]*(A[1][0]*A[2][1] - A[1][1]*A[2][0]);
+	
+	double invA[3][3];
+	invA[0][0] =  (A[1][1]*A[2][2] - A[1][2]*A[2][1]) / detA;
+	invA[0][1] = -(A[0][1]*A[2][2] - A[0][2]*A[2][1]) / detA;
+	invA[0][2] =  (A[0][1]*A[1][2] - A[0][2]*A[1][1]) / detA;
+	invA[1][0] = -(A[1][0]*A[2][2] - A[1][2]*A[2][0]) / detA;
+	invA[1][1] =  (A[0][0]*A[2][2] - A[0][2]*A[2][0]) / detA;
+	invA[1][2] = -(A[0][0]*A[1][2] - A[0][2]*A[1][0]) / detA;
+	invA[2][0] =  (A[1][0]*A[2][1] - A[1][1]*A[2][0]) / detA;
+	invA[2][1] = -(A[0][0]*A[2][1] - A[0][1]*A[2][0]) / detA;
+	invA[2][2] =  (A[0][0]*A[1][1] - A[0][1]*A[1][0]) / detA;
+	
+	for (int i = 0; i < 3; i++) {
+		x[i] = 0.0;
+		for (int j = 0; j < 3; j++) {
+			x[i] += invA[i][j] * b[j];
+		}
+	}
 }
