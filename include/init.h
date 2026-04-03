@@ -10,7 +10,7 @@ void set_fermi_levels(struct fermi *fermi, double epsilon_p, double epsilon_n);
 void create_particles(struct test_particles *part, int num);
 void generate_random_particles(struct test_particles *part, double r_max, int num);
 void compute_particle_energies(struct test_particles *part, struct woods_saxon ws, double sigma_k, int num, int z, int type);
-void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm);
+void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm, struct fermi *fermi_levels);
 void output_centroids(FILE *out, struct test_particles part, int num);
 void free_particles(struct test_particles *part);
 

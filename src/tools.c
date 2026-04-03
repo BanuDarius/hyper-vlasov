@@ -15,7 +15,7 @@ double nuclear_radius(unsigned short a) {
 
 int max_particles(double r_max, double k_max, int test_part_per_nucleon) {
 	double t = r_max * k_max, ct = 2.0 * M_PI;
-	double phase_space_volume = 64.0 * t * t * t;
+	double phase_space_volume = (16.0 / 9.0) * M_PI * M_PI * (t * t * t);
 	int max = test_part_per_nucleon * (int)floor(phase_space_volume / (ct * ct * ct) + 0.5);
 	return max;
 }

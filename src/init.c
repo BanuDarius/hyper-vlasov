@@ -91,14 +91,52 @@ void compute_particle_energies(struct test_particles *part, struct woods_saxon w
 	}
 }
 
-void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm) {
-	double r_max = param.r_max, sigma_k = param.sigma_k;
-	int max_part = param.max_test_part, z = param.z;
+void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm, struct fermi *fermi_levels) {
+	double r_max = param.r_max, sigma_k = param.sigma_k, total_delta_epsilon;
+	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
 	
 	generate_random_particles(part_p, r_max, max_part);
 	generate_random_particles(part_n, r_max, max_part);
 	compute_particle_energies(part_p, ws, sigma_k, max_part, z, PROTONS);
 	compute_particle_energies(part_n, ws, sigma_k, max_part, z, NEUTRONS);
+	
+	do {
+		int check_less_p = 0, check_equal_p = 0, check_more_p = 0;
+		int check_less_n = 0, check_equal_n = 0, check_more_n = 0;
+		for(int i = 0; i < max_part; i++) {
+			if(part_p->energy[i] < fermi_levels->epsilon_p)
+				check_equal_p += 2;
+			if(part_p->energy[i] < fermi_levels->epsilon_p + 0.5)
+				check_more_p += 2;
+			if(part_p->energy[i] < fermi_levels->epsilon_p - 0.5)
+				check_less_p += 2;
+			
+			if(part_n->energy[i] < fermi_levels->epsilon_n)
+				check_equal_n += 2;
+			if(part_n->energy[i] < fermi_levels->epsilon_n + 0.5)
+				check_more_n += 2;
+			if(part_n->energy[i] < fermi_levels->epsilon_n - 0.5)
+				check_less_n += 2;
+		}
+		printf("%i %i %i\n", check_less_p, check_equal_p, check_more_p);
+		printf("%i %i %i\n", check_less_n, check_equal_n, check_more_n);
+		
+		double delta_part_n = n * part_per_nucleon - check_equal_n;
+		double delta_part_p = z * part_per_nucleon - check_equal_p;
+		double delta_epsilon_n = 0.5 * delta_part_n / (check_more_n - check_less_n);
+		double delta_epsilon_p = 0.5 * delta_part_p / (check_more_p - check_less_p);
+		
+		if(fabs(delta_epsilon_p) > 0.5) delta_epsilon_p *= 0.6;
+		if(fabs(delta_epsilon_n) > 0.5) delta_epsilon_n *= 0.6;
+		
+		fermi_levels->epsilon_p += delta_epsilon_p;
+		fermi_levels->epsilon_n += delta_epsilon_n;
+		
+		total_delta_epsilon = fabs(delta_epsilon_n) + fabs(delta_epsilon_p);
+		
+		printf("%lf\n", total_delta_epsilon);
+		it++;
+	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_ITERATIONS);
 }
 
 void output_centroids(FILE *out, struct test_particles part, int num) {

@@ -3,9 +3,11 @@
 
 #define PROTONS 0
 #define NEUTRONS 1
+#define MAX_ITERATIONS 30
+#define DELTA_EPSILON_TOLERANCE 0.01
 
-#define H_BAR_C 197.33
 #define MC2 935.0
+#define H_BAR_C 197.33
 
 struct parameters {
 	int total_test_part, test_part_per_nucleon, max_test_part, z, n;
