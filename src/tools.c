@@ -57,13 +57,13 @@ double calc_sigma(double fwhm) {
 	return sigma;
 }
 
-void copy_particle_pos(struct test_particles part, double *v, int i) {
+void copy_particle_pos_to_vector(double *v, struct test_particles part, int i) {
 	v[0] = part.x[i];
 	v[1] = part.y[i];
 	v[2] = part.z[i];
 }
 
-void copy_particle_vel(struct test_particles part, double *v, int i) {
+void copy_particle_vel_to_vector(double *v, struct test_particles part, int i) {
 	v[0] = part.kx[i];
 	v[1] = part.ky[i];
 	v[2] = part.kz[i];

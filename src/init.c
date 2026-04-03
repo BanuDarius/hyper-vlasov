@@ -52,8 +52,8 @@ void create_particles(struct test_particles *part, int num) {
 
 double compute_energy(struct test_particles *part, struct woods_saxon ws, double sigma_k, int z, int type, int i) {
 	double energy = 0.0, r_vec[3], k_vec[3], r, k;
-	copy_particle_pos(*part, r_vec, i);
-	copy_particle_vel(*part, k_vec, i);
+	copy_particle_pos_to_vector(r_vec, *part, i);
+	copy_particle_vel_to_vector(k_vec, *part, i);
 	
 	r = magnitude(r_vec);
 	k = magnitude(k_vec);
@@ -68,14 +68,54 @@ double compute_energy(struct test_particles *part, struct woods_saxon ws, double
 	return energy;
 }
 
-void compute_particle_energies(struct test_particles *part, struct woods_saxon ws, double sigma_k, int z, int type, int num) {
+void compute_particle_energies(struct test_particles *part, struct woods_saxon ws, struct parameters param, int type, int num) {
+	double sigma_k = param.sigma_k, z = param.z;
 	for(int i = 0; i < num; i++)
 		part->energy[i] = compute_energy(part, ws, sigma_k, z, type, i);
 }
 
-void compute_particle_densities(struct test_particles *part, double sigma_r, int num) {
-	double one = 1.0;
-	memcpy(part->density, &one, num * sizeof(double));
+void compute_particle_densities(struct test_particles *part_p, struct test_particles *part_n, struct parameters param) {
+	int total_p = param.z * param.test_part_per_nucleon, total_n = param.n * param.test_part_per_nucleon;
+	int test_part = param.test_part_per_nucleon;
+	double sigma_r = param.sigma_r;
+	for(int i = 0; i < total_p; i++)
+		part_p->density[i] = 1.0;
+	for(int i = 0; i < total_n; i++)
+		part_n->density[i] = 1.0;
+	
+	double sigma_sqr_4 = 4.0 * sigma_r * sigma_r;
+	double term = (1.0 / test_part) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
+	double r_i[3], r_j[3], diff[3], dist_squared, fact;
+	for(int i = 0; i < total_p + total_n; i++) {
+		if(i % 1000 == 0)
+			printf("%i\n", i);
+		if(i < total_p)
+			copy_particle_pos_to_vector(r_i, *part_p, i);
+		else
+			copy_particle_pos_to_vector(r_i, *part_n, i - total_p);
+		for(int j = i + 1; j < total_p + total_n; j++) {
+			if(j < total_p)
+				copy_particle_pos_to_vector(r_j, *part_p, j);
+			else
+				copy_particle_pos_to_vector(r_j, *part_n, j - total_p);
+			sub_vec(diff, r_i, r_j);
+			dist_squared = dot(diff, diff);
+			fact = exp(-(dist_squared) / sigma_sqr_4);
+			
+			if(i < total_p)
+				part_p->density[i] += fact;
+			else
+				part_n->density[i - total_p] += fact;
+			if(j < total_p)
+				part_p->density[j] += fact;
+			else
+				part_n->density[j - total_p] += fact;
+		}
+	}
+	for(int i = 0; i < total_p; i++)
+		part_p->density[i] *= term;
+	for(int i = 0; i < total_n; i++)
+		part_n->density[i] *= term;
 }
 
 void generate_random_particles(struct test_particles *part, double r_max, int num) {
@@ -119,15 +159,15 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 }
 
 void initialize_particles(struct test_particles *part_p, struct test_particles *part_n, struct parameters param, struct woods_saxon ws, struct skyrme skm, struct fermi *fermi_levels) {
-	double r_max = param.r_max, sigma_k = param.sigma_k, total_delta_epsilon;
+	double r_max = param.r_max, sigma_k = param.sigma_k, sigma_r = param.sigma_r, total_delta_epsilon;
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
 	
 	create_particles(part_p,  param.max_test_part);
 	create_particles(part_n,  param.max_test_part);
 	generate_random_particles(part_p, r_max, max_part);
 	generate_random_particles(part_n, r_max, max_part);
-	compute_particle_energies(part_p, ws, sigma_k, z, PROTONS, max_part);
-	compute_particle_energies(part_n, ws, sigma_k, z, NEUTRONS, max_part);
+	compute_particle_energies(part_p, ws, param, PROTONS, max_part);
+	compute_particle_energies(part_n, ws, param, NEUTRONS, max_part);
 	
 	do {
 		int check_less_p = 0, check_equal_p = 0, check_more_p = 0;
@@ -175,8 +215,10 @@ void initialize_particles(struct test_particles *part_p, struct test_particles *
 	
 	generate_checking_particles(part_p, ws, param, fermi_levels->epsilon_p, PROTONS, total_p);
 	generate_checking_particles(part_n, ws, param, fermi_levels->epsilon_n, NEUTRONS, total_n);
-	compute_particle_energies(part_p, ws, sigma_k, z, PROTONS, total_p);
-	compute_particle_energies(part_n, ws, sigma_k, z, NEUTRONS, total_n);
+	compute_particle_energies(part_p, ws, param, PROTONS, total_p);
+	compute_particle_energies(part_n, ws, param, NEUTRONS, total_n);
+	
+	compute_particle_densities(part_p, part_n, param);
 }
 
 void output_centroids(FILE *out, struct test_particles part, int num) {
@@ -187,6 +229,8 @@ void output_centroids(FILE *out, struct test_particles part, int num) {
 		fwrite(&part.kx[i], sizeof(double), 1, out);
 		fwrite(&part.ky[i], sizeof(double), 1, out);
 		fwrite(&part.kz[i], sizeof(double), 1, out);
+		fwrite(&part.energy[i], sizeof(double), 1, out);
+		fwrite(&part.density[i], sizeof(double), 1, out);
 	}
 }
 

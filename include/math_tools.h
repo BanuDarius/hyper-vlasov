@@ -18,4 +18,9 @@ static inline void mult_vec(double *a, double *b, double c) {
 		a[i] = b[i] * c;
 }
 
+static inline void sub_vec(double *a, double *b, double *c) {
+	for(int i = 0; i < 3; i++)
+		a[i] = b[i] - c[i];
+}
+
 #endif
