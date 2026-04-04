@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,9 +34,11 @@ double woods_saxon_potential(struct woods_saxon ws, double r) {
 	return v;
 }
 
-double skyrme_potential(struct skyrme skm, double rho) {
+double skyrme_potential(struct skyrme skm, double rho_p, double rho_n, int type) {
+	double tau = (type == PROTONS) ? -1.0 : +1;
+	double rho = rho_p + rho_n;
 	double t = rho / RHO_0;
-	double v = skm.A * t + skm.B * pow(t, skm.gamma);
+	double v = skm.A * t + skm.B * pow(t, skm.gamma) + tau * 2.0 * skm.C * ((rho_n - rho_p) / RHO_0);
 	return v;
 }
 
@@ -79,31 +82,36 @@ void compute_particle_energies(struct test_particles *part, struct woods_saxon *
 
 void compute_particle_densities(struct test_particles *part, double sigma_r, double part_per_nucleon) {
 	int p = part->protons, n = part->neutrons, total = p + n;
-	for(int i = 0; i < total; i++)
-		part->density[i] = 1.0;
 	
 	double sigma_sqr_4 = 4.0 * sigma_r * sigma_r;
 	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
-	double r_i[3], r_j[3], diff[3], dist_squared, fact;
+	#pragma omp parallel for schedule(static)
 	for(int i = 0; i < total; i++) {
-		if(i % 1000 == 0)
-			printf("%i\n", i);
+		if(i % 1000 == 0 && omp_get_thread_num() == 0)
+			printf("%i / %i\n", i, total / omp_get_num_threads());
 		
+		double r_i[3], r_j[3], diff[3], dist_squared, fact, density_p = 0.0, density_n = 0.0;
 		copy_particle_pos_to_vector(r_i, *part, i);
 		
-		for(int j = i + 1; j < total; j++) {
+		for(int j = 0; j < total; j++) {
 			copy_particle_pos_to_vector(r_j, *part, j);
 			
 			sub_vec(diff, r_i, r_j);
 			dist_squared = dot(diff, diff);
 			fact = exp(-(dist_squared) / sigma_sqr_4);
-			
-			part->density[i] += fact;
-			part->density[j] += fact;
+			if(j < p)
+				density_p += fact;
+			else
+				density_n += fact;
 		}
+		part->density_p[i] = density_p;
+		part->density_n[i] = density_n;
 	}
-	for(int i = 0; i < total; i++)
-		part->density[i] *= term;
+	#pragma omp parallel for schedule(static)
+	for(int i = 0; i < total; i++) {
+		part->density_p[i] *= term;
+		part->density_n[i] *= term;
+	}
 }
 
 void generate_random_particles(struct test_particles *part, double r_max) {
@@ -126,8 +134,18 @@ void generate_random_particles(struct test_particles *part, double r_max) {
 	}
 }
 
-void scatter_particles(struct test_particles *part, struct world world, int num) {
-	
+void scatter_particles(struct volumetric_density *dens, struct test_particles *part, struct world world) {
+	int x = world.n[0], y = world.n[1], z = world.n[2];
+	int world_size = x * z * z, total = part->protons + part->neutrons;
+	for(int i = 0; i < x; i++) {
+		for(int j = 0; j < y; j++) {
+			for(int k = 0; k < z; k++) {
+				double r_vec[3];
+				int idx = i;
+				copy_particle_pos_to_vector(r_vec, *part, idx);
+			}
+		}
+	}
 }
 
 void generate_checking_particles(struct test_particles *part, struct woods_saxon *ws, struct parameters param, struct fermi *fermi_levels) {
@@ -156,17 +174,18 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 }
 
 void chi_squared(struct test_particles *part, struct woods_saxon ws, struct skyrme skm) {
-	int total = part->protons + part->neutrons;
-	double chi_squared = 0.0;
+	int total = part->protons + part->neutrons, type;
+	double chi_squared = 0.0, r_vec[3], density_p, density_n, r, v_ws, v_skyrme, diff;
 	for(int i = 0; i < total; i++) {
-		double r_vec[3], density;
+		type = (i < part->protons) ? PROTONS : NEUTRONS;
 		copy_particle_pos_to_vector(r_vec, *part, i);
-		density = part->density[i];
+		density_p = part->density_p[i];
+		density_n = part->density_n[i];
 		
-		double r = magnitude(r_vec);
-		double v_ws = woods_saxon_potential(ws, r);
-		double v_skyrme = skyrme_potential(skm, density);
-		double diff = v_ws - v_skyrme;
+		r = magnitude(r_vec);
+		v_ws = woods_saxon_potential(ws, r);
+		v_skyrme = skyrme_potential(skm, density_p, density_n, type);
+		diff = v_ws - v_skyrme;
 		chi_squared += diff * diff;
 	}
 	printf("CHI SQUARED %lf\n", chi_squared);
@@ -217,7 +236,8 @@ void copy_particle(struct test_particles *part_a, struct test_particles *part_b,
 	part_a->ky[idx] = part_b->ky[i];
 	part_a->kz[idx] = part_b->kz[i];
 	part_a->energy[idx] = part_b->energy[i];
-	part_a->density[idx] = part_b->density[i];
+	part_a->density_p[idx] = part_b->density_p[i];
+	part_a->density_n[idx] = part_b->density_n[i];
 }
 
 void copy_particle_pos_to_vector(double *v, struct test_particles part, int i) {

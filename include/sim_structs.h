@@ -17,7 +17,7 @@ struct parameters {
 };
 
 struct test_particles {
-	double *energy, *density;
+	double *energy, *density_p, *density_n;
 	double *x, *y, *z, *kx, *ky, *kz;
 	int protons, neutrons;
 };
@@ -32,7 +32,7 @@ struct woods_saxon {
 };
 
 struct skyrme {
-	double A, B, gamma;
+	double A, B, C, gamma;
 };
 
 struct fermi {

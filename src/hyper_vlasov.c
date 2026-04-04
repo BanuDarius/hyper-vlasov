@@ -14,9 +14,9 @@ int main(int argc, char **argv) {
 	}
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 10, n = 14, num_test_part = 1000, nx = 10;
+	int z = 10, n = 14, num_test_part = 200, nx = 10;
 	double V0 = -50.0, a = 0.66;
-	double A = -356.0, B = 303.0, gamma = 7.0 / 6.0;
+	double A = -356.0, B = 303.0, C = 32.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
 	double k_fwhm = 0.346, r_fwhm = 1.444;
 	double sigma_k = calc_sigma(k_fwhm), sigma_r = calc_sigma(r_fwhm);
@@ -28,13 +28,16 @@ int main(int argc, char **argv) {
 	struct fermi fermi_levels;
 	struct woods_saxon ws[2];
 	struct test_particles part;
+	struct volumetric_density dens_p;
 	
-	set_skyrme(&skm, A, B, gamma);
+	set_skyrme(&skm, A, B, C, gamma);
 	set_world(&world, d_max, nx);
 	set_fermi_levels(&fermi_levels, epsilon_p, epsilon_n);
 	set_parameters(&param, z, n, num_test_part, sigma_k, sigma_r);
 	set_woods_saxon(&ws[0], V0, 0.8 * param.r_max, a);
 	set_woods_saxon(&ws[1], V0, 0.8 * param.r_max, a);
+	
+	create_volumetric_density(&dens_p, world, PROTONS);
 	
 	printf("%i\n", param.max_test_part);
 	printf("%lf %lf\n", param.sigma_k, param.sigma_r);
@@ -48,6 +51,7 @@ int main(int argc, char **argv) {
 	printf("%lf %lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
 	
 	free_particles(&part);
+	free_volumetric_density(&dens_p);
 	printf("Done\n");
 	fclose(out);
 	return 0;
