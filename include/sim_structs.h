@@ -23,7 +23,6 @@ struct test_particles {
 };
 
 struct volumetric_density {
-	int type;
 	int *density;
 };
 

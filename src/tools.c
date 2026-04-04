@@ -134,13 +134,16 @@ void generate_random_particles(struct test_particles *part, double r_max) {
 	}
 }
 
-void scatter_particles(struct volumetric_density *dens, struct test_particles *part, struct world world) {
-	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
+void scatter_particles(struct volumetric_density *dens, struct test_particles *part, struct world world, int type) {
+	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2], r_vec[3];
 	int x = world.n[0], y = world.n[1], z = world.n[2];
-	int world_size = x * z * z, total = part->protons + part->neutrons;
-	double r_vec[3];
+	int world_size = x * z * z, start, end;
+	
+	if(type == PROTONS) { start = 0; end = part->protons;}
+	else { start = part->protons; end = start + part->neutrons; }
+	
 	#pragma omp parallel for
-	for(int i = 0; i < total; i++) {
+	for(int i = start; i < end; i++) {
 		copy_particle_pos_to_vector(r_vec, *part, i);
 		int x_idx = (int)(x / 2.0 * (r_vec[0] / d_max_x + 1.0));
 		int y_idx = (int)(y / 2.0 * (r_vec[1] / d_max_y + 1.0));

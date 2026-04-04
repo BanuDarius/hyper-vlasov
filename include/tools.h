@@ -14,7 +14,7 @@ double compute_energy(struct test_particles *part, struct woods_saxon *ws, doubl
 void compute_particle_energies(struct test_particles *part, struct woods_saxon *ws, struct parameters param);
 void compute_particle_densities(struct test_particles *part, double sigma_r, double part_per_nucleon);
 void generate_random_particles(struct test_particles *part, double r_max);
-void scatter_particles(struct volumetric_density *dens, struct test_particles *part, struct world world);
+void scatter_particles(struct volumetric_density *dens, struct test_particles *part, struct world world, int type);
 void generate_checking_particles(struct test_particles *part, struct woods_saxon *ws, struct parameters param, struct fermi *fermi_levels);
 void chi_squared(struct test_particles *part, struct woods_saxon *ws, struct skyrme skm);
 void relax_woods_saxon(struct woods_saxon *ws, struct woods_saxon *ws_old, double coef);

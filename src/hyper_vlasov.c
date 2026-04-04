@@ -28,7 +28,7 @@ int main(int argc, char **argv) {
 	struct fermi fermi_levels;
 	struct woods_saxon ws[2];
 	struct test_particles part;
-	struct volumetric_density dens_p;
+	struct volumetric_density dens;
 	
 	set_skyrme(&skm, A, B, C, gamma);
 	set_world(&world, d_max, nx);
@@ -42,15 +42,15 @@ int main(int argc, char **argv) {
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
 	
 	//output_centroids(out, part, NEUTRONS);
-	create_volumetric_density(&dens_p, world, PROTONS);
-	scatter_particles(&dens_p, &part, world);
-	output_volumetric_density(out, dens_p, world);
+	create_volumetric_density(&dens, world);
+	scatter_particles(&dens, &part, world, NEUTRONS);
+	output_volumetric_density(out, dens, world);
 	
 	printf("FERMI P %lf FERMI N %lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
 	printf("Done\n");
 	
 	free_particles(&part);
-	free_volumetric_density(&dens_p);
+	free_volumetric_density(&dens);
 	fclose(out);
 	return 0;
 }

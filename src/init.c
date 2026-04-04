@@ -48,8 +48,7 @@ void set_world(struct world *world, double d_max, int n) {
 	}
 }
 
-void create_volumetric_density(struct volumetric_density *dens, struct world world, int type) {
-	dens->type = type;
+void create_volumetric_density(struct volumetric_density *dens, struct world world) {
 	int world_size = world.n[0] *world.n[1] * world.n[2] ;
 	dens->density = malloc(world_size * sizeof(int));
 	for(int i = 0; i < world_size; i++)
