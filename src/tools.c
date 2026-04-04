@@ -87,8 +87,8 @@ void compute_particle_densities(struct test_particles *part, double sigma_r, dou
 	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
 	#pragma omp parallel for schedule(static)
 	for(int i = 0; i < total; i++) {
-		if(i % 1000 == 0 && omp_get_thread_num() == 0)
-			printf("%i / %i\n", i, total / omp_get_num_threads());
+		//if(i % 1000 == 0 && omp_get_thread_num() == 0)
+		//	printf("%i / %i\n", i, total / omp_get_num_threads());
 		
 		double r_i[3], r_j[3], diff[3], dist_squared, fact, density_p = 0.0, density_n = 0.0;
 		copy_particle_pos_to_vector(r_i, *part, i);
@@ -139,14 +139,16 @@ void scatter_particles(struct volumetric_density *dens, struct test_particles *p
 	int x = world.n[0], y = world.n[1], z = world.n[2];
 	int world_size = x * z * z, total = part->protons + part->neutrons;
 	double r_vec[3];
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		copy_particle_pos_to_vector(r_vec, *part, i);
-		int x_idx = (int)(x / 2 * (r_vec[0] / d_max_x + 1));
-		int y_idx = (int)(y / 2 * (r_vec[1] / d_max_y + 1));
-		int z_idx = (int)(z / 2 * (r_vec[2] / d_max_x + 1));
+		int x_idx = (int)(x / 2.0 * (r_vec[0] / d_max_x + 1.0));
+		int y_idx = (int)(y / 2.0 * (r_vec[1] / d_max_y + 1.0));
+		int z_idx = (int)(z / 2.0 * (r_vec[2] / d_max_x + 1.0));
 		if(x_idx < 0 || y_idx < 0 || z_idx < 0 || x_idx > x || y_idx > y || z_idx > z)
 			continue;
 		int idx = x_idx * (y * z) + y_idx * z + z_idx;
+		#pragma omp atomic update
 		dens->density[idx] += 1;
 	}
 }
@@ -201,6 +203,14 @@ void chi_squared(struct test_particles *part, struct woods_saxon *ws, struct sky
 			chi_squared_n += diff * diff;
 	}
 	printf("CHI SQUARED P %lf CHI SQUARED N %lf\n", chi_squared_p, chi_squared_n);
+}
+
+void relax_woods_saxon(struct woods_saxon *ws, struct woods_saxon *ws_old, double coef) {
+	for(int i = 0; i < 2; i++) {
+		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;
+		ws[i].R12 = coef * ws[i].R12 + (1.0 - coef) * ws_old[i].R12;
+		ws[i].a = coef * ws[i].a + (1.0 - coef) * ws_old[i].a;
+	}
 }
 
 double kinetic_energy() {

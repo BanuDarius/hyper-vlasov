@@ -6,10 +6,11 @@
 #include "physics.h"
 #include "math_tools.h"
 #include "sim_structs.h"
+#include "fit_algorithm.h"
 
 void initialize_particles(struct test_particles *part, struct parameters param, struct woods_saxon *ws, struct skyrme skm, struct fermi *fermi_levels) {
 	double delta_part_p, delta_part_n, delta_epsilon_p, delta_epsilon_n;
-	double r_max = param.r_max, sigma_k = param.sigma_k, sigma_r = param.sigma_r, total_delta_epsilon;
+	double r_max = param.r_max, sigma_k = param.sigma_k, sigma_r = param.sigma_r, total_delta_epsilon, relax_coef = 0.6;
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
 	
@@ -42,8 +43,8 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 		delta_epsilon_n = 0.5 * delta_part_n / (check_more_n - check_less_n);
 		delta_epsilon_p = 0.5 * delta_part_p / (check_more_p - check_less_p);
 		
-		if(fabs(delta_epsilon_p) > 0.5) delta_epsilon_p *= 0.6;
-		if(fabs(delta_epsilon_n) > 0.5) delta_epsilon_n *= 0.6;
+		if(fabs(delta_epsilon_p) > 0.5) delta_epsilon_p *= relax_coef;
+		if(fabs(delta_epsilon_n) > 0.5) delta_epsilon_n *= relax_coef;
 		
 		fermi_levels->epsilon_p += delta_epsilon_p;
 		fermi_levels->epsilon_n += delta_epsilon_n;
@@ -52,8 +53,14 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 		generate_checking_particles(part, ws, param, fermi_levels);
 		compute_particle_densities(part, sigma_r, (double)part_per_nucleon);
 		
-		//minim_woods_saxon(part, ws, skm);
+		struct woods_saxon ws_old[2];
+		ws_old[0] = ws[0]; ws_old[1] = ws[1];
 		
+		minim_woods_saxon(part, ws, skm);
+		relax_woods_saxon(ws, ws_old, relax_coef);
+		
+		printf("WS PARAM %lf %lf %lf\n", ws[0].V0, ws[0].R12, ws[0].a);
+		printf("WS PARAM %lf %lf %lf\n", ws[1].V0, ws[1].R12, ws[1].a);
 		printf("ITERATION = %i DELTA EPSILON = %lf\n", it,  total_delta_epsilon);
 		printf("%i %i %i\n", check_less_p, check_equal_p, check_more_p);
 		printf("%i %i %i\n", check_less_n, check_equal_n, check_more_n);
@@ -62,12 +69,5 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_ITERATIONS);
 	
 	compute_particle_energies(part, ws, param);
-	
-	printf("WS PARAM %lf %lf %lf\n", ws[0].V0, ws[1].R12, ws[1].a);
-	printf("WS PARAM %lf %lf %lf\n", ws[1].V0, ws[1].R12, ws[1].a);
-	
-	//printf("WS PARAM %lf %lf %lf\n", ws[0]->V0, ws[1]->R12, ws[1]->a);
-	//printf("WS PARAM %lf %lf %lf\n", ws[1]->V0, ws[1]->R12, ws[1]->a);
-	
 	chi_squared(part, ws, skm);
 }

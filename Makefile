@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -fopenmp -Iinclude -O2 -march=native -MMD -MP
-LDLIBS = -lm
+LDLIBS = -lm -lgsl -lgslcblas
 
 SRC_DIR = src
 BUILD_DIR = build
@@ -9,7 +9,7 @@ OUTPUT_DIR = output
 
 TARGET = $(BIN_DIR)/hyper_vlasov
 
-SRCS = $(SRC_DIR)/hyper_vlasov.c $(SRC_DIR)/init.c $(SRC_DIR)/tools.c $(SRC_DIR)/physics.c
+SRCS = $(SRC_DIR)/hyper_vlasov.c $(SRC_DIR)/init.c $(SRC_DIR)/tools.c $(SRC_DIR)/physics.c  $(SRC_DIR)/fit_algorithm.c
 
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 
