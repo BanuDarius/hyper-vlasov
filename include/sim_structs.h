@@ -9,15 +9,22 @@
 #define MC2 935.0
 #define H_BAR_C 197.33
 #define RHO_0 0.16
+#define K_MAX 1.5
 
 struct parameters {
-	int test_part_per_nucleon, max_test_part, z, n;
 	double sigma_k, sigma_r, r_max;
+	int test_part_per_nucleon, max_test_part, z, n;
 };
 
 struct test_particles {
-	double *x, *y, *z, *kx, *ky, *kz;
 	double *energy, *density;
+	double *x, *y, *z, *kx, *ky, *kz;
+	int protons, neutrons;
+};
+
+struct volumetric_density {
+	int type;
+	double *density;
 };
 
 struct woods_saxon {
@@ -30,6 +37,11 @@ struct skyrme {
 
 struct fermi {
 	double epsilon_p, epsilon_n;
+};
+
+struct world {
+	int n[3];
+	double d_max[3];
 };
 
 #endif

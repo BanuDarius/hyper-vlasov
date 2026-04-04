@@ -9,7 +9,7 @@ OUTPUT_DIR = output
 
 TARGET = $(BIN_DIR)/hyper_vlasov
 
-SRCS = $(SRC_DIR)/hyper_vlasov.c $(SRC_DIR)/init.c $(SRC_DIR)/tools.c
+SRCS = $(SRC_DIR)/hyper_vlasov.c $(SRC_DIR)/init.c $(SRC_DIR)/tools.c $(SRC_DIR)/physics.c
 
 OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
 
