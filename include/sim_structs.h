@@ -3,7 +3,7 @@
 
 #define PROTONS 0
 #define NEUTRONS 1
-#define MAX_ITERATIONS 50
+#define MAX_ITERATIONS 30
 #define DELTA_EPSILON_TOLERANCE 0.1
 
 #define MC2 935.0

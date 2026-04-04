@@ -108,8 +108,8 @@ void output_vtk_header(FILE *out, struct world world) {
 	fprintf(out, "BINARY\n");
 	fprintf(out, "DATASET STRUCTURED_POINTS\n");
 	fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
-	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0] / 2.0, -world.d_max[1] / 2.0, -world.d_max[2] / 2.0);
-	fprintf(out, "SPACING %lf %lf %lf\n", world.n[0] / world.d_max[0], world.n[1] / world.d_max[1], world.n[2] / world. d_max[2]);
+	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
+	fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
 	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
 	fprintf(out, "SCALARS density int 1\n");
 	fprintf(out, "LOOKUP_TABLE default\n");

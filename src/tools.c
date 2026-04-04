@@ -85,7 +85,7 @@ void compute_particle_densities(struct test_particles *part, double sigma_r, dou
 	
 	double sigma_sqr_4 = 4.0 * sigma_r * sigma_r;
 	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		//if(i % 1000 == 0 && omp_get_thread_num() == 0)
 		//	printf("%i / %i\n", i, total / omp_get_num_threads());
@@ -107,7 +107,7 @@ void compute_particle_densities(struct test_particles *part, double sigma_r, dou
 		part->density_p[i] = density_p;
 		part->density_n[i] = density_n;
 	}
-	#pragma omp parallel for schedule(static)
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		part->density_p[i] *= term;
 		part->density_n[i] *= term;

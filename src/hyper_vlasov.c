@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 	}
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 50, n = 82, num_test_part = 300, nx = 16;
+	int z = 10, n = 12, num_test_part = 3000, nx = 16;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, C = 32.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
@@ -47,10 +47,10 @@ int main(int argc, char **argv) {
 	output_volumetric_density(out, dens_p, world);
 	
 	printf("FERMI P %lf FERMI N %lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
+	printf("Done\n");
 	
 	free_particles(&part);
 	free_volumetric_density(&dens_p);
-	printf("Done\n");
 	fclose(out);
 	return 0;
 }
