@@ -61,20 +61,13 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 		it++;
 	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_ITERATIONS);
 	
-	free_particles(part);
-	create_particles(part, total_p, total_n);
-	generate_checking_particles(part, ws, param, fermi_levels);
 	compute_particle_energies(part, ws, param);
-	compute_particle_densities(part, sigma_r, (double)part_per_nucleon);
 	
 	printf("WS PARAM %lf %lf %lf\n", ws[0].V0, ws[1].R12, ws[1].a);
 	printf("WS PARAM %lf %lf %lf\n", ws[1].V0, ws[1].R12, ws[1].a);
 	
-	//fit_woods_saxon_param(&ws_p, part_p, skm, total_p);
-	//fit_woods_saxon_param(&ws_n, part_n, skm, total_n);
-	
 	//printf("WS PARAM %lf %lf %lf\n", ws[0]->V0, ws[1]->R12, ws[1]->a);
 	//printf("WS PARAM %lf %lf %lf\n", ws[1]->V0, ws[1]->R12, ws[1]->a);
 	
-	chi_squared(part, *ws, skm);
+	chi_squared(part, ws, skm);
 }

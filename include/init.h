@@ -11,6 +11,8 @@ void set_world(struct world *world, double d_max, int n);
 void create_volumetric_density(struct volumetric_density *dens, struct world world, int type);
 void create_particles(struct test_particles *part, int protons, int neutrons);
 void output_centroids(FILE *out, struct test_particles part, int type);
+void output_volumetric_density(FILE *out, struct volumetric_density dens, struct world world);
+void output_vtk_header(FILE *out, struct world world);
 void free_particles(struct test_particles *part);
 void free_volumetric_density(struct volumetric_density *dens);
 

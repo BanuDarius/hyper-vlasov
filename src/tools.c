@@ -135,16 +135,19 @@ void generate_random_particles(struct test_particles *part, double r_max) {
 }
 
 void scatter_particles(struct volumetric_density *dens, struct test_particles *part, struct world world) {
+	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2];
 	int world_size = x * z * z, total = part->protons + part->neutrons;
-	for(int i = 0; i < x; i++) {
-		for(int j = 0; j < y; j++) {
-			for(int k = 0; k < z; k++) {
-				double r_vec[3];
-				int idx = i;
-				copy_particle_pos_to_vector(r_vec, *part, idx);
-			}
-		}
+	double r_vec[3];
+	for(int i = 0; i < total; i++) {
+		copy_particle_pos_to_vector(r_vec, *part, i);
+		int x_idx = (int)(x / 2 * (r_vec[0] / d_max_x + 1));
+		int y_idx = (int)(y / 2 * (r_vec[1] / d_max_y + 1));
+		int z_idx = (int)(z / 2 * (r_vec[2] / d_max_x + 1));
+		if(x_idx < 0 || y_idx < 0 || z_idx < 0 || x_idx > x || y_idx > y || z_idx > z)
+			continue;
+		int idx = x_idx * (y * z) + y_idx * z + z_idx;
+		dens->density[idx] += 1;
 	}
 }
 
@@ -173,42 +176,31 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 	}
 }
 
-void chi_squared(struct test_particles *part, struct woods_saxon ws, struct skyrme skm) {
+void chi_squared(struct test_particles *part, struct woods_saxon *ws, struct skyrme skm) {
+	struct woods_saxon ws_c;
 	int total = part->protons + part->neutrons, type;
-	double chi_squared = 0.0, r_vec[3], density_p, density_n, r, v_ws, v_skyrme, diff;
+	double chi_squared_p = 0.0, chi_squared_n = 0.0, r_vec[3], density_p, density_n, r, v_ws, v_skyrme, diff;
 	for(int i = 0; i < total; i++) {
-		type = (i < part->protons) ? PROTONS : NEUTRONS;
+		if(i < part->protons) {
+			type = PROTONS; ws_c = ws[0];
+		}
+		else {
+			type = NEUTRONS; ws_c = ws[1];
+		}
 		copy_particle_pos_to_vector(r_vec, *part, i);
 		density_p = part->density_p[i];
 		density_n = part->density_n[i];
 		
 		r = magnitude(r_vec);
-		v_ws = woods_saxon_potential(ws, r);
+		v_ws = woods_saxon_potential(ws_c, r);
 		v_skyrme = skyrme_potential(skm, density_p, density_n, type);
 		diff = v_ws - v_skyrme;
-		chi_squared += diff * diff;
+		if(type == PROTONS)
+			chi_squared_p += diff * diff;
+		else
+			chi_squared_n += diff * diff;
 	}
-	printf("CHI SQUARED %lf\n", chi_squared);
-}
-
-void copy_accepted_particles(struct test_particles *part_accepted, struct test_particles *part_all, double epsilon, int num) {
-	int idx = 0;
-	double r[3], r_sym[3], k[3], k_sym[3];
-	for(int i = 0; i < num; i++) {
-		if(part_all->energy[i] < epsilon) {
-			copy_particle_pos_to_vector(r, *part_all, i);
-			copy_particle_vel_to_vector(k, *part_all, i);
-			mult_vec(r_sym, r, -1.0);
-			mult_vec(k_sym, k, -1.0);
-			
-			copy_vector_to_particle_pos(part_accepted, r, idx);
-			copy_vector_to_particle_vel(part_accepted, k, idx);
-			idx++;
-			copy_vector_to_particle_pos(part_accepted, r_sym, idx);
-			copy_vector_to_particle_vel(part_accepted, k_sym, idx);
-			idx++;
-		}
-	}
+	printf("CHI SQUARED P %lf CHI SQUARED N %lf\n", chi_squared_p, chi_squared_n);
 }
 
 double kinetic_energy() {

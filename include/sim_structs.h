@@ -3,7 +3,7 @@
 
 #define PROTONS 0
 #define NEUTRONS 1
-#define MAX_ITERATIONS 30
+#define MAX_ITERATIONS 1
 #define DELTA_EPSILON_TOLERANCE 0.001
 
 #define MC2 935.0
@@ -24,7 +24,7 @@ struct test_particles {
 
 struct volumetric_density {
 	int type;
-	double *density;
+	int *density;
 };
 
 struct woods_saxon {

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "init.h"
 #include "tools.h"
@@ -42,15 +43,17 @@ void set_fermi_levels(struct fermi *fermi, double epsilon_p, double epsilon_n) {
 void set_world(struct world *world, double d_max, int n) {
 	int world_size = n * n * n;
 	for(int i = 0; i < 3; i++) {
-		world->d_max[i] = d_max;
 		world->n[i] = n;
+		world->d_max[i] = d_max;
 	}
 }
 
 void create_volumetric_density(struct volumetric_density *dens, struct world world, int type) {
 	dens->type = type;
 	int world_size = world.n[0] *world.n[1] * world.n[2] ;
-	dens->density = malloc(world_size * sizeof(double));
+	dens->density = malloc(world_size * sizeof(int));
+	for(int i = 0; i < world_size; i++)
+		dens->density[i] = 0;
 }
 
 void create_particles(struct test_particles *part, int protons, int neutrons) {
@@ -87,6 +90,29 @@ void output_centroids(FILE *out, struct test_particles part, int type) {
 		fwrite(&part.density_p[i], sizeof(double), 1, out);
 		fwrite(&part.density_n[i], sizeof(double), 1, out);
 	}
+}
+
+void output_volumetric_density(FILE *out, struct volumetric_density dens, struct world world) {
+	output_vtk_header(out, world);
+	int total = world.n[0] * world.n[1] * world.n[2];
+	uint32_t *vtk_density = malloc(total * sizeof(uint32_t));
+	for(int i = 0; i < total; i++)
+		vtk_density[i] = __builtin_bswap32(dens.density[i]);
+	fwrite(vtk_density, sizeof(uint32_t), total, out);
+	free(vtk_density);
+}
+
+void output_vtk_header(FILE *out, struct world world) {
+	fprintf(out, "# vtk DataFile Version 3.0\n");
+	fprintf(out, "Volumetric density\n");
+	fprintf(out, "BINARY\n");
+	fprintf(out, "DATASET STRUCTURED_POINTS\n");
+	fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
+	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0] / 2.0, -world.d_max[1] / 2.0, -world.d_max[2] / 2.0);
+	fprintf(out, "SPACING %lf %lf %lf\n", world.n[0] / world.d_max[0], world.n[1] / world.d_max[1], world.n[2] / world. d_max[2]);
+	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
+	fprintf(out, "SCALARS density int 1\n");
+	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
 void free_particles(struct test_particles *part) {
