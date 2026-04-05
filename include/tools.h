@@ -9,6 +9,7 @@ double compute_energy(struct test_particles *part, struct woods_saxon *ws, doubl
 void compute_particle_energies(struct test_particles *part, struct woods_saxon *ws, struct parameters param);
 void compute_particle_densities(struct test_particles *part, struct parameters param);
 void compute_volumetric_density(struct volumetric_density *volume_dens, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param);
+void apply_constant_to_density(struct volumetric_density *volume_dens, struct world world, struct parameters param);
 void generate_random_particles(struct test_particles *part, double r_max);
 void scatter_particles(struct particle_count *part_count, struct test_particles *part, struct world world, int type);
 void generate_checking_particles(struct test_particles *part, struct woods_saxon *ws, struct parameters param, struct fermi *fermi_levels);

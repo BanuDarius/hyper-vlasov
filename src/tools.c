@@ -80,11 +80,10 @@ void compute_particle_densities(struct test_particles *part, struct parameters p
 }
 
 void compute_volumetric_density(struct volumetric_density *volume_dens, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param) {
-	double sigma_r = param.sigma_r;
 	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2];
 	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2], part_per_nucleon = param.test_part_per_nucleon;
 	
-	double sigma_sqr_4 = 4.0 * sigma_r * sigma_r;
+	double sigma_r = param.sigma_r, sigma_sqr_4 = 4.0 * sigma_r * sigma_r;
 	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++) {
@@ -133,8 +132,9 @@ void scatter_particles(struct particle_count *part_count, struct test_particles 
 	int x = world.n[0], y = world.n[1], z = world.n[2];
 	int start, end;
 	
-	if(type == PROTONS) { start = 0; end = part->protons;}
-	else { start = part->protons; end = start + part->neutrons; }
+	if(type == PROTONS) { start = 0; end = part->protons; }
+	else if(type == NEUTRONS) { start = part->protons; end = start + part->neutrons; }
+	else { start = 0; end = part->protons + part->neutrons; }
 	
 	#pragma omp parallel for
 	for(int i = start; i < end; i++) {

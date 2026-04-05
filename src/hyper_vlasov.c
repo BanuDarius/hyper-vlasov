@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 	}
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 10, n = 12, num_test_part = 1000, nx = 16;
+	int z = 50, n = 82, num_test_part = 200, nx = 16;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, C = 32.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
 	
 	set_skyrme(&skm, A, B, C, gamma);
 	set_world(&world, d_max, nx);
-	set_world(&world_visual, d_max, 4 * nx);
+	set_world(&world_visual, d_max, 2 * nx);
 	set_fermi_levels(&fermi_levels, epsilon_p, epsilon_n);
 	set_parameters(&param, z, n, num_test_part, sigma_k, sigma_r);
 	set_woods_saxon(&ws[0], V0, 0.8 * param.r_max, a);
@@ -45,14 +45,11 @@ int main(int argc, char **argv) {
 	
 	//output_centroids(out, part, NEUTRONS);
 	create_particle_count(&part_count[0], world);
-	create_particle_count(&part_count[1], world);
-	scatter_particles(&part_count[0], &part, world, PROTONS);
-	scatter_particles(&part_count[1], &part, world, NEUTRONS);
+	scatter_particles(&part_count[0], &part, world, PROTONS_AND_NEUTRONS);
 	
 	create_volumetric_density(&volume_dens[0], world_visual);
 	create_volumetric_density(&volume_dens[1], world_visual);
 	compute_volumetric_density(&volume_dens[0], part_count[0], world_visual, world, param);
-	compute_volumetric_density(&volume_dens[0], part_count[1], world_visual, world, param);
 	
 	output_volumetric_density(out, volume_dens[0], world_visual);
 	
@@ -64,8 +61,6 @@ int main(int argc, char **argv) {
 	fclose(out);
 	free_particles(&part);
 	free_particle_count(&part_count[0]);
-	free_particle_count(&part_count[1]);
 	free_volumetric_density(&volume_dens[0]);
-	free_volumetric_density(&volume_dens[1]);
 	return 0;
 }
