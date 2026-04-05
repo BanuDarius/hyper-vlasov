@@ -1,12 +1,13 @@
 #include <omp.h>
 #include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
+#include <stdlib.h>
 #include <stdint.h>
 
 #include "init.h"
 #include "tools.h"
+#include "physics.h"
 #include "math_tools.h"
 #include "sim_structs.h"
 
@@ -41,18 +42,24 @@ void set_fermi_levels(struct fermi *fermi, double epsilon_p, double epsilon_n) {
 }
 
 void set_world(struct world *world, double d_max, int n) {
-	int world_size = n * n * n;
 	for(int i = 0; i < 3; i++) {
 		world->n[i] = n;
 		world->d_max[i] = d_max;
 	}
 }
 
-void create_volumetric_density(struct volumetric_density *dens, struct world world) {
-	int world_size = world.n[0] *world.n[1] * world.n[2] ;
-	dens->density = malloc(world_size * sizeof(int));
+void create_particle_count(struct particle_count *part_count, struct world world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2] ;
+	part_count->count = malloc(world_size * sizeof(int));
 	for(int i = 0; i < world_size; i++)
-		dens->density[i] = 0;
+		part_count->count[i] = 0;
+}
+
+void create_volumetric_density(struct volumetric_density *volume_dens, struct world world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	volume_dens->density = malloc(world_size * sizeof(double));
+	for(int i = 0; i < world_size; i++)
+		volume_dens->density[i] = 0.0;
 }
 
 void create_particles(struct test_particles *part, int protons, int neutrons) {
@@ -72,12 +79,9 @@ void create_particles(struct test_particles *part, int protons, int neutrons) {
 
 void output_centroids(FILE *out, struct test_particles part, int type) {
 	int start, end;
-	if(type == PROTONS) {
-		start = 0; end = part.protons;
-	}
-	else {
-		start = part.protons; end = part.protons + part.neutrons;
-	}
+	if(type == PROTONS) { start = 0; end = part.protons; }
+	else { start = part.protons; end = part.protons + part.neutrons; }
+	
 	for(int i = start; i < end; i++) {
 		fwrite(&part.x[i], sizeof(double), 1, out);
 		fwrite(&part.y[i], sizeof(double), 1, out);
@@ -91,17 +95,40 @@ void output_centroids(FILE *out, struct test_particles part, int type) {
 	}
 }
 
-void output_volumetric_density(FILE *out, struct volumetric_density dens, struct world world) {
-	output_vtk_header(out, world);
+void output_particle_count(FILE *out, struct particle_count particle_count, struct world world) {
+	output_vtk_header_count(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
-	uint32_t *vtk_density = malloc(total * sizeof(uint32_t));
+	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
 	for(int i = 0; i < total; i++)
-		vtk_density[i] = __builtin_bswap32(dens.density[i]);
-	fwrite(vtk_density, sizeof(uint32_t), total, out);
+		vtk_count[i] = __builtin_bswap32(particle_count.count[i]);
+	fwrite(vtk_count, sizeof(uint32_t), total, out);
+	free(vtk_count);
+}
+
+void output_volumetric_density(FILE *out, struct volumetric_density volume_dens, struct world world) {
+	output_vtk_header_volumetric(out, world);
+	int total = world.n[0] * world.n[1] * world.n[2];
+	uint64_t *vtk_density = malloc(total * sizeof(uint64_t));
+	for(int i = 0; i < total; i++)
+		vtk_density[i] = swap_endian(volume_dens.density[i]);
+	fwrite(vtk_density, sizeof(uint64_t), total, out);
 	free(vtk_density);
 }
 
-void output_vtk_header(FILE *out, struct world world) {
+void output_vtk_header_count(FILE *out, struct world world) {
+	fprintf(out, "# vtk DataFile Version 3.0\n");
+	fprintf(out, "Volumetric count\n");
+	fprintf(out, "BINARY\n");
+	fprintf(out, "DATASET STRUCTURED_POINTS\n");
+	fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
+	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
+	fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
+	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
+	fprintf(out, "SCALARS count int 1\n");
+	fprintf(out, "LOOKUP_TABLE default\n");
+}
+
+void output_vtk_header_volumetric(FILE *out, struct world world) {
 	fprintf(out, "# vtk DataFile Version 3.0\n");
 	fprintf(out, "Volumetric density\n");
 	fprintf(out, "BINARY\n");
@@ -110,7 +137,7 @@ void output_vtk_header(FILE *out, struct world world) {
 	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
 	fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
 	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
-	fprintf(out, "SCALARS density int 1\n");
+	fprintf(out, "SCALARS density double 1\n");
 	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
@@ -121,6 +148,16 @@ void free_particles(struct test_particles *part) {
 	free(part->energy);
 }
 
-void free_volumetric_density(struct volumetric_density *dens) {
-	free(dens->density);
+void free_particle_count(struct particle_count *part_count) {
+	free(part_count->count);
+}
+
+void free_volumetric_density(struct volumetric_density *volume_dens) {
+	free(volume_dens->density);
+}
+
+static inline uint64_t swap_endian(double v) {
+	uint64_t data;
+	memcpy(&data, &v, sizeof(double));
+	return __builtin_bswap64(data);
 }

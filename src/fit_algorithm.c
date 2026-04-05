@@ -3,6 +3,7 @@
 #include <gsl/gsl_multifit_nlinear.h>
 
 #include "tools.h"
+#include "physics.h"
 #include "math_tools.h"
 #include "sim_structs.h"
 #include "fit_algorithm.h"

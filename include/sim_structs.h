@@ -22,8 +22,12 @@ struct test_particles {
 	int protons, neutrons;
 };
 
+struct particle_count {
+	int *count;
+};
+
 struct volumetric_density {
-	int *density;
+	double *density;
 };
 
 struct woods_saxon {

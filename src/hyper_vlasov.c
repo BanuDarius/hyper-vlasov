@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
 	}
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 50, n = 82, num_test_part = 3000, nx = 16;
+	int z = 10, n = 12, num_test_part = 1000, nx = 16;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, C = 32.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
@@ -23,15 +23,17 @@ int main(int argc, char **argv) {
 	double d_max = nuclear_radius(z + n);
 	
 	struct skyrme skm;
-	struct world world;
 	struct parameters param;
 	struct fermi fermi_levels;
 	struct woods_saxon ws[2];
 	struct test_particles part;
-	struct volumetric_density dens;
+	struct particle_count part_count[2];
+	struct world world, world_visual;
+	struct volumetric_density volume_dens[2];
 	
 	set_skyrme(&skm, A, B, C, gamma);
 	set_world(&world, d_max, nx);
+	set_world(&world_visual, d_max, 4 * nx);
 	set_fermi_levels(&fermi_levels, epsilon_p, epsilon_n);
 	set_parameters(&param, z, n, num_test_part, sigma_k, sigma_r);
 	set_woods_saxon(&ws[0], V0, 0.8 * param.r_max, a);
@@ -42,15 +44,28 @@ int main(int argc, char **argv) {
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
 	
 	//output_centroids(out, part, NEUTRONS);
-	create_volumetric_density(&dens, world);
-	scatter_particles(&dens, &part, world, NEUTRONS);
-	output_volumetric_density(out, dens, world);
+	create_particle_count(&part_count[0], world);
+	create_particle_count(&part_count[1], world);
+	scatter_particles(&part_count[0], &part, world, PROTONS);
+	scatter_particles(&part_count[1], &part, world, NEUTRONS);
+	
+	create_volumetric_density(&volume_dens[0], world_visual);
+	create_volumetric_density(&volume_dens[1], world_visual);
+	compute_volumetric_density(&volume_dens[0], part_count[0], world_visual, world, param);
+	compute_volumetric_density(&volume_dens[0], part_count[1], world_visual, world, param);
+	
+	output_volumetric_density(out, volume_dens[0], world_visual);
+	
+	//output_particle_count(out, part_count[0], world);
 	
 	printf("FERMI P %lf FERMI N %lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
 	printf("Done\n");
 	
-	free_particles(&part);
-	free_volumetric_density(&dens);
 	fclose(out);
+	free_particles(&part);
+	free_particle_count(&part_count[0]);
+	free_particle_count(&part_count[1]);
+	free_volumetric_density(&volume_dens[0]);
+	free_volumetric_density(&volume_dens[1]);
 	return 0;
 }
