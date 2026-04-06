@@ -40,8 +40,8 @@ void compute_particle_energies(struct test_particles *part, struct woods_saxon *
 void compute_particle_densities(struct test_particles *part, struct parameters param) {
 	int part_per_nucleon = param.test_part_per_nucleon, p = part->protons, n = part->neutrons, total = p + n;
 	
-	double sigma_r = param.sigma_r;
-	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r, 1.5)));
+	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
+	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		double r_i[3], r_j[3], diff[3];
@@ -53,7 +53,7 @@ void compute_particle_densities(struct test_particles *part, struct parameters p
 			
 			sub_vec(diff, r_i, r_j);
 			dist_squared = dot(diff, diff);
-			fact = exp(-dist_squared / (2.0 * sigma_r));
+			fact = exp(-dist_squared * exp_term);
 			if(j < p)
 				density_p += fact;
 			else
@@ -73,12 +73,12 @@ void compute_volumetric_density(struct volumetric_density *volume, struct partic
 	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
 	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2], part_per_nucleon = param.test_part_per_nucleon;
 	
-	double sigma_r = param.sigma_r;
-	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r, 1.5)));
 	if(type == PROTONS) { start = 0; end = world_size_data; }
 	else if(type == NEUTRONS) { start = world_size_data; end = 2 * world_size_data; }
 	else { start = 0; end = 2 * world_size_data; }
 	
+	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
+	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++) {
 		double r_i[3], r_j[3], diff[3];
@@ -91,7 +91,7 @@ void compute_volumetric_density(struct volumetric_density *volume, struct partic
 			
 			sub_vec(diff, r_i, r_j);
 			dist_squared = dot(diff, diff);
-			fact = exp(-dist_squared / (2.0 * sigma_r));
+			fact = exp(-dist_squared * exp_term);
 			density += count * fact;
 		}
 		volume->density[i] += density;
