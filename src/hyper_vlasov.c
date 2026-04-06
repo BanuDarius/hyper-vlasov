@@ -16,7 +16,7 @@ int main(int argc, char **argv) {
 	double start_time = omp_get_wtime();
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 10, n = 14, num_test_part = 1000, nx = 16;
+	int z = 50, n = 82, num_test_part = 1000, nx = 16;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, C = 32.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
 	scatter_particles(&part_count, &part, world);
 	
 	create_volumetric_density(&volume, world_visual);
-	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS);
+	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
 	
 	//output_centroids(out, part, PROTONS_AND_NEUTRONS);
 	//output_particle_count(out, part_count, world);
