@@ -1,3 +1,4 @@
+#include <omp.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -12,9 +13,10 @@ int main(int argc, char **argv) {
 		printf("BAD!\n");
 		return 1;
 	}
+	double start_time = omp_get_wtime();
 	
 	FILE *out = fopen(argv[1], "wb");
-	int z = 50, n = 82, num_test_part = 200, nx = 16;
+	int z = 10, n = 14, num_test_part = 1000, nx = 16;
 	double V0 = -50.0, a = 0.66;
 	double A = -356.0, B = 303.0, C = 32.0, gamma = 7.0 / 6.0;
 	double epsilon_p = -8.0, epsilon_n = -12.0;
@@ -40,7 +42,7 @@ int main(int argc, char **argv) {
 	set_woods_saxon(&ws[1], V0, 0.8 * param.r_max, a);
 	
 	printf("MAX TEST PART %i\n", param.max_test_part);
-	
+	printf("Simulation started.\n");
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
 	
 	create_particle_count(&part_count, world);
@@ -54,7 +56,8 @@ int main(int argc, char **argv) {
 	output_volumetric_density(out, volume, world_visual);
 	
 	printf("FERMI P %lf FERMI N %lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
-	printf("Done\n");
+	printf("Simulation ended.\n");
+	printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
 	
 	fclose(out);
 	free_particles(&part);

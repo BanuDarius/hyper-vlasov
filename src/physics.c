@@ -14,6 +14,7 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
 	
+	struct woods_saxon ws_old[2];
 	struct test_particles temp_part;
 	create_particles(part, total_p, total_n);
 	create_particles(&temp_part, max_part, max_part);
@@ -53,7 +54,6 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 		generate_checking_particles(part, ws, param, fermi_levels);
 		compute_particle_densities(part, param);
 		
-		struct woods_saxon ws_old[2];
 		ws_old[0] = ws[0]; ws_old[1] = ws[1];
 		
 		minim_woods_saxon(part, ws, skm);
