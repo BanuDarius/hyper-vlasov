@@ -157,6 +157,59 @@ void free_volumetric_density(struct volumetric_density *volume) {
 	free(volume->density);
 }
 
+void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct world *world_visual, struct fermi *fermi_levels, struct parameters *param, struct woods_saxon *ws) {
+	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm;
+	char current[32];
+	int i = 0, num_test_part, nx, z, n;
+	
+	while(fscanf(in, "%s", current) != EOF) {
+		if(!strcmp(current, "V0"))
+			i += fscanf(in, "%lf", &V0);
+		else if(!strcmp(current, "a"))
+			i += fscanf(in, "%lf", &a);
+		else if(!strcmp(current, "A"))
+			i += fscanf(in, "%lf", &A);
+		else if(!strcmp(current, "B"))
+			i += fscanf(in, "%lf", &B);
+		else if(!strcmp(current, "C"))
+			i += fscanf(in, "%lf", &C);
+		else if(!strcmp(current, "gamma"))
+			i += fscanf(in, "%lf", &gamma);
+		else if(!strcmp(current, "epsilon_p"))
+			i += fscanf(in, "%lf", &epsilon_p);
+		else if(!strcmp(current, "epsilon_n"))
+			i += fscanf(in, "%lf", &epsilon_n);
+		else if(!strcmp(current, "k_fwhm"))
+			i += fscanf(in, "%lf", &k_fwhm);
+		else if(!strcmp(current, "r_fwhm"))
+			i += fscanf(in, "%lf", &r_fwhm);
+		else if(!strcmp(current, "nx"))
+			i += fscanf(in, "%i", &nx);
+		else if(!strcmp(current, "num_test_part"))
+			i += fscanf(in, "%i", &num_test_part);
+		else if(!strcmp(current, "n"))
+			i += fscanf(in, "%i", &n);
+		else if(!strcmp(current, "z"))
+			i += fscanf(in, "%i", &z);
+	}
+	
+	if(i != INPUT_FILE_COUNT) {
+		fprintf(stderr, "Error: Invalid input file.\n");
+		exit(1);
+	}
+	
+	double sigma_k = calc_sigma(k_fwhm), sigma_r = calc_sigma(r_fwhm);
+	double d_max = nuclear_radius(z + n);
+	
+	set_skyrme(skm, A, B, C, gamma);
+	set_world(world, d_max, nx);
+	set_world(world_visual, d_max, 4 * nx);
+	set_fermi_levels(fermi_levels, epsilon_p, epsilon_n);
+	set_parameters(param, z, n, num_test_part, sigma_k, sigma_r);
+	set_woods_saxon(&ws[0], V0, 0.8 * param->r_max, a);
+	set_woods_saxon(&ws[1], V0, 0.8 * param->r_max, a);
+
+}
 static inline uint64_t swap_endian(double v) {
 	uint64_t data;
 	memcpy(&data, &v, sizeof(double));

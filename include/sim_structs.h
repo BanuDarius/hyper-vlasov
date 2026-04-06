@@ -7,6 +7,8 @@
 #define MAX_ITERATIONS 32
 #define DELTA_EPSILON_TOLERANCE 0.1
 
+#define INPUT_FILE_COUNT 14
+
 #define MC2 935.0
 #define H_BAR_C 197.33
 #define RHO_0 0.16

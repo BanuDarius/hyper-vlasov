@@ -9,20 +9,13 @@
 
 int main(int argc, char **argv) {
 	srand(128);
-	if(argc != 2) {
+	if(argc != 3) {
 		printf("BAD!\n");
 		return 1;
 	}
 	double start_time = omp_get_wtime();
 	
-	FILE *out = fopen(argv[1], "wb");
-	int z = 50, n = 82, num_test_part = 1000, nx = 16;
-	double V0 = -50.0, a = 0.66;
-	double A = -356.0, B = 303.0, C = 32.0, gamma = 7.0 / 6.0;
-	double epsilon_p = -8.0, epsilon_n = -12.0;
-	double k_fwhm = 0.346, r_fwhm = 1.444;
-	double sigma_k = calc_sigma(k_fwhm), sigma_r = calc_sigma(r_fwhm);
-	double d_max = nuclear_radius(z + n);
+	FILE *in = fopen(argv[1], "r"), *out = fopen(argv[2], "wb");
 	
 	struct skyrme skm;
 	struct parameters param;
@@ -33,13 +26,7 @@ int main(int argc, char **argv) {
 	struct world world, world_visual;
 	struct volumetric_density volume;
 	
-	set_skyrme(&skm, A, B, C, gamma);
-	set_world(&world, d_max, nx);
-	set_world(&world_visual, d_max, 4 * nx);
-	set_fermi_levels(&fermi_levels, epsilon_p, epsilon_n);
-	set_parameters(&param, z, n, num_test_part, sigma_k, sigma_r);
-	set_woods_saxon(&ws[0], V0, 0.8 * param.r_max, a);
-	set_woods_saxon(&ws[1], V0, 0.8 * param.r_max, a);
+	read_input_file(in, &skm, &world, &world_visual, &fermi_levels, &param, ws);
 	
 	printf("MAX TEST PART %i\n", param.max_test_part);
 	printf("Simulation started.\n");
@@ -49,7 +36,7 @@ int main(int argc, char **argv) {
 	scatter_particles(&part_count, &part, world);
 	
 	create_volumetric_density(&volume, world_visual);
-	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
+	compute_volumetric_density(&volume, part_count, world_visual, world, param, NEUTRONS);
 	
 	//output_centroids(out, part, PROTONS_AND_NEUTRONS);
 	//output_particle_count(out, part_count, world);
@@ -59,7 +46,7 @@ int main(int argc, char **argv) {
 	printf("Simulation ended.\n");
 	printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
 	
-	fclose(out);
+	fclose(out); fclose(in);
 	free_particles(&part);
 	free_particle_count(&part_count);
 	free_volumetric_density(&volume);

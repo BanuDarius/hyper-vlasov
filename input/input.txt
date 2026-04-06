@@ -1,0 +1,14 @@
+num_test_part 1000
+z 50
+n 82
+V0 -50.0
+a 0.66
+A -356.0
+B 303.0
+C 32.0
+gamma 1.16666666666
+epsilon_p -8.0
+epsilon_n -12.0
+k_fwhm 0.346
+r_fwhm 1.444
+nx 16
