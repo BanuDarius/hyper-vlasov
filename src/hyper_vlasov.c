@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 	scatter_particles(&part_count, &part, world);
 	
 	create_volumetric_density(&volume, world_visual);
-	compute_volumetric_density(&volume, part_count, world_visual, world, param, NEUTRONS);
+	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
 	
 	//output_centroids(out, part, PROTONS_AND_NEUTRONS);
 	//output_particle_count(out, part_count, world);
