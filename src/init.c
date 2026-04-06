@@ -50,16 +50,16 @@ void set_world(struct world *world, double d_max, int n) {
 
 void create_particle_count(struct particle_count *part_count, struct world world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2] ;
-	part_count->count = malloc(world_size * sizeof(int));
-	for(int i = 0; i < world_size; i++)
+	part_count->count = malloc(2 * world_size * sizeof(int));
+	for(int i = 0; i < 2 * world_size; i++)
 		part_count->count[i] = 0;
 }
 
-void create_volumetric_density(struct volumetric_density *volume_dens, struct world world) {
+void create_volumetric_density(struct volumetric_density *volume, struct world world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
-	volume_dens->density = malloc(world_size * sizeof(double));
+	volume->density = malloc(world_size * sizeof(double));
 	for(int i = 0; i < world_size; i++)
-		volume_dens->density[i] = 0.0;
+		volume->density[i] = 0.0;
 }
 
 void create_particles(struct test_particles *part, int protons, int neutrons) {
@@ -80,7 +80,8 @@ void create_particles(struct test_particles *part, int protons, int neutrons) {
 void output_centroids(FILE *out, struct test_particles part, int type) {
 	int start, end;
 	if(type == PROTONS) { start = 0; end = part.protons; }
-	else { start = part.protons; end = part.protons + part.neutrons; }
+	else if(type == NEUTRONS) { start = 0; end = part.protons + part.neutrons; }
+	else { start = 0; end = part.protons + part.neutrons; }
 	
 	for(int i = start; i < end; i++) {
 		fwrite(&part.x[i], sizeof(double), 1, out);
@@ -105,12 +106,12 @@ void output_particle_count(FILE *out, struct particle_count particle_count, stru
 	free(vtk_count);
 }
 
-void output_volumetric_density(FILE *out, struct volumetric_density volume_dens, struct world world) {
+void output_volumetric_density(FILE *out, struct volumetric_density volume, struct world world) {
 	output_vtk_header_volumetric(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint64_t *vtk_density = malloc(total * sizeof(uint64_t));
 	for(int i = 0; i < total; i++)
-		vtk_density[i] = swap_endian(volume_dens.density[i]);
+		vtk_density[i] = swap_endian(volume.density[i]);
 	fwrite(vtk_density, sizeof(uint64_t), total, out);
 	free(vtk_density);
 }
@@ -152,8 +153,8 @@ void free_particle_count(struct particle_count *part_count) {
 	free(part_count->count);
 }
 
-void free_volumetric_density(struct volumetric_density *volume_dens) {
-	free(volume_dens->density);
+void free_volumetric_density(struct volumetric_density *volume) {
+	free(volume->density);
 }
 
 static inline uint64_t swap_endian(double v) {

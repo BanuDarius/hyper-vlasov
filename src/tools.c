@@ -79,32 +79,36 @@ void compute_particle_densities(struct test_particles *part, struct parameters p
 	}
 }
 
-void compute_volumetric_density(struct volumetric_density *volume_dens, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param) {
-	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2];
+void compute_volumetric_density(struct volumetric_density *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type) {
+	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
 	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2], part_per_nucleon = param.test_part_per_nucleon;
 	
 	double sigma_r = param.sigma_r, sigma_sqr_4 = 4.0 * sigma_r * sigma_r;
 	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(M_PI * sigma_sqr_4, 1.5)));
+	if(type == PROTONS) { start = 0; end = world_size_data; }
+	else if(type == NEUTRONS) { start = world_size_data; end = 2 * world_size_data; }
+	else { start = 0; end = 2 * world_size_data; }
+	
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++) {
 		double r_i[3], r_j[3], diff[3];
 		double fact, dist_squared, density = 0.0;
 		world_pos_to_vector(r_i, world_visual, i);
 		
-		for(int j = 0; j < world_size_data; j++) {
+		for(int j = start; j < end; j++) {
 			int count = part_count.count[j];
-			world_pos_to_vector(r_j, world_data, j);
+			world_pos_to_vector(r_j, world_data, j % world_size_data);
 			
 			sub_vec(diff, r_i, r_j);
 			dist_squared = dot(diff, diff);
 			fact = exp(-dist_squared / sigma_sqr_4);
 			density += count * fact;
 		}
-		volume_dens->density[i] += density;
+		volume->density[i] += density;
 	}
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++)
-		volume_dens->density[i] *= term;
+		volume->density[i] *= term;
 }
 
 void generate_random_particles(struct test_particles *part, double r_max) {
@@ -127,24 +131,22 @@ void generate_random_particles(struct test_particles *part, double r_max) {
 	}
 }
 
-void scatter_particles(struct particle_count *part_count, struct test_particles *part, struct world world, int type) {
-	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2], r_vec[3];
-	int x = world.n[0], y = world.n[1], z = world.n[2];
-	int start, end;
-	
-	if(type == PROTONS) { start = 0; end = part->protons; }
-	else if(type == NEUTRONS) { start = part->protons; end = start + part->neutrons; }
-	else { start = 0; end = part->protons + part->neutrons; }
+void scatter_particles(struct particle_count *part_count, struct test_particles *part, struct world world) {
+	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
+	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
 	
 	#pragma omp parallel for
-	for(int i = start; i < end; i++) {
+	for(int i = 0; i < total; i++) {
+		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *part, i);
 		int x_idx = (int)(x / 2.0 * (r_vec[0] / d_max_x + 1.0));
 		int y_idx = (int)(y / 2.0 * (r_vec[1] / d_max_y + 1.0));
 		int z_idx = (int)(z / 2.0 * (r_vec[2] / d_max_z + 1.0));
-		if(x_idx < 0 || y_idx < 0 || z_idx < 0 || x_idx > x || y_idx > y || z_idx > z)
+		if(x_idx < 0 || y_idx < 0 || z_idx < 0 || x_idx >= x || y_idx >= y || z_idx >= z)
 			continue;
 		int idx = x_idx * (y * z) + y_idx * z + z_idx;
+		if(i >= part->protons)
+			idx += world_size;
 		#pragma omp atomic update
 		part_count->count[idx] += 1;
 	}
