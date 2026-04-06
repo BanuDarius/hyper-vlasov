@@ -102,6 +102,7 @@ void output_particle_count(FILE *out, struct particle_count particle_count, stru
 	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
 	for(int i = 0; i < total; i++)
 		vtk_count[i] = __builtin_bswap32(particle_count.count[i]);
+	
 	fwrite(vtk_count, sizeof(uint32_t), total, out);
 	free(vtk_count);
 }
@@ -112,6 +113,7 @@ void output_volumetric_density(FILE *out, struct volumetric_density volume, stru
 	uint64_t *vtk_density = malloc(total * sizeof(uint64_t));
 	for(int i = 0; i < total; i++)
 		vtk_density[i] = swap_endian(volume.density[i]);
+	
 	fwrite(vtk_density, sizeof(uint64_t), total, out);
 	free(vtk_density);
 }

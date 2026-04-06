@@ -137,6 +137,7 @@ void scatter_particles(struct particle_count *part_count, struct test_particles 
 		int idx = x_idx * (y * z) + y_idx * z + z_idx;
 		if(i >= part->protons)
 			idx += world_size;
+		
 		#pragma omp atomic update
 		part_count->count[idx] += 1;
 	}
@@ -167,20 +168,17 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 	}
 }
 
-void chi_squared(struct test_particles *part, struct woods_saxon *ws, struct skyrme skm, int part_per_nucleon) {
+void chi_squared(struct test_particles part, struct woods_saxon *ws, struct skyrme skm, int part_per_nucleon) {
 	struct woods_saxon ws_c;
-	int total = part->protons + part->neutrons, type;
+	int total = part.protons + part.neutrons, type;
 	double chi_squared_p = 0.0, chi_squared_n = 0.0, r_vec[3], density_p, density_n, r, v_ws, v_skyrme, diff;
 	for(int i = 0; i < total; i++) {
-		if(i < part->protons) {
-			type = PROTONS; ws_c = ws[0];
-		}
-		else {
-			type = NEUTRONS; ws_c = ws[1];
-		}
-		copy_particle_pos_to_vector(r_vec, *part, i);
-		density_p = part->density_p[i];
-		density_n = part->density_n[i];
+		if(i < part.protons) { type = PROTONS; ws_c = ws[0]; }
+		else { type = NEUTRONS; ws_c = ws[1]; }
+		
+		copy_particle_pos_to_vector(r_vec, part, i);
+		density_p = part.density_p[i];
+		density_n = part.density_n[i];
 		
 		r = magnitude(r_vec);
 		v_ws = woods_saxon_potential(ws_c, r);
@@ -195,6 +193,24 @@ void chi_squared(struct test_particles *part, struct woods_saxon *ws, struct sky
 	printf("CHI SQUARED P %0.2lf CHI SQUARED N %0.2lf\n", chi_squared_p, chi_squared_n);
 }
 
+double mean_squared_radius(struct test_particles part, int type) {
+	int start, end;
+	double part_num;
+	if(type == PROTONS) { start = 0; end = part.protons; part_num = (double)part.protons;}
+	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; part_num = (double)part.neutrons; }
+	
+	double r_sqr = 0.0;
+	#pragma omp parallel for reduction(+:r_sqr)
+	for(int i = start; i < end; i++) {
+		double r_vec[3], r2;
+		
+		copy_particle_pos_to_vector(r_vec, part, i);
+		r2 = dot(r_vec, r_vec);
+		r_sqr += r2;
+	}
+	return r_sqr / part_num;
+}
+
 void relax_woods_saxon(struct woods_saxon *ws, struct woods_saxon *ws_old, double coef) {
 	for(int i = 0; i < 2; i++) {
 		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;
@@ -205,7 +221,7 @@ void relax_woods_saxon(struct woods_saxon *ws, struct woods_saxon *ws_old, doubl
 
 double kinetic_energy() {
 	double hc2 = H_BAR_C * H_BAR_C;
-	double e_kin = hc2 / (2 * MC2);
+	double e_kin = hc2 / (2.0 * MC2);
 	return e_kin;
 }
 

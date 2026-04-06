@@ -1,6 +1,6 @@
 #include <omp.h>
+#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "init.h"
 #include "tools.h"
@@ -27,21 +27,26 @@ int main(int argc, char **argv) {
 	
 	read_input_file(in, &skm, &world, &world_visual, &fermi_levels, &param, ws);
 	
+	create_particle_count(&part_count, world);
+	create_volumetric_density(&volume, world_visual);
 	printf("MAX TEST PART %i\n", param.max_test_part);
+	
 	printf("Simulation started.\n");
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
 	
-	create_particle_count(&part_count, world);
+	chi_squared(part, ws, skm, param.test_part_per_nucleon);
+	double msr_p = mean_squared_radius(part, PROTONS);
+	double msr_n = mean_squared_radius(part, NEUTRONS);
+
 	scatter_particles(&part_count, &part, world);
-	
-	create_volumetric_density(&volume, world_visual);
 	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
 	
-	//output_centroids(out, part, PROTONS_AND_NEUTRONS);
+	//output_centroids(out, part, PROTONS);
 	//output_particle_count(out, part_count, world);
 	output_volumetric_density(out, volume, world_visual);
 	
-	printf("FERMI P %lf FERMI N %lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
+	printf("FERMI P %0.2lf FERMI N %0.2lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
+	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	printf("Simulation ended.\n");
 	printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
 	
