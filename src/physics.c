@@ -59,9 +59,9 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 		minim_woods_saxon(part, ws, skm);
 		relax_woods_saxon(ws, ws_old, relax_coef);
 		
-		printf("WS PARAM %lf %lf %lf\n", ws[0].V0, ws[0].R12, ws[0].a);
-		printf("WS PARAM %lf %lf %lf\n", ws[1].V0, ws[1].R12, ws[1].a);
-		printf("ITERATION = %i DELTA EPSILON = %lf\n", it,  total_delta_epsilon);
+		printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
+		printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);
+		printf("ITERATION = %i DELTA EPSILON = %0.2lf\n", it,  total_delta_epsilon);
 		printf("%i %i %i\n", check_less_p, check_equal_p, check_more_p);
 		printf("%i %i %i\n", check_less_n, check_equal_n, check_more_n);
 		

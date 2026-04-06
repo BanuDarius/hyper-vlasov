@@ -25,7 +25,7 @@ double compute_energy(struct test_particles *part, struct woods_saxon *ws, doubl
 	energy += (k * k) * kinetic_energy();
 	
 	if(i < part->protons)
-		energy += coulomb_potential(ws_c, z, r);
+		energy += coulomb_potential(ws_c, (double)z, r);
 	
 	energy += fluctuation_energy(sigma_k);
 	return energy;
@@ -192,7 +192,7 @@ void chi_squared(struct test_particles *part, struct woods_saxon *ws, struct sky
 			chi_squared_n += diff * diff;
 	}
 	chi_squared_n /= part_per_nucleon; chi_squared_p /= part_per_nucleon;
-	printf("CHI SQUARED P %lf CHI SQUARED N %lf\n", chi_squared_p, chi_squared_n);
+	printf("CHI SQUARED P %0.2lf CHI SQUARED N %0.2lf\n", chi_squared_p, chi_squared_n);
 }
 
 void relax_woods_saxon(struct woods_saxon *ws, struct woods_saxon *ws_old, double coef) {
