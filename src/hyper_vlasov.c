@@ -18,8 +18,8 @@ int main(int argc, char **argv) {
 	
 	struct skyrme skm;
 	struct parameters param;
-	struct fermi fermi_levels;
 	struct woods_saxon ws[2];
+	struct fermi fermi_levels;
 	struct test_particles part;
 	struct particle_count part_count;
 	struct world world, world_visual;
