@@ -14,7 +14,6 @@ int main(int argc, char **argv) {
 		return 1;
 	}
 	double start_time = omp_get_wtime();
-	
 	FILE *in = fopen(argv[1], "r"), *out = fopen(argv[2], "wb");
 	
 	struct skyrme skm;
