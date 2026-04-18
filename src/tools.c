@@ -153,6 +153,7 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 			epsilon = fermi_levels->epsilon_p;
 		else
 			epsilon = fermi_levels->epsilon_n;
+		
 		double r_new[3], k_new[3];
 		random_vec(r_new, r_max);
 		random_vec(k_new, K_MAX);

@@ -1,4 +1,4 @@
-num_test_part 3000
+num_test_part 1000
 z 10
 n 12
 V0 -50.0
