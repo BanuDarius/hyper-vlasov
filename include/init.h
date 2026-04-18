@@ -2,6 +2,7 @@
 #define INIT_H
 
 #include <stdint.h>
+#include <string.h>
 
 #include "sim_structs.h"
 
@@ -22,6 +23,11 @@ void free_particles(struct test_particles *part);
 void free_particle_count(struct particle_count *part_count);
 void free_volumetric_density(struct volumetric_density *volume);
 void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct world *world_visual, struct fermi *fermi_levels, struct parameters *param, struct woods_saxon *ws);
-static inline uint64_t swap_endian(double v);
+
+static inline uint64_t swap_endian(double v) {
+	uint64_t data;
+	memcpy(&data, &v, sizeof(double));
+	return __builtin_bswap64(data);
+}
 
 #endif

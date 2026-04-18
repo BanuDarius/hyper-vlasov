@@ -9,18 +9,19 @@
 #include "sim_structs.h"
 
 double compute_energy(struct test_particles *part, struct woods_saxon *ws, double sigma_k, int z, int i) {
-	double energy = 0.0, r_vec[3], k_vec[3], r, k;
 	struct woods_saxon ws_c;
 	if(i < part->protons)
 		ws_c = ws[0];
 	else
 		ws_c = ws[1];
+	double r_vec[3], k_vec[3];
 	copy_particle_pos_to_vector(r_vec, *part, i);
 	copy_particle_vel_to_vector(k_vec, *part, i);
 	
-	r = magnitude(r_vec);
-	k = magnitude(k_vec);
+	double r = magnitude(r_vec);
+	double k = magnitude(k_vec);
 	
+	double energy = 0.0;
 	energy += woods_saxon_potential(ws_c, r);
 	energy += (k * k) * kinetic_energy();
 	
@@ -102,9 +103,9 @@ void compute_volumetric_density(struct volumetric_density *volume, struct partic
 }
 
 void generate_random_particles(struct test_particles *part, double r_max) {
-	double r_new[3], k_new[3];
 	int total = part->protons + part->neutrons, i = 0;
 	while(i < total) {
+		double r_new[3];
 		random_vec(r_new, r_max);
 		if(dot(r_new, r_new) < r_max * r_max) {
 			copy_vector_to_particle_pos(part, r_new, i);
@@ -113,6 +114,7 @@ void generate_random_particles(struct test_particles *part, double r_max) {
 	}
 	i = 0;
 	while(i < total) {
+		double k_new[3];
 		random_vec(k_new, K_MAX);
 		if(dot(k_new, k_new) < K_MAX * K_MAX) {
 			copy_vector_to_particle_vel(part, k_new, i);
@@ -144,7 +146,6 @@ void scatter_particles(struct particle_count *part_count, struct test_particles 
 }
 
 void generate_checking_particles(struct test_particles *part, struct woods_saxon *ws, struct parameters param, struct fermi *fermi_levels) {
-	double r_new[3], k_new[3], energy;
 	double r_max = param.r_max, sigma_k = param.sigma_k, z = param.z, epsilon;
 	int total = part->protons + part->neutrons, i = 0;
 	while(i < total) {
@@ -152,11 +153,12 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 			epsilon = fermi_levels->epsilon_p;
 		else
 			epsilon = fermi_levels->epsilon_n;
+		double r_new[3], k_new[3];
 		random_vec(r_new, r_max);
 		random_vec(k_new, K_MAX);
 		copy_vector_to_particle_pos(part, r_new, i);
 		copy_vector_to_particle_vel(part, k_new, i);
-		energy = compute_energy(part, ws, sigma_k, z, i);
+		double energy = compute_energy(part, ws, sigma_k, z, i);
 		
 		if(energy < epsilon) {
 			mult_vec(r_new, r_new, -1.0);
@@ -169,21 +171,25 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 }
 
 void chi_squared(struct test_particles part, struct woods_saxon *ws, struct skyrme skm, int part_per_nucleon) {
-	struct woods_saxon ws_c;
-	int total = part.protons + part.neutrons, type;
-	double chi_squared_p = 0.0, chi_squared_n = 0.0, r_vec[3], density_p, density_n, r, v_ws, v_skyrme, diff;
+	int total = part.protons + part.neutrons;
+	
+	double chi_squared_p = 0.0, chi_squared_n = 0.0;
+	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
 	for(int i = 0; i < total; i++) {
+		int type;
+		struct woods_saxon ws_c;
 		if(i < part.protons) { type = PROTONS; ws_c = ws[0]; }
 		else { type = NEUTRONS; ws_c = ws[1]; }
 		
+		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, part, i);
-		density_p = part.density_p[i];
-		density_n = part.density_n[i];
+		double density_p = part.density_p[i];
+		double density_n = part.density_n[i];
 		
-		r = magnitude(r_vec);
-		v_ws = woods_saxon_potential(ws_c, r);
-		v_skyrme = skyrme_potential(skm, density_p, density_n, type);
-		diff = v_ws - v_skyrme;
+		double r = magnitude(r_vec);
+		double v_ws = woods_saxon_potential(ws_c, r);
+		double v_skyrme = skyrme_potential(skm, density_p, density_n, type);
+		double diff = v_ws - v_skyrme;
 		if(type == PROTONS)
 			chi_squared_p += diff * diff;
 		else

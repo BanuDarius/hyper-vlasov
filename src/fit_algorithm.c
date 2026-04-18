@@ -18,19 +18,18 @@ void set_fit_function(struct fit_data *fit, struct test_particles *part, struct 
 
 int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 	struct fit_data *fit = (struct fit_data*)p;
-	
 	double V0 = gsl_vector_get(x, 0), R12 = gsl_vector_get(x, 1), a = gsl_vector_get(x, 2);
-	double r_vec[3], density_p, density_n, v_woods_saxon, v_skyrme, r;
 	
 	for(int i = 0; i < fit->total; i++) {
 		int idx = fit->start + i;
+		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *fit->part, idx);
-		r = magnitude(r_vec);
 		
-		density_p = fit->part->density_p[idx];
-		density_n = fit->part->density_n[idx];
-		v_skyrme = skyrme_potential(fit->skm, density_p, density_n, fit->type);
-		v_woods_saxon = V0 / (1.0 + exp((r - R12) / a));
+		double r = magnitude(r_vec);
+		double density_p = fit->part->density_p[idx];
+		double density_n = fit->part->density_n[idx];
+		double v_skyrme = skyrme_potential(fit->skm, density_p, density_n, fit->type);
+		double v_woods_saxon = V0 / (1.0 + exp((r - R12) / a));
 		
 		gsl_vector_set(f, i, v_skyrme - v_woods_saxon);
 	}
@@ -39,21 +38,20 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 
 int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *J) {
 	struct fit_data *fit = (struct fit_data*)p;
-	
 	double V0 = gsl_vector_get(x, 0), R12 = gsl_vector_get(x, 1), a = gsl_vector_get(x, 2);
-	double r_vec[3], r, exp_v, exp_v_squared, dV0, dR12, da;
 	
 	for(int i = 0; i < fit->total; i++) {
 		int idx = fit->start + i;
+		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *fit->part, idx);
-		r = magnitude(r_vec);
 		
-		exp_v = exp((r - R12) / a);
-		exp_v_squared = (1.0 + exp_v) * (1.0 + exp_v);
+		double r = magnitude(r_vec);
+		double exp_v = exp((r - R12) / a);
+		double exp_v_squared = (1.0 + exp_v) * (1.0 + exp_v);
 		
-		dV0 = -1.0 / (1.0 + exp_v);
-		dR12 = -(V0 * exp_v) / (a * exp_v_squared);
-		da = -(V0 * (r - R12) * exp_v) / (a * a * exp_v_squared);
+		double dV0 = -1.0 / (1.0 + exp_v);
+		double dR12 = -(V0 * exp_v) / (a * exp_v_squared);
+		double da = -(V0 * (r - R12) * exp_v) / (a * a * exp_v_squared);
 		
 		gsl_matrix_set(J, i, 0, dV0);
 		gsl_matrix_set(J, i, 1, dR12);

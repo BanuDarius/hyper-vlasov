@@ -9,12 +9,10 @@
 #include "fit_algorithm.h"
 
 void initialize_particles(struct test_particles *part, struct parameters param, struct woods_saxon *ws, struct skyrme skm, struct fermi *fermi_levels) {
-	double delta_part_p, delta_part_n, delta_epsilon_p, delta_epsilon_n;
-	double r_max = param.r_max, sigma_r = param.sigma_r, total_delta_epsilon, relax_coef = 0.6;
+	double r_max = param.r_max, total_delta_epsilon, relax_coef = 0.6;
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
 	
-	struct woods_saxon ws_old[2];
 	struct test_particles temp_part;
 	create_particles(part, total_p, total_n);
 	create_particles(&temp_part, max_part, max_part);
@@ -38,27 +36,27 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 			if(temp_part.energy[i + max_part] < fermi_levels->epsilon_n - 0.5)
 				check_less_n += 2;
 		}
-		
-		delta_part_n = total_n - check_equal_n;
-		delta_part_p = total_p - check_equal_p;
-		delta_epsilon_n = 0.5 * delta_part_n / (check_more_n - check_less_n);
-		delta_epsilon_p = 0.5 * delta_part_p / (check_more_p - check_less_p);
+		double delta_part_n = total_n - check_equal_n;
+		double delta_part_p = total_p - check_equal_p;
+		double delta_epsilon_n = 0.5 * delta_part_n / (check_more_n - check_less_n);
+		double delta_epsilon_p = 0.5 * delta_part_p / (check_more_p - check_less_p);
 		
 		if(fabs(delta_epsilon_p) > 0.5) delta_epsilon_p *= relax_coef;
 		if(fabs(delta_epsilon_n) > 0.5) delta_epsilon_n *= relax_coef;
 		
 		fermi_levels->epsilon_p += delta_epsilon_p;
 		fermi_levels->epsilon_n += delta_epsilon_n;
-		total_delta_epsilon = fabs(delta_epsilon_n) + fabs(delta_epsilon_p);
 		
 		generate_checking_particles(part, ws, param, fermi_levels);
 		compute_particle_densities(part, param);
 		
+		struct woods_saxon ws_old[2];
 		ws_old[0] = ws[0]; ws_old[1] = ws[1];
 		
 		minim_woods_saxon(part, ws, skm);
 		relax_woods_saxon(ws, ws_old, relax_coef);
 		
+		total_delta_epsilon = fabs(delta_epsilon_n) + fabs(delta_epsilon_p);
 		printf("%i %i %i\n", check_less_p, check_equal_p, check_more_p);
 		printf("%i %i %i\n", check_less_n, check_equal_n, check_more_n);
 		printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);

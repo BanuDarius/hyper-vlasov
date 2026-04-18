@@ -1,7 +1,6 @@
 #include <omp.h>
 #include <math.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
 
@@ -211,9 +210,4 @@ void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct w
 	set_woods_saxon(&ws[0], V0, 0.8 * param->r_max, a);
 	set_woods_saxon(&ws[1], V0, 0.8 * param->r_max, a);
 
-}
-static inline uint64_t swap_endian(double v) {
-	uint64_t data;
-	memcpy(&data, &v, sizeof(double));
-	return __builtin_bswap64(data);
 }
