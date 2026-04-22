@@ -30,10 +30,10 @@ SOFTWARE. */
 double compute_energy(struct test_particles *part, struct woods_saxon *ws, double sigma_k, int z, int i);
 void compute_particle_energies(struct test_particles *part, struct woods_saxon *ws, struct parameters param);
 void compute_particle_densities(struct test_particles *part, struct parameters param);
-void compute_volumetric_density(struct volumetric_density *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type);
-void apply_constant_to_density(struct volumetric_density *volume, struct world world, struct parameters param);
+void compute_volumetric_density(struct scalar_field *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type);
+void apply_constant_to_density(struct scalar_field *volume, struct world world, struct parameters param);
 void generate_random_particles(struct test_particles *part, double r_max);
-void distribute_particles_cic(struct volumetric_density *volume, struct test_particles *part, struct world world, int type);
+void distribute_particles_cic(struct scalar_field *volume, struct test_particles *part, struct world world, int type);
 void scatter_particles(struct particle_count *part_count, struct test_particles *part, struct world world);
 void generate_checking_particles(struct test_particles *part, struct woods_saxon *ws, struct parameters param, struct fermi *fermi_levels);
 void chi_squared(struct test_particles part, struct woods_saxon *ws, struct skyrme skm, int part_per_nucleon);

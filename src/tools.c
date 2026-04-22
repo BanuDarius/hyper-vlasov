@@ -92,7 +92,7 @@ void compute_particle_densities(struct test_particles *part, struct parameters p
 	}
 }
 
-void compute_volumetric_density(struct volumetric_density *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type) {
+void compute_volumetric_density(struct scalar_field *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type) {
 	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
 	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2], part_per_nucleon = param.test_part_per_nucleon;
 	
@@ -117,14 +117,14 @@ void compute_volumetric_density(struct volumetric_density *volume, struct partic
 			fact = exp(-dist_squared * exp_term);
 			density += count * fact;
 		}
-		volume->density[i] += density;
+		volume->v[i] += density;
 	}
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++)
-		volume->density[i] *= term;
+		volume->v[i] *= term;
 }
 
-void distribute_particles_cic(struct volumetric_density *volume, struct test_particles *part, struct world world, int type) {
+void distribute_particles_cic(struct scalar_field *volume, struct test_particles *part, struct world world, int type) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], start, end;
 	
@@ -162,41 +162,41 @@ void distribute_particles_cic(struct volumetric_density *volume, struct test_par
 		
 		int idx000 = x0 * (y * z) + y0 * z + z0;
 		#pragma omp atomic update
-		volume->density[idx000] += t_x * t_y * t_z;
+		volume->v[idx000] += t_x * t_y * t_z;
 		if (x1 < x) {
 			int idx100 = x1 * (y * z) + y0 * z + z0;
 			#pragma omp atomic update
-			volume->density[idx100] += d_x * t_y * t_z;
+			volume->v[idx100] += d_x * t_y * t_z;
 		}
 		if (y1 < y) {
 			int idx010 = x0 * (y * z) + y1 * z + z0;
 			#pragma omp atomic update
-			volume->density[idx010] += t_x * d_y * t_z;
+			volume->v[idx010] += t_x * d_y * t_z;
 		}
 		if (x1 < x && y1 < y) {
 			int idx110 = x1 * (y * z) + y1 * z + z0;
 			#pragma omp atomic update
-			volume->density[idx110] += d_x * d_y * t_z;
+			volume->v[idx110] += d_x * d_y * t_z;
 		}
 		if (z1 < z) {
 			int idx001 = x0 * (y * z) + y0 * z + z1;
 			#pragma omp atomic update
-			volume->density[idx001] += t_x * t_y * d_z;
+			volume->v[idx001] += t_x * t_y * d_z;
 		}
 		if (x1 < x && z1 < z) {
 			int idx101 = x1 * (y * z) + y0 * z + z1;
 			#pragma omp atomic update
-			volume->density[idx101] += d_x * t_y * d_z;
+			volume->v[idx101] += d_x * t_y * d_z;
 		}
 		if (y1 < y && z1 < z) {
 			int idx011 = x0 * (y * z) + y1 * z + z1;
 			#pragma omp atomic update
-			volume->density[idx011] += t_x * d_y * d_z;
+			volume->v[idx011] += t_x * d_y * d_z;
 		}
 		if (x1 < x && y1 < y && z1 < z) {
 			int idx111 = x1 * (y * z) + y1 * z + z1;
 			#pragma omp atomic update
-			volume->density[idx111] += d_x * d_y * d_z;
+			volume->v[idx111] += d_x * d_y * d_z;
 		}
 	}
 }

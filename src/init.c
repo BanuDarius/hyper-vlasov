@@ -72,17 +72,19 @@ void set_world(struct world *world, double d_max, int n) {
 }
 
 void create_particle_count(struct particle_count *part_count, struct world world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2] ;
+	int world_size = world.n[0] * world.n[1] * world.n[2];
 	part_count->count = malloc(2 * world_size * sizeof(int));
+	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
 		part_count->count[i] = 0;
 }
 
-void create_volumetric_density(struct volumetric_density *volume, struct world world) {
+void create_volumetric_density(struct scalar_field *volume, struct world world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
-	volume->density = malloc(world_size * sizeof(double));
+	volume->v = malloc(world_size * sizeof(double));
+	#pragma omp parallel for
 	for(int i = 0; i < world_size; i++)
-		volume->density[i] = 0.0;
+		volume->v[i] = 0.0;
 }
 
 void create_particles(struct test_particles *part, int protons, int neutrons) {
@@ -123,6 +125,7 @@ void output_particle_count(FILE *out, struct particle_count particle_count, stru
 	output_vtk_header_count(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++)
 		vtk_count[i] = __builtin_bswap32(particle_count.count[i]);
 	
@@ -130,12 +133,13 @@ void output_particle_count(FILE *out, struct particle_count particle_count, stru
 	free(vtk_count);
 }
 
-void output_volumetric_density(FILE *out, struct volumetric_density volume, struct world world) {
+void output_volumetric_density(FILE *out, struct scalar_field volume, struct world world) {
 	output_vtk_header_volumetric(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint64_t *vtk_density = malloc(total * sizeof(uint64_t));
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++)
-		vtk_density[i] = swap_endian(volume.density[i]);
+		vtk_density[i] = swap_endian(volume.v[i]);
 	
 	fwrite(vtk_density, sizeof(uint64_t), total, out);
 	free(vtk_density);
@@ -178,8 +182,12 @@ void free_particle_count(struct particle_count *part_count) {
 	free(part_count->count);
 }
 
-void free_volumetric_density(struct volumetric_density *volume) {
-	free(volume->density);
+void free_vector_field(struct vector_field *field) {
+	free(field->x); free(field->y); free(field->z);
+}
+
+void free_volumetric_density(struct scalar_field *field) {
+	free(field->v);
 }
 
 void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct world *world_visual, struct fermi *fermi_levels, struct parameters *param, struct woods_saxon *ws) {

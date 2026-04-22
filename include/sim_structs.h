@@ -51,8 +51,12 @@ struct particle_count {
 	int *count;
 };
 
-struct volumetric_density {
-	double *density;
+struct scalar_field {
+	double *v;
+};
+
+struct vector_field {
+	double *x, *y, *z;
 };
 
 struct woods_saxon {

@@ -34,13 +34,13 @@ void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, st
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
 	
-	struct volumetric_density volume;
+	struct scalar_field volume;
 	create_volumetric_density(&volume, world_visual);
 	distribute_particles_cic(&volume, part, world, PROTONS);
 	
 	double x = 0.0;
 	for(int i = 0; i < world.n[0] * world.n[1] * world.n[2]; i++) {
-		x += volume.density[i];
+		x += volume.v[i];
 	}
 	printf("TOTAL SUM %0.2lf\n", x);
 	
