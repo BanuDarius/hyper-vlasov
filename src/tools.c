@@ -125,16 +125,11 @@ void compute_volumetric_density(struct scalar_field *volume, struct particle_cou
 		volume->v[i] *= term;
 }
 
-void compute_volumetric_density_cic(struct scalar_field *volume, struct test_particles *part, struct parameters param, struct world world, int type) {
+void compute_volumetric_density_cic(struct scalar_field *volume, struct test_particles *part, struct parameters param, struct world world) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	int x = world.n[0], y = world.n[1], z = world.n[2], start, end;
-	
-	if(type == PROTONS) { start = 0; end = part->protons; }
-	else if(type == NEUTRONS) { start = part->protons; end = part->protons + part->neutrons; }
-	else { start = 0; end = part->protons + part->neutrons; }
-	
+	int x = world.n[0], y = world.n[1], z = world.n[2], size = x * y * z, total = part->protons + part->neutrons;
 	#pragma omp parallel for
-	for(int i = start; i < end; i++) {
+	for(int i = 0; i < total; i++) {
 		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *part, i);
 		
@@ -142,60 +137,52 @@ void compute_volumetric_density_cic(struct scalar_field *volume, struct test_par
 		double cy = (y / 2.0) * (r_vec[1] / d_max_y + 1.0);
 		double cz = (z / 2.0) * (r_vec[2] / d_max_z + 1.0);
 		
-		int x0 = (int)cx;
-		int y0 = (int)cy;
-		int z0 = (int)cz;
+		int x0 = (int)cx; int y0 = (int)cy; int z0 = (int)cz;
 		
 		if(x0 < 0 || y0 < 0 || z0 < 0 || x0 >= x || y0 >= y || z0 >= z)
 			continue;
 			
-		double d_x = cx - x0;
-		double d_y = cy - y0;
-		double d_z = cz - z0;
+		double d_x = cx - x0; double d_y = cy - y0; double d_z = cz - z0;
+		double t_x = 1.0 - d_x; double t_y = 1.0 - d_y; double t_z = 1.0 - d_z;
 		
-		double t_x = 1.0 - d_x;
-		double t_y = 1.0 - d_y;
-		double t_z = 1.0 - d_z;
+		int x1 = x0 + 1; int y1 = y0 + 1; int z1 = z0 + 1;
 		
-		int x1 = x0 + 1;
-		int y1 = y0 + 1;
-		int z1 = z0 + 1;
-		
-		int idx000 = x0 * (y * z) + y0 * z + z0;
+		int offset = (i >= part->protons) ? size : 0;
+		int idx000 = x0 * (y * z) + y0 * z + z0 + offset;
 		#pragma omp atomic update
 		volume->v[idx000] += t_x * t_y * t_z;
 		if (x1 < x) {
-			int idx100 = x1 * (y * z) + y0 * z + z0;
+			int idx100 = x1 * (y * z) + y0 * z + z0 + offset;
 			#pragma omp atomic update
 			volume->v[idx100] += d_x * t_y * t_z;
 		}
 		if (y1 < y) {
-			int idx010 = x0 * (y * z) + y1 * z + z0;
+			int idx010 = x0 * (y * z) + y1 * z + z0 + offset;
 			#pragma omp atomic update
 			volume->v[idx010] += t_x * d_y * t_z;
 		}
 		if (x1 < x && y1 < y) {
-			int idx110 = x1 * (y * z) + y1 * z + z0;
+			int idx110 = x1 * (y * z) + y1 * z + z0 + offset;
 			#pragma omp atomic update
 			volume->v[idx110] += d_x * d_y * t_z;
 		}
 		if (z1 < z) {
-			int idx001 = x0 * (y * z) + y0 * z + z1;
+			int idx001 = x0 * (y * z) + y0 * z + z1 + offset;
 			#pragma omp atomic update
 			volume->v[idx001] += t_x * t_y * d_z;
 		}
 		if (x1 < x && z1 < z) {
-			int idx101 = x1 * (y * z) + y0 * z + z1;
+			int idx101 = x1 * (y * z) + y0 * z + z1 + offset;
 			#pragma omp atomic update
 			volume->v[idx101] += d_x * t_y * d_z;
 		}
 		if (y1 < y && z1 < z) {
-			int idx011 = x0 * (y * z) + y1 * z + z1;
+			int idx011 = x0 * (y * z) + y1 * z + z1 + offset;
 			#pragma omp atomic update
 			volume->v[idx011] += t_x * d_y * d_z;
 		}
 		if (x1 < x && y1 < y && z1 < z) {
-			int idx111 = x1 * (y * z) + y1 * z + z1;
+			int idx111 = x1 * (y * z) + y1 * z + z1 + offset;
 			#pragma omp atomic update
 			volume->v[idx111] += d_x * d_y * d_z;
 		}
@@ -206,13 +193,15 @@ void compute_volumetric_density_cic(struct scalar_field *volume, struct test_par
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
 	#pragma omp parallel for
-	for(int i = 0; i < x * y * z; i++) {
+	for(int i = 0; i < 2 * size; i++) {
 		double r_i[3], r_j[3], diff[3];
 		double fact, dist_squared, density = 0.0;
-		world_pos_to_vector(r_i, world, i);
+		world_pos_to_vector(r_i, world, i % size);
 		
-		for(int j = 0; j < x * y * z; j++) {
-			double count = temp_volume.v[j];
+		for(int j = 0; j < size; j++) {
+			int offset = (i >= size) ? size : 0;
+			int idx = j + offset;
+			double count = temp_volume.v[idx];
 			world_pos_to_vector(r_j, world, j);
 			
 			sub_vec(diff, r_i, r_j);
@@ -226,7 +215,7 @@ void compute_volumetric_density_cic(struct scalar_field *volume, struct test_par
 	
 	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
 	#pragma omp parallel for
-	for(int i = 0; i < x * y * z; i++) {
+	for(int i = 0; i < 2 * size; i++) {
 		volume->v[i] *= term;
 	}
 }
@@ -311,8 +300,8 @@ void chi_squared(struct test_particles part, struct woods_saxon *ws, struct skyr
 	for(int i = 0; i < total; i++) {
 		int type;
 		struct woods_saxon ws_c;
-		if(i < part.protons) { type = PROTONS; ws_c = ws[0]; }
-		else { type = NEUTRONS; ws_c = ws[1]; }
+		if(i >= part.protons) { type = NEUTRONS; ws_c = ws[1]; }
+		else { type = PROTONS; ws_c = ws[0]; }
 		
 		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, part, i);

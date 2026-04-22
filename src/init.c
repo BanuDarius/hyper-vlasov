@@ -81,9 +81,9 @@ void create_particle_count(struct particle_count *part_count, struct world world
 
 void create_volumetric_density(struct scalar_field *volume, struct world world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
-	volume->v = malloc(world_size * sizeof(double));
+	volume->v = malloc(2 * world_size * sizeof(double));
 	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++)
+	for(int i = 0; i < 2 * world_size; i++)
 		volume->v[i] = 0.0;
 }
 
@@ -133,25 +133,25 @@ void output_particle_count(FILE *out, struct particle_count particle_count, stru
 	free(vtk_count);
 }
 
-void output_volumetric_density(FILE *out, struct scalar_field *volume, struct world world) {
-	int total = world.n[0] * world.n[1] * world.n[2];
-	uint64_t *vtk_density_p = malloc(total * sizeof(uint64_t));
-	uint64_t *vtk_density_n = malloc(total * sizeof(uint64_t));
-	uint64_t *vtk_density_t = malloc(total * sizeof(uint64_t));
+void output_volumetric_density(FILE *out, struct scalar_field volume, struct world world) {
+	int size = world.n[0] * world.n[1] * world.n[2];
+	uint64_t *vtk_density_p = malloc(size * sizeof(uint64_t));
+	uint64_t *vtk_density_n = malloc(size * sizeof(uint64_t));
+	uint64_t *vtk_density_t = malloc(size * sizeof(uint64_t));
 	#pragma omp parallel for
-	for(int i = 0; i < total; i++) {
-		vtk_density_p[i] = swap_endian(volume[0].v[i]);
-		vtk_density_n[i] = swap_endian(volume[1].v[i]);
-		vtk_density_t[i] = swap_endian(volume[0].v[i] + volume[1].v[i]);
+	for(int i = 0; i < size; i++) {
+		vtk_density_p[i] = swap_endian(volume.v[i]);
+		vtk_density_n[i] = swap_endian(volume.v[i + size]);
+		vtk_density_t[i] = swap_endian(volume.v[i] + volume.v[i + size]);
 	}
 	
 	output_vtk_header_volumetric_start(out, world);
 	output_vtk_header_volumetric_next(out, PROTONS);
-	fwrite(vtk_density_p, sizeof(uint64_t), total, out);
+	fwrite(vtk_density_p, sizeof(uint64_t), size, out);
 	output_vtk_header_volumetric_next(out, NEUTRONS);
-	fwrite(vtk_density_n, sizeof(uint64_t), total, out);
+	fwrite(vtk_density_n, sizeof(uint64_t), size, out);
 	output_vtk_header_volumetric_next(out, PROTONS_AND_NEUTRONS);
-	fwrite(vtk_density_t, sizeof(uint64_t), total, out);
+	fwrite(vtk_density_t, sizeof(uint64_t), size, out);
 	
 	free(vtk_density_p); free(vtk_density_n); free(vtk_density_t);
 }

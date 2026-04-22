@@ -20,7 +20,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
-#include <omp.h>
 #include <math.h>
 #include <stdio.h>
 
@@ -34,17 +33,14 @@ void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, st
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
 	
-	struct scalar_field volume[2];
-	create_volumetric_density(&volume[0], world);
-	create_volumetric_density(&volume[1], world);
-	compute_volumetric_density_cic(&volume[0], part, param, world, PROTONS);
-	compute_volumetric_density_cic(&volume[1], part, param, world, NEUTRONS);
+	struct scalar_field volume;
+	create_volumetric_density(&volume, world);
+	compute_volumetric_density_cic(&volume, part, param, world);
 	
 	output_volumetric_density(out, volume, world);
 	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
-	free_scalar_field(&volume[0]);
-	free_scalar_field(&volume[1]);
+	free_scalar_field(&volume);
 	//struct particle_count part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);

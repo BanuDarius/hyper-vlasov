@@ -38,7 +38,7 @@ void create_volumetric_density(struct scalar_field *volume, struct world world);
 void create_particles(struct test_particles *part, int protons, int neutrons);
 void output_centroids(FILE *out, struct test_particles part, int type);
 void output_particle_count(FILE *out, struct particle_count particle_count, struct world world);
-void output_volumetric_density(FILE *out, struct scalar_field *volume, struct world world);
+void output_volumetric_density(FILE *out, struct scalar_field volume, struct world world);
 void output_vtk_header_count(FILE *out, struct world world);
 void output_vtk_header_volumetric_start(FILE *out, struct world world);
 void output_vtk_header_volumetric_next(FILE *out, int type);
