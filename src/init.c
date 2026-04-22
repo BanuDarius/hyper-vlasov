@@ -1,3 +1,25 @@
+/* MIT License
+
+Copyright (c) 2026 Banu Darius-Matei
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. */
+
 #include <omp.h>
 #include <math.h>
 #include <stdio.h>
@@ -10,9 +32,11 @@
 #include "math_tools.h"
 #include "sim_structs.h"
 
-void set_parameters(struct parameters *param, int z, int n, int test_part_per_nucleon, double sigma_k, double sigma_r) {
+void set_parameters(struct parameters *param, int z, int n, int test_part_per_nucleon, double sigma_k, double sigma_r, double t_f, int steps) {
 	param->z = z;
 	param->n = n;
+	param->t_f = t_f;
+	param->steps = steps;
 	param->sigma_k = sigma_k;
 	param->sigma_r = sigma_r;
 	
@@ -159,9 +183,9 @@ void free_volumetric_density(struct volumetric_density *volume) {
 }
 
 void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct world *world_visual, struct fermi *fermi_levels, struct parameters *param, struct woods_saxon *ws) {
-	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm;
+	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f;
 	char current[32];
-	int i = 0, num_test_part, nx, z, n;
+	int i = 0, num_test_part, steps, nx, z, n;
 	
 	while(fscanf(in, "%s", current) != EOF) {
 		if(!strcmp(current, "V0"))
@@ -184,29 +208,32 @@ void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct w
 			i += fscanf(in, "%lf", &k_fwhm);
 		else if(!strcmp(current, "r_fwhm"))
 			i += fscanf(in, "%lf", &r_fwhm);
+		else if(!strcmp(current, "t_f"))
+			i += fscanf(in, "%lf", &t_f);
 		else if(!strcmp(current, "nx"))
 			i += fscanf(in, "%i", &nx);
 		else if(!strcmp(current, "num_test_part"))
 			i += fscanf(in, "%i", &num_test_part);
+		else if(!strcmp(current, "steps"))
+			i += fscanf(in, "%i", &steps);
 		else if(!strcmp(current, "n"))
 			i += fscanf(in, "%i", &n);
 		else if(!strcmp(current, "z"))
 			i += fscanf(in, "%i", &z);
 	}
-	
 	if(i != INPUT_FILE_COUNT) {
 		fprintf(stderr, "Error: Invalid input file.\n");
 		exit(1);
 	}
 	
 	double sigma_k = calc_sigma(k_fwhm), sigma_r = calc_sigma(r_fwhm);
-	double d_max = nuclear_radius(z + n);
+	double d_max = 1.2 * nuclear_radius(z + n);
 	
 	set_skyrme(skm, A, B, C, gamma);
 	set_world(world, d_max, nx);
 	set_world(world_visual, d_max, 4 * nx);
 	set_fermi_levels(fermi_levels, epsilon_p, epsilon_n);
-	set_parameters(param, z, n, num_test_part, sigma_k, sigma_r);
+	set_parameters(param, z, n, num_test_part, sigma_k, sigma_r, t_f, steps);
 	set_woods_saxon(&ws[0], V0, 0.8 * param->r_max, a);
 	set_woods_saxon(&ws[1], V0, 0.8 * param->r_max, a);
 

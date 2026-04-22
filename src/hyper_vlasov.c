@@ -1,3 +1,25 @@
+/* MIT License
+
+Copyright (c) 2026 Banu Darius-Matei
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE. */
+
 #include <omp.h>
 #include <math.h>
 #include <stdio.h>
@@ -12,14 +34,8 @@ void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, st
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
 	
-	//struct particle_count part_count;
 	struct volumetric_density volume;
-	
-	//create_particle_count(&part_count, world);
 	create_volumetric_density(&volume, world_visual);
-	
-	//scatter_particles(&part_count, part, world);
-	//compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
 	distribute_particles_cic(&volume, part, world, PROTONS);
 	
 	double x = 0.0;
@@ -28,13 +44,17 @@ void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, st
 	}
 	printf("TOTAL SUM %0.2lf\n", x);
 	
-	//output_centroids(out, part, PROTONS);
-	//output_particle_count(out, part_count, world);
 	output_volumetric_density(out, volume, world);
 	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
-	//free_particle_count(&part_count);
 	free_volumetric_density(&volume);
+	//struct particle_count part_count;
+	//create_particle_count(&part_count, world);
+	//scatter_particles(&part_count, part, world);
+	//free_particle_count(&part_count);
+	//compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
+	//output_centroids(out, part, PROTONS);
+	//output_particle_count(out, part_count, world);
 }
 
 int main(int argc, char **argv) {
