@@ -30,24 +30,21 @@ SOFTWARE. */
 #include "sim_structs.h"
 
 void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, struct skyrme skm, struct parameters param, struct world world, struct world world_visual) {
-	chi_squared(*part, ws, skm, param.test_part_per_nucleon);
+	chi_squared(*part, ws, skm, param.part_per_nucleon);
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
 	
-	struct scalar_field volume;
-	create_volumetric_density(&volume, world_visual);
-	distribute_particles_cic(&volume, part, world, PROTONS);
-	
-	double x = 0.0;
-	for(int i = 0; i < world.n[0] * world.n[1] * world.n[2]; i++) {
-		x += volume.v[i];
-	}
-	printf("TOTAL SUM %0.2lf\n", x);
+	struct scalar_field volume[2];
+	create_volumetric_density(&volume[0], world);
+	create_volumetric_density(&volume[1], world);
+	compute_volumetric_density_cic(&volume[0], part, param, world, PROTONS);
+	compute_volumetric_density_cic(&volume[1], part, param, world, NEUTRONS);
 	
 	output_volumetric_density(out, volume, world);
 	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
-	free_volumetric_density(&volume);
+	free_scalar_field(&volume[0]);
+	free_scalar_field(&volume[1]);
 	//struct particle_count part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);

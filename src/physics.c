@@ -32,7 +32,7 @@ SOFTWARE. */
 
 void initialize_particles(struct test_particles *part, struct parameters param, struct woods_saxon *ws, struct skyrme skm, struct fermi *fermi_levels) {
 	double r_max = param.r_max, total_delta_epsilon, relax_coef = 0.6;
-	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.test_part_per_nucleon, it = 0;
+	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon, it = 0;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
 	
 	struct test_particles temp_part;
@@ -95,10 +95,10 @@ double nuclear_radius(unsigned short a) {
 	return radius;
 }
 
-int max_particles(double r_max, double k_max, int test_part_per_nucleon) {
+int max_particles(double r_max, double k_max, int part_per_nucleon) {
 	double t = r_max * k_max, ct = 2.0 * M_PI;
 	double phase_space_volume = (16.0 / 9.0) * M_PI * M_PI * (t * t * t);
-	int max = test_part_per_nucleon * (int)floor(phase_space_volume / (ct * ct * ct) + 0.5);
+	int max = part_per_nucleon * (int)floor(phase_space_volume / (ct * ct * ct) + 0.5);
 	return max;
 }
 

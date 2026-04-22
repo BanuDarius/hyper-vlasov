@@ -38,7 +38,7 @@ SOFTWARE. */
 
 struct parameters {
 	double sigma_k, sigma_r, r_max, t_f;
-	int test_part_per_nucleon, max_test_part, steps, z, n;
+	int part_per_nucleon, max_test_part, steps, z, n;
 };
 
 struct test_particles {

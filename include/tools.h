@@ -23,6 +23,7 @@ SOFTWARE. */
 #ifndef TOOLS_H
 #define TOOLS_H
 
+#include <omp.h>
 #include <stdlib.h>
 
 #include "sim_structs.h"
@@ -31,10 +32,9 @@ double compute_energy(struct test_particles *part, struct woods_saxon *ws, doubl
 void compute_particle_energies(struct test_particles *part, struct woods_saxon *ws, struct parameters param);
 void compute_particle_densities(struct test_particles *part, struct parameters param);
 void compute_volumetric_density(struct scalar_field *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type);
-void apply_constant_to_density(struct scalar_field *volume, struct world world, struct parameters param);
-void generate_random_particles(struct test_particles *part, double r_max);
-void distribute_particles_cic(struct scalar_field *volume, struct test_particles *part, struct world world, int type);
+void compute_volumetric_density_cic(struct scalar_field *volume, struct test_particles *part, struct parameters param, struct world world, int type);
 void scatter_particles(struct particle_count *part_count, struct test_particles *part, struct world world);
+void generate_random_particles(struct test_particles *part, double r_max);
 void generate_checking_particles(struct test_particles *part, struct woods_saxon *ws, struct parameters param, struct fermi *fermi_levels);
 void chi_squared(struct test_particles part, struct woods_saxon *ws, struct skyrme skm, int part_per_nucleon);
 double mean_squared_radius(struct test_particles part, int type);
@@ -85,4 +85,9 @@ static inline void copy_vector_to_particle_vel(struct test_particles *part, doub
 	part->kz[i] = v[2];
 }
 
+static inline void copy_scalar_field(struct scalar_field *volume_a, struct scalar_field *volume_b, struct world world) {
+	#pragma omp parallel for
+	for(int i = 0; i < world.n[0] * world.n[1] * world.n[2]; i++)
+		volume_a->v[i] = volume_b->v[i];
+}
 #endif

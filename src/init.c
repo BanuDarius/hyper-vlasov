@@ -32,7 +32,7 @@ SOFTWARE. */
 #include "math_tools.h"
 #include "sim_structs.h"
 
-void set_parameters(struct parameters *param, int z, int n, int test_part_per_nucleon, double sigma_k, double sigma_r, double t_f, int steps) {
+void set_parameters(struct parameters *param, int z, int n, int part_per_nucleon, double sigma_k, double sigma_r, double t_f, int steps) {
 	param->z = z;
 	param->n = n;
 	param->t_f = t_f;
@@ -40,10 +40,10 @@ void set_parameters(struct parameters *param, int z, int n, int test_part_per_nu
 	param->sigma_k = sigma_k;
 	param->sigma_r = sigma_r;
 	
-	param->test_part_per_nucleon = test_part_per_nucleon;
+	param->part_per_nucleon = part_per_nucleon;
 	param->r_max = nuclear_radius(z + n);
 	
-	param->max_test_part = max_particles(param->r_max, K_MAX, param->test_part_per_nucleon);
+	param->max_test_part = max_particles(param->r_max, K_MAX, param->part_per_nucleon);
 }
 
 void set_woods_saxon(struct woods_saxon *ws, double V0, double R12, double a) {
@@ -133,16 +133,27 @@ void output_particle_count(FILE *out, struct particle_count particle_count, stru
 	free(vtk_count);
 }
 
-void output_volumetric_density(FILE *out, struct scalar_field volume, struct world world) {
-	output_vtk_header_volumetric(out, world);
+void output_volumetric_density(FILE *out, struct scalar_field *volume, struct world world) {
 	int total = world.n[0] * world.n[1] * world.n[2];
-	uint64_t *vtk_density = malloc(total * sizeof(uint64_t));
+	uint64_t *vtk_density_p = malloc(total * sizeof(uint64_t));
+	uint64_t *vtk_density_n = malloc(total * sizeof(uint64_t));
+	uint64_t *vtk_density_t = malloc(total * sizeof(uint64_t));
 	#pragma omp parallel for
-	for(int i = 0; i < total; i++)
-		vtk_density[i] = swap_endian(volume.v[i]);
+	for(int i = 0; i < total; i++) {
+		vtk_density_p[i] = swap_endian(volume[0].v[i]);
+		vtk_density_n[i] = swap_endian(volume[1].v[i]);
+		vtk_density_t[i] = swap_endian(volume[0].v[i] + volume[1].v[i]);
+	}
 	
-	fwrite(vtk_density, sizeof(uint64_t), total, out);
-	free(vtk_density);
+	output_vtk_header_volumetric_start(out, world);
+	output_vtk_header_volumetric_next(out, PROTONS);
+	fwrite(vtk_density_p, sizeof(uint64_t), total, out);
+	output_vtk_header_volumetric_next(out, NEUTRONS);
+	fwrite(vtk_density_n, sizeof(uint64_t), total, out);
+	output_vtk_header_volumetric_next(out, PROTONS_AND_NEUTRONS);
+	fwrite(vtk_density_t, sizeof(uint64_t), total, out);
+	
+	free(vtk_density_p); free(vtk_density_n); free(vtk_density_t);
 }
 
 void output_vtk_header_count(FILE *out, struct world world) {
@@ -158,7 +169,7 @@ void output_vtk_header_count(FILE *out, struct world world) {
 	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
-void output_vtk_header_volumetric(FILE *out, struct world world) {
+void output_vtk_header_volumetric_start(FILE *out, struct world world) {
 	fprintf(out, "# vtk DataFile Version 3.0\n");
 	fprintf(out, "Volumetric density\n");
 	fprintf(out, "BINARY\n");
@@ -167,7 +178,14 @@ void output_vtk_header_volumetric(FILE *out, struct world world) {
 	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
 	fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
 	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
-	fprintf(out, "SCALARS density double 1\n");
+}
+
+void output_vtk_header_volumetric_next(FILE *out, int type) {
+	char tag;
+	if(type == PROTONS) tag = 'p';
+	else if(type == NEUTRONS) tag = 'n';
+	else tag = 't';
+	fprintf(out, "SCALARS density_%c double 1\n", tag);
 	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
@@ -186,7 +204,7 @@ void free_vector_field(struct vector_field *field) {
 	free(field->x); free(field->y); free(field->z);
 }
 
-void free_volumetric_density(struct scalar_field *field) {
+void free_scalar_field(struct scalar_field *field) {
 	free(field->v);
 }
 

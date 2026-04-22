@@ -25,6 +25,7 @@ SOFTWARE. */
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "init.h"
 #include "tools.h"
 #include "physics.h"
 #include "math_tools.h"
@@ -61,7 +62,7 @@ void compute_particle_energies(struct test_particles *part, struct woods_saxon *
 }
 
 void compute_particle_densities(struct test_particles *part, struct parameters param) {
-	int part_per_nucleon = param.test_part_per_nucleon, p = part->protons, n = part->neutrons, total = p + n;
+	int part_per_nucleon = param.part_per_nucleon, p = part->protons, n = part->neutrons, total = p + n;
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
 	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
@@ -94,14 +95,14 @@ void compute_particle_densities(struct test_particles *part, struct parameters p
 
 void compute_volumetric_density(struct scalar_field *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type) {
 	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
-	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2], part_per_nucleon = param.test_part_per_nucleon;
+	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2];
 	
 	if(type == PROTONS) { start = 0; end = world_size_data; }
 	else if(type == NEUTRONS) { start = world_size_data; end = 2 * world_size_data; }
 	else { start = 0; end = 2 * world_size_data; }
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
-	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
+	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++) {
 		double r_i[3], r_j[3], diff[3];
@@ -124,7 +125,7 @@ void compute_volumetric_density(struct scalar_field *volume, struct particle_cou
 		volume->v[i] *= term;
 }
 
-void distribute_particles_cic(struct scalar_field *volume, struct test_particles *part, struct world world, int type) {
+void compute_volumetric_density_cic(struct scalar_field *volume, struct test_particles *part, struct parameters param, struct world world, int type) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], start, end;
 	
@@ -198,6 +199,35 @@ void distribute_particles_cic(struct scalar_field *volume, struct test_particles
 			#pragma omp atomic update
 			volume->v[idx111] += d_x * d_y * d_z;
 		}
+	}
+	struct scalar_field temp_volume;
+	create_volumetric_density(&temp_volume, world);
+	copy_scalar_field(&temp_volume, volume, world);
+	
+	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
+	#pragma omp parallel for
+	for(int i = 0; i < x * y * z; i++) {
+		double r_i[3], r_j[3], diff[3];
+		double fact, dist_squared, density = 0.0;
+		world_pos_to_vector(r_i, world, i);
+		
+		for(int j = 0; j < x * y * z; j++) {
+			double count = temp_volume.v[j];
+			world_pos_to_vector(r_j, world, j);
+			
+			sub_vec(diff, r_i, r_j);
+			dist_squared = dot(diff, diff);
+			fact = exp(-dist_squared * exp_term);
+			density += count * fact;
+		}
+		volume->v[i] = density;
+	}
+	free_scalar_field(&temp_volume);
+	
+	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
+	#pragma omp parallel for
+	for(int i = 0; i < x * y * z; i++) {
+		volume->v[i] *= term;
 	}
 }
 
