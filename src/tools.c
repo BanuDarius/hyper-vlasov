@@ -123,6 +123,15 @@ void generate_random_particles(struct test_particles *part, double r_max) {
 	}
 }
 
+void distribute_particles_cic(struct volumetric_density *volume, struct test_particles *part, struct world world) {
+	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
+	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
+	
+	for(int i = 0; i < total; i++) {
+		
+	}
+}
+
 void scatter_particles(struct particle_count *part_count, struct test_particles *part, struct world world) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
@@ -131,11 +140,14 @@ void scatter_particles(struct particle_count *part_count, struct test_particles 
 	for(int i = 0; i < total; i++) {
 		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *part, i);
+		
 		int x_idx = (int)(x / 2.0 * (r_vec[0] / d_max_x + 1.0));
 		int y_idx = (int)(y / 2.0 * (r_vec[1] / d_max_y + 1.0));
 		int z_idx = (int)(z / 2.0 * (r_vec[2] / d_max_z + 1.0));
+		
 		if(x_idx < 0 || y_idx < 0 || z_idx < 0 || x_idx >= x || y_idx >= y || z_idx >= z)
 			continue;
+		
 		int idx = x_idx * (y * z) + y_idx * z + z_idx;
 		if(i >= part->protons)
 			idx += world_size;

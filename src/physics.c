@@ -89,7 +89,7 @@ double skyrme_potential(struct skyrme skm, double rho_p, double rho_n, int type)
 	double tau = (type == PROTONS) ? -1.0 : +1;
 	double rho = rho_p + rho_n;
 	double t = rho / RHO_0;
-	double v = skm.A * t + skm.B * pow(t, skm.gamma) + tau * 2.0 * skm.C * ((rho_n - rho_p) / RHO_0);
+	double v = skm.A * t + skm.B * pow(t, skm.gamma) + tau * skm.C * ((rho_n - rho_p) / RHO_0);
 	return v;
 }
 
