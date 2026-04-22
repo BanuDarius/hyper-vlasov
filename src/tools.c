@@ -102,33 +102,80 @@ void compute_volumetric_density(struct volumetric_density *volume, struct partic
 		volume->density[i] *= term;
 }
 
-void generate_random_particles(struct test_particles *part, double r_max) {
-	int total = part->protons + part->neutrons, i = 0;
-	while(i < total) {
-		double r_new[3];
-		random_vec(r_new, r_max);
-		if(dot(r_new, r_new) < r_max * r_max) {
-			copy_vector_to_particle_pos(part, r_new, i);
-			i++;
-		}
-	}
-	i = 0;
-	while(i < total) {
-		double k_new[3];
-		random_vec(k_new, K_MAX);
-		if(dot(k_new, k_new) < K_MAX * K_MAX) {
-			copy_vector_to_particle_vel(part, k_new, i);
-			i++;
-		}
-	}
-}
-
-void distribute_particles_cic(struct volumetric_density *volume, struct test_particles *part, struct world world) {
+void distribute_particles_cic(struct volumetric_density *volume, struct test_particles *part, struct world world, int type) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
+	int x = world.n[0], y = world.n[1], z = world.n[2], start, end;
 	
-	for(int i = 0; i < total; i++) {
+	if(type == PROTONS) { start = 0; end = part->protons; }
+	else if(type == NEUTRONS) { start = part->protons; end = part->protons + part->neutrons; }
+	else { start = 0; end = part->protons + part->neutrons; }
+	
+	#pragma omp parallel for
+	for(int i = start; i < end; i++) {
+		double r_vec[3];
+		copy_particle_pos_to_vector(r_vec, *part, i);
 		
+		double cx = (x / 2.0) * (r_vec[0] / d_max_x + 1.0);
+		double cy = (y / 2.0) * (r_vec[1] / d_max_y + 1.0);
+		double cz = (z / 2.0) * (r_vec[2] / d_max_z + 1.0);
+		
+		int x0 = (int)cx;
+		int y0 = (int)cy;
+		int z0 = (int)cz;
+		
+		if(x0 < 0 || y0 < 0 || z0 < 0 || x0 >= x || y0 >= y || z0 >= z)
+			continue;
+			
+		double d_x = cx - x0;
+		double d_y = cy - y0;
+		double d_z = cz - z0;
+		
+		double t_x = 1.0 - d_x;
+		double t_y = 1.0 - d_y;
+		double t_z = 1.0 - d_z;
+		
+		int x1 = x0 + 1;
+		int y1 = y0 + 1;
+		int z1 = z0 + 1;
+		
+		int idx000 = x0 * (y * z) + y0 * z + z0;
+		#pragma omp atomic update
+		volume->density[idx000] += t_x * t_y * t_z;
+		if (x1 < x) {
+			int idx100 = x1 * (y * z) + y0 * z + z0;
+			#pragma omp atomic update
+			volume->density[idx100] += d_x * t_y * t_z;
+		}
+		if (y1 < y) {
+			int idx010 = x0 * (y * z) + y1 * z + z0;
+			#pragma omp atomic update
+			volume->density[idx010] += t_x * d_y * t_z;
+		}
+		if (x1 < x && y1 < y) {
+			int idx110 = x1 * (y * z) + y1 * z + z0;
+			#pragma omp atomic update
+			volume->density[idx110] += d_x * d_y * t_z;
+		}
+		if (z1 < z) {
+			int idx001 = x0 * (y * z) + y0 * z + z1;
+			#pragma omp atomic update
+			volume->density[idx001] += t_x * t_y * d_z;
+		}
+		if (x1 < x && z1 < z) {
+			int idx101 = x1 * (y * z) + y0 * z + z1;
+			#pragma omp atomic update
+			volume->density[idx101] += d_x * t_y * d_z;
+		}
+		if (y1 < y && z1 < z) {
+			int idx011 = x0 * (y * z) + y1 * z + z1;
+			#pragma omp atomic update
+			volume->density[idx011] += t_x * d_y * d_z;
+		}
+		if (x1 < x && y1 < y && z1 < z) {
+			int idx111 = x1 * (y * z) + y1 * z + z1;
+			#pragma omp atomic update
+			volume->density[idx111] += d_x * d_y * d_z;
+		}
 	}
 }
 
@@ -154,6 +201,27 @@ void scatter_particles(struct particle_count *part_count, struct test_particles 
 		
 		#pragma omp atomic update
 		part_count->count[idx] += 1;
+	}
+}
+
+void generate_random_particles(struct test_particles *part, double r_max) {
+	int total = part->protons + part->neutrons, i = 0;
+	while(i < total) {
+		double r_new[3];
+		random_vec(r_new, r_max);
+		if(dot(r_new, r_new) < r_max * r_max) {
+			copy_vector_to_particle_pos(part, r_new, i);
+			i++;
+		}
+	}
+	i = 0;
+	while(i < total) {
+		double k_new[3];
+		random_vec(k_new, K_MAX);
+		if(dot(k_new, k_new) < K_MAX * K_MAX) {
+			copy_vector_to_particle_vel(part, k_new, i);
+			i++;
+		}
 	}
 }
 

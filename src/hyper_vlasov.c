@@ -12,21 +12,28 @@ void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, st
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
 	
-	struct particle_count part_count;
+	//struct particle_count part_count;
 	struct volumetric_density volume;
 	
-	create_particle_count(&part_count, world);
+	//create_particle_count(&part_count, world);
 	create_volumetric_density(&volume, world_visual);
 	
-	scatter_particles(&part_count, part, world);
-	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
+	//scatter_particles(&part_count, part, world);
+	//compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
+	distribute_particles_cic(&volume, part, world, PROTONS);
+	
+	double x = 0.0;
+	for(int i = 0; i < world.n[0] * world.n[1] * world.n[2]; i++) {
+		x += volume.density[i];
+	}
+	printf("TOTAL SUM %0.2lf\n", x);
 	
 	//output_centroids(out, part, PROTONS);
 	//output_particle_count(out, part_count, world);
-	output_volumetric_density(out, volume, world_visual);
+	output_volumetric_density(out, volume, world);
 	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
-	free_particle_count(&part_count);
+	//free_particle_count(&part_count);
 	free_volumetric_density(&volume);
 }
 

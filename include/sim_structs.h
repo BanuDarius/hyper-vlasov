@@ -20,9 +20,9 @@ struct parameters {
 };
 
 struct test_particles {
-	double *energy, *density_p, *density_n;
-	double *x, *y, *z, *kx, *ky, *kz;
 	int protons, neutrons;
+	double *x, *y, *z, *kx, *ky, *kz;
+	double *energy, *density_p, *density_n;
 };
 
 struct particle_count {
