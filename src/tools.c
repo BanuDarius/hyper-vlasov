@@ -31,8 +31,8 @@ SOFTWARE. */
 #include "math_tools.h"
 #include "sim_structs.h"
 
-double compute_energy(struct test_particles *part, struct woods_saxon *ws, double sigma_k, int z, int i) {
-	struct woods_saxon ws_c;
+double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z, int i) {
+	WoodsSaxon ws_c;
 	if(i < part->protons)
 		ws_c = ws[0];
 	else
@@ -55,13 +55,13 @@ double compute_energy(struct test_particles *part, struct woods_saxon *ws, doubl
 	return energy;
 }
 
-void compute_particle_energies(struct test_particles *part, struct woods_saxon *ws, struct parameters param) {
+void compute_particle_energies(TestParticles *part, WoodsSaxon *ws, Parameters param) {
 	double sigma_k = param.sigma_k, z = param.z;
 	for(int i = 0; i < part->protons + part->neutrons; i++)
 		part->energy[i] = compute_energy(part, ws, sigma_k, z, i);
 }
 
-void compute_particle_densities(struct test_particles *part, struct parameters param) {
+void compute_particle_densities(TestParticles *part, Parameters param) {
 	int part_per_nucleon = param.part_per_nucleon, p = part->protons, n = part->neutrons, total = p + n;
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
@@ -93,7 +93,7 @@ void compute_particle_densities(struct test_particles *part, struct parameters p
 	}
 }
 
-void compute_volumetric_density(struct scalar_field *volume, struct particle_count part_count, struct world world_visual, struct world world_data, struct parameters param, int type) {
+void compute_volumetric_density(ScalarField *volume, ParticleCount part_count, World world_visual, World world_data, Parameters param, int type) {
 	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
 	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2];
 	
@@ -125,7 +125,7 @@ void compute_volumetric_density(struct scalar_field *volume, struct particle_cou
 		volume->v[i] *= term;
 }
 
-void compute_volumetric_density_cic(struct scalar_field *volume, struct test_particles *part, struct parameters param, struct world world) {
+void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Parameters param, World world) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], size = x * y * z, total = part->protons + part->neutrons;
 	#pragma omp parallel for
@@ -144,7 +144,6 @@ void compute_volumetric_density_cic(struct scalar_field *volume, struct test_par
 			
 		double d_x = cx - x0; double d_y = cy - y0; double d_z = cz - z0;
 		double t_x = 1.0 - d_x; double t_y = 1.0 - d_y; double t_z = 1.0 - d_z;
-		
 		int x1 = x0 + 1; int y1 = y0 + 1; int z1 = z0 + 1;
 		
 		int offset = (i >= part->protons) ? size : 0;
@@ -187,7 +186,7 @@ void compute_volumetric_density_cic(struct scalar_field *volume, struct test_par
 			volume->v[idx111] += d_x * d_y * d_z;
 		}
 	}
-	struct scalar_field temp_volume;
+	ScalarField temp_volume;
 	create_volumetric_density(&temp_volume, world);
 	copy_scalar_field(&temp_volume, volume, world);
 	
@@ -220,7 +219,7 @@ void compute_volumetric_density_cic(struct scalar_field *volume, struct test_par
 	}
 }
 
-void scatter_particles(struct particle_count *part_count, struct test_particles *part, struct world world) {
+void scatter_particles(ParticleCount *part_count, TestParticles *part, World world) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
 	
@@ -245,7 +244,7 @@ void scatter_particles(struct particle_count *part_count, struct test_particles 
 	}
 }
 
-void generate_random_particles(struct test_particles *part, double r_max) {
+void generate_random_particles(TestParticles *part, double r_max) {
 	int total = part->protons + part->neutrons, i = 0;
 	while(i < total) {
 		double r_new[3];
@@ -266,7 +265,7 @@ void generate_random_particles(struct test_particles *part, double r_max) {
 	}
 }
 
-void generate_checking_particles(struct test_particles *part, struct woods_saxon *ws, struct parameters param, struct fermi *fermi_levels) {
+void generate_checking_particles(TestParticles *part, WoodsSaxon *ws, Parameters param, Fermi *fermi_levels) {
 	double r_max = param.r_max, sigma_k = param.sigma_k, z = param.z, epsilon;
 	int total = part->protons + part->neutrons, i = 0;
 	while(i < total) {
@@ -292,14 +291,14 @@ void generate_checking_particles(struct test_particles *part, struct woods_saxon
 	}
 }
 
-void chi_squared(struct test_particles part, struct woods_saxon *ws, struct skyrme skm, int part_per_nucleon) {
+void chi_squared(TestParticles part, WoodsSaxon *ws, Skyrme skm, int part_per_nucleon) {
 	int total = part.protons + part.neutrons;
 	
 	double chi_squared_p = 0.0, chi_squared_n = 0.0;
 	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
 	for(int i = 0; i < total; i++) {
 		int type;
-		struct woods_saxon ws_c;
+		WoodsSaxon ws_c;
 		if(i >= part.protons) { type = NEUTRONS; ws_c = ws[1]; }
 		else { type = PROTONS; ws_c = ws[0]; }
 		
@@ -321,7 +320,7 @@ void chi_squared(struct test_particles part, struct woods_saxon *ws, struct skyr
 	printf("CHI SQUARED P %0.2lf CHI SQUARED N %0.2lf\n", chi_squared_p, chi_squared_n);
 }
 
-double mean_squared_radius(struct test_particles part, int type) {
+double mean_squared_radius(TestParticles part, int type) {
 	int start, end;
 	double part_num;
 	if(type == PROTONS) { start = 0; end = part.protons; part_num = (double)part.protons;}
@@ -339,7 +338,7 @@ double mean_squared_radius(struct test_particles part, int type) {
 	return r_sqr / part_num;
 }
 
-void relax_woods_saxon(struct woods_saxon *ws, struct woods_saxon *ws_old, double coef) {
+void relax_woods_saxon(WoodsSaxon *ws, WoodsSaxon *ws_old, double coef) {
 	for(int i = 0; i < 2; i++) {
 		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;
 		ws[i].R12 = coef * ws[i].R12 + (1.0 - coef) * ws_old[i].R12;

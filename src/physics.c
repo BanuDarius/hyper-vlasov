@@ -30,12 +30,12 @@ SOFTWARE. */
 #include "sim_structs.h"
 #include "fit_algorithm.h"
 
-void initialize_particles(struct test_particles *part, struct parameters param, struct woods_saxon *ws, struct skyrme skm, struct fermi *fermi_levels) {
+void initialize_particles(TestParticles *part, Parameters param, WoodsSaxon *ws, Skyrme skm, Fermi *fermi_levels) {
 	double r_max = param.r_max, total_delta_epsilon, relax_coef = 0.6;
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon, it = 0;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
 	
-	struct test_particles temp_part;
+	TestParticles temp_part;
 	create_particles(part, total_p, total_n);
 	create_particles(&temp_part, max_part, max_part);
 	do {
@@ -72,7 +72,7 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 		generate_checking_particles(part, ws, param, fermi_levels);
 		compute_particle_densities(part, param);
 		
-		struct woods_saxon ws_old[2];
+		WoodsSaxon ws_old[2];
 		ws_old[0] = ws[0]; ws_old[1] = ws[1];
 		
 		minim_woods_saxon(part, ws, skm);
@@ -88,6 +88,7 @@ void initialize_particles(struct test_particles *part, struct parameters param, 
 		it++;
 	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_ITERATIONS);	
 	compute_particle_energies(part, ws, param);
+	free_particles(&temp_part);
 }
 
 double nuclear_radius(unsigned short a) {
@@ -102,20 +103,20 @@ int max_particles(double r_max, double k_max, int part_per_nucleon) {
 	return max;
 }
 
-double woods_saxon_potential(struct woods_saxon ws, double r) {
+double woods_saxon_potential(WoodsSaxon ws, double r) {
 	double v = ws.V0 / (1.0 + exp((r - ws.R12) / ws.a));
 	return v;
 }
 
-double skyrme_potential(struct skyrme skm, double rho_p, double rho_n, int type) {
-	double tau = (type == PROTONS) ? -1.0 : +1;
+double skyrme_potential(Skyrme skm, double rho_p, double rho_n, int type) {
+	double tau = (type == PROTONS) ? -1.0 : +1.0;
 	double rho = rho_p + rho_n;
 	double t = rho / RHO_0;
 	double v = skm.A * t + skm.B * pow(t, skm.gamma) + tau * skm.C * ((rho_n - rho_p) / RHO_0);
 	return v;
 }
 
-double coulomb_potential(struct woods_saxon ws, double z, double r) {
+double coulomb_potential(WoodsSaxon ws, double z, double r) {
 	double R12 = ws.R12, v;
 	if(r <= ws.R12)
 		v = 1.44 * (z - 1.0) / R12 * (1.5 - 0.5 * (r / R12) * (r / R12));

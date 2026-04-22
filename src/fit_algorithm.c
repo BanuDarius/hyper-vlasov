@@ -30,7 +30,7 @@ SOFTWARE. */
 #include "sim_structs.h"
 #include "fit_algorithm.h"
 
-void set_fit_function(struct fit_data *fit, struct test_particles *part, struct skyrme skm, int type, int start, int total) {
+void set_fit_function(struct fit_data *fit, TestParticles *part, Skyrme skm, int type, int start, int total) {
 	fit->skm = skm;
 	fit->type = type;
 	fit->part = part;
@@ -82,7 +82,7 @@ int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *J) {
 	return GSL_SUCCESS;
 }
 
-void minim_woods_saxon(struct test_particles *part, struct woods_saxon *ws, struct skyrme skm) {
+void minim_woods_saxon(TestParticles *part, WoodsSaxon *ws, Skyrme skm) {
 	const gsl_multifit_nlinear_type *T_MAGIC = gsl_multifit_nlinear_trust;
 	gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
 	

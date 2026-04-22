@@ -36,44 +36,45 @@ SOFTWARE. */
 #define RHO_0 0.16
 #define K_MAX 1.5
 
-struct parameters {
+typedef struct {
 	double sigma_k, sigma_r, r_max, t_f;
 	int part_per_nucleon, max_test_part, steps, z, n;
-};
+} Parameters;
 
-struct test_particles {
+typedef struct {
 	int protons, neutrons;
 	double *x, *y, *z, *kx, *ky, *kz;
 	double *energy, *density_p, *density_n;
-};
+	double *fx, *fy, *fz;
+} TestParticles;
 
-struct particle_count {
+typedef struct {
 	int *count;
-};
+} ParticleCount;
 
-struct scalar_field {
+typedef struct {
 	double *v;
-};
+} ScalarField;
 
-struct vector_field {
+typedef struct {
 	double *x, *y, *z;
-};
+} VectorField;
 
-struct woods_saxon {
+typedef struct {
 	double V0, R12, a;
-};
+} WoodsSaxon;
 
-struct skyrme {
+typedef struct {
 	double A, B, C, gamma;
-};
+} Skyrme;
 
-struct fermi {
+typedef struct {
 	double epsilon_p, epsilon_n;
-};
+} Fermi;
 
-struct world {
+typedef struct {
 	int n[3];
 	double d_max[3];
-};
+} World;
 
 #endif

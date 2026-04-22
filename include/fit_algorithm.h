@@ -30,15 +30,15 @@ SOFTWARE. */
 #include "sim_structs.h"
 
 struct fit_data {
-	struct test_particles *part;
-	struct skyrme skm;
+	TestParticles *part;
+	Skyrme skm;
 	int type, start, total;
 };
 
-void set_fit_function(struct fit_data *fit, struct test_particles *part, struct skyrme skm, int type, int start, int total);
+void set_fit_function(struct fit_data *fit, TestParticles *part, Skyrme skm, int type, int start, int total);
 int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f);
 int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *J);
-void minim_woods_saxon(struct test_particles *part, struct woods_saxon *ws, struct skyrme skm);
+void minim_woods_saxon(TestParticles *part, WoodsSaxon *ws, Skyrme skm);
 
 
 #endif

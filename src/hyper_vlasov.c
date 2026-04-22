@@ -28,12 +28,12 @@ SOFTWARE. */
 #include "physics.h"
 #include "sim_structs.h"
 
-void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, struct skyrme skm, struct parameters param, struct world world, struct world world_visual) {
+void simulate(FILE *out, TestParticles *part, WoodsSaxon *ws, Skyrme skm, Parameters param, World world, World world_visual) {
 	chi_squared(*part, ws, skm, param.part_per_nucleon);
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
 	
-	struct scalar_field volume;
+	ScalarField volume;
 	create_volumetric_density(&volume, world);
 	compute_volumetric_density_cic(&volume, part, param, world);
 	
@@ -41,7 +41,7 @@ void simulate(FILE *out, struct test_particles *part, struct woods_saxon *ws, st
 	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
 	free_scalar_field(&volume);
-	//struct particle_count part_count;
+	//ParticleCount part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);
 	//free_particle_count(&part_count);
@@ -59,12 +59,12 @@ int main(int argc, char **argv) {
 	double start_time = omp_get_wtime();
 	FILE *in = fopen(argv[1], "r"), *out = fopen(argv[2], "wb");
 	
-	struct skyrme skm;
-	struct parameters param;
-	struct woods_saxon ws[2];
-	struct fermi fermi_levels;
-	struct test_particles part;
-	struct world world, world_visual;
+	Skyrme skm;
+	Parameters param;
+	WoodsSaxon ws[2];
+	Fermi fermi_levels;
+	TestParticles part;
+	World world, world_visual;
 	
 	read_input_file(in, &skm, &world, &world_visual, &fermi_levels, &param, ws);
 	printf("MAX TEST PART %i\n", param.max_test_part);

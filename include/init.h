@@ -28,25 +28,25 @@ SOFTWARE. */
 
 #include "sim_structs.h"
 
-void set_parameters(struct parameters *param, int z, int n, int part_per_nucleon, double sigma_k, double sigma_r, double t_f, int steps);
-void set_woods_saxon(struct woods_saxon *ws, double V0, double R12, double a);
-void set_skyrme(struct skyrme *skm, double A, double B, double C, double gamma);
-void set_fermi_levels(struct fermi *fermi, double epsilon_p, double epsilon_n);
-void set_world(struct world *world, double d_max, int n);
-void create_particle_count(struct particle_count *part_count, struct world world);
-void create_volumetric_density(struct scalar_field *volume, struct world world);
-void create_particles(struct test_particles *part, int protons, int neutrons);
-void output_centroids(FILE *out, struct test_particles part, int type);
-void output_particle_count(FILE *out, struct particle_count particle_count, struct world world);
-void output_volumetric_density(FILE *out, struct scalar_field volume, struct world world);
-void output_vtk_header_count(FILE *out, struct world world);
-void output_vtk_header_volumetric_start(FILE *out, struct world world);
+void set_parameters(Parameters *param, int z, int n, int part_per_nucleon, double sigma_k, double sigma_r, double t_f, int steps);
+void set_woods_saxon(WoodsSaxon *ws, double V0, double R12, double a);
+void set_skyrme(Skyrme *skm, double A, double B, double C, double gamma);
+void set_fermi_levels(Fermi *fermi, double epsilon_p, double epsilon_n);
+void set_world(World *world, double d_max, int n);
+void create_particle_count(ParticleCount *part_count, World world);
+void create_volumetric_density(ScalarField *volume, World world);
+void create_particles(TestParticles *part, int protons, int neutrons);
+void output_centroids(FILE *out, TestParticles part, int type);
+void output_particle_count(FILE *out, ParticleCount particle_count, World world);
+void output_volumetric_density(FILE *out, ScalarField volume, World world);
+void output_vtk_header_count(FILE *out, World world);
+void output_vtk_header_volumetric_start(FILE *out, World world);
 void output_vtk_header_volumetric_next(FILE *out, int type);
-void free_particles(struct test_particles *part);
-void free_particle_count(struct particle_count *part_count);
-void free_vector_field(struct vector_field *field);
-void free_scalar_field(struct scalar_field *volume);
-void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct world *world_visual, struct fermi *fermi_levels, struct parameters *param, struct woods_saxon *ws);
+void free_particles(TestParticles *part);
+void free_particle_count(ParticleCount *part_count);
+void free_vector_field(VectorField *field);
+void free_scalar_field(ScalarField *volume);
+void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, Fermi *fermi_levels, Parameters *param, WoodsSaxon *ws);
 
 static inline uint64_t swap_endian(double v) {
 	uint64_t data;

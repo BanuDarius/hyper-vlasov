@@ -32,7 +32,7 @@ SOFTWARE. */
 #include "math_tools.h"
 #include "sim_structs.h"
 
-void set_parameters(struct parameters *param, int z, int n, int part_per_nucleon, double sigma_k, double sigma_r, double t_f, int steps) {
+void set_parameters(Parameters *param, int z, int n, int part_per_nucleon, double sigma_k, double sigma_r, double t_f, int steps) {
 	param->z = z;
 	param->n = n;
 	param->t_f = t_f;
@@ -46,32 +46,32 @@ void set_parameters(struct parameters *param, int z, int n, int part_per_nucleon
 	param->max_test_part = max_particles(param->r_max, K_MAX, param->part_per_nucleon);
 }
 
-void set_woods_saxon(struct woods_saxon *ws, double V0, double R12, double a) {
+void set_woods_saxon(WoodsSaxon *ws, double V0, double R12, double a) {
 	ws->a = a;
 	ws->V0 = V0;
 	ws->R12 = R12;
 }
 
-void set_skyrme(struct skyrme *skm, double A, double B, double C, double gamma) {
+void set_skyrme(Skyrme *skm, double A, double B, double C, double gamma) {
 	skm->A = A;
 	skm->B = B;
 	skm->C = C;
 	skm->gamma = gamma;
 }
 
-void set_fermi_levels(struct fermi *fermi, double epsilon_p, double epsilon_n) {
+void set_fermi_levels(Fermi *fermi, double epsilon_p, double epsilon_n) {
 	fermi->epsilon_p = epsilon_p;
 	fermi->epsilon_n = epsilon_n;
 }
 
-void set_world(struct world *world, double d_max, int n) {
+void set_world(World *world, double d_max, int n) {
 	for(int i = 0; i < 3; i++) {
 		world->n[i] = n;
 		world->d_max[i] = d_max;
 	}
 }
 
-void create_particle_count(struct particle_count *part_count, struct world world) {
+void create_particle_count(ParticleCount *part_count, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	part_count->count = malloc(2 * world_size * sizeof(int));
 	#pragma omp parallel for
@@ -79,7 +79,7 @@ void create_particle_count(struct particle_count *part_count, struct world world
 		part_count->count[i] = 0;
 }
 
-void create_volumetric_density(struct scalar_field *volume, struct world world) {
+void create_volumetric_density(ScalarField *volume, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	volume->v = malloc(2 * world_size * sizeof(double));
 	#pragma omp parallel for
@@ -87,7 +87,7 @@ void create_volumetric_density(struct scalar_field *volume, struct world world) 
 		volume->v[i] = 0.0;
 }
 
-void create_particles(struct test_particles *part, int protons, int neutrons) {
+void create_particles(TestParticles *part, int protons, int neutrons) {
 	int total = protons + neutrons;
 	part->protons = protons;
 	part->neutrons = neutrons;
@@ -97,12 +97,15 @@ void create_particles(struct test_particles *part, int protons, int neutrons) {
 	part->kx = malloc(total * sizeof(double));
 	part->ky = malloc(total * sizeof(double));
 	part->kz = malloc(total * sizeof(double));
+	part->fx = malloc(total * sizeof(double));
+	part->fy = malloc(total * sizeof(double));
+	part->fz = malloc(total * sizeof(double));
 	part->energy = malloc(total * sizeof(double));
 	part->density_p = malloc(total * sizeof(double));
 	part->density_n = malloc(total * sizeof(double));
 }
 
-void output_centroids(FILE *out, struct test_particles part, int type) {
+void output_centroids(FILE *out, TestParticles part, int type) {
 	int start, end;
 	if(type == PROTONS) { start = 0; end = part.protons; }
 	else if(type == NEUTRONS) { start = 0; end = part.protons + part.neutrons; }
@@ -121,7 +124,7 @@ void output_centroids(FILE *out, struct test_particles part, int type) {
 	}
 }
 
-void output_particle_count(FILE *out, struct particle_count particle_count, struct world world) {
+void output_particle_count(FILE *out, ParticleCount particle_count, World world) {
 	output_vtk_header_count(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
@@ -133,7 +136,7 @@ void output_particle_count(FILE *out, struct particle_count particle_count, stru
 	free(vtk_count);
 }
 
-void output_volumetric_density(FILE *out, struct scalar_field volume, struct world world) {
+void output_volumetric_density(FILE *out, ScalarField volume, World world) {
 	int size = world.n[0] * world.n[1] * world.n[2];
 	uint64_t *vtk_density_p = malloc(size * sizeof(uint64_t));
 	uint64_t *vtk_density_n = malloc(size * sizeof(uint64_t));
@@ -156,7 +159,7 @@ void output_volumetric_density(FILE *out, struct scalar_field volume, struct wor
 	free(vtk_density_p); free(vtk_density_n); free(vtk_density_t);
 }
 
-void output_vtk_header_count(FILE *out, struct world world) {
+void output_vtk_header_count(FILE *out, World world) {
 	fprintf(out, "# vtk DataFile Version 3.0\n");
 	fprintf(out, "Volumetric count\n");
 	fprintf(out, "BINARY\n");
@@ -169,7 +172,7 @@ void output_vtk_header_count(FILE *out, struct world world) {
 	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
-void output_vtk_header_volumetric_start(FILE *out, struct world world) {
+void output_vtk_header_volumetric_start(FILE *out, World world) {
 	fprintf(out, "# vtk DataFile Version 3.0\n");
 	fprintf(out, "Volumetric density\n");
 	fprintf(out, "BINARY\n");
@@ -189,26 +192,27 @@ void output_vtk_header_volumetric_next(FILE *out, int type) {
 	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
-void free_particles(struct test_particles *part) {
+void free_particles(TestParticles *part) {
 	free(part->x); free(part->y); free(part->z);
 	free(part->kx); free(part->ky); free(part->kz);
+	free(part->fx); free(part->fy); free(part->fz);
 	free(part->density_p); free(part->density_n);
 	free(part->energy);
 }
 
-void free_particle_count(struct particle_count *part_count) {
+void free_particle_count(ParticleCount *part_count) {
 	free(part_count->count);
 }
 
-void free_vector_field(struct vector_field *field) {
+void free_vector_field(VectorField *field) {
 	free(field->x); free(field->y); free(field->z);
 }
 
-void free_scalar_field(struct scalar_field *field) {
+void free_scalar_field(ScalarField *field) {
 	free(field->v);
 }
 
-void read_input_file(FILE *in, struct skyrme *skm, struct world *world, struct world *world_visual, struct fermi *fermi_levels, struct parameters *param, struct woods_saxon *ws) {
+void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, Fermi *fermi_levels, Parameters *param, WoodsSaxon *ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f;
 	char current[32];
 	int i = 0, num_test_part, steps, nx, z, n;
