@@ -74,6 +74,10 @@ void set_world(World *world, double d_max, int n) {
 void create_particle_count(ParticleCount *part_count, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	part_count->count = malloc(2 * world_size * sizeof(int));
+	if(part_count->count == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
 		part_count->count[i] = 0;
@@ -82,6 +86,10 @@ void create_particle_count(ParticleCount *part_count, World world) {
 void create_volumetric_density(ScalarField *volume, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	volume->v = malloc(2 * world_size * sizeof(double));
+	if(volume->v == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
 		volume->v[i] = 0.0;
@@ -103,6 +111,14 @@ void create_particles(TestParticles *part, int protons, int neutrons) {
 	part->energy = malloc(total * sizeof(double));
 	part->density_p = malloc(total * sizeof(double));
 	part->density_n = malloc(total * sizeof(double));
+	
+	if(part->x == NULL || part->y == NULL || part->z == NULL
+	|| part->kx == NULL || part->ky == NULL || part->kz == NULL
+	|| part->fx == NULL || part->fy == NULL || part->fz == NULL
+	|| part->energy == NULL || part->density_p == NULL || part->density_n == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
 }
 
 void output_centroids(FILE *out, TestParticles part, int type) {
@@ -128,6 +144,10 @@ void output_particle_count(FILE *out, ParticleCount particle_count, World world)
 	output_vtk_header_count(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
+	if(vtk_count == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++)
 		vtk_count[i] = __builtin_bswap32(particle_count.count[i]);
@@ -141,6 +161,10 @@ void output_volumetric_density(FILE *out, ScalarField volume, World world) {
 	uint64_t *vtk_density_p = malloc(size * sizeof(uint64_t));
 	uint64_t *vtk_density_n = malloc(size * sizeof(uint64_t));
 	uint64_t *vtk_density_t = malloc(size * sizeof(uint64_t));
+	if(vtk_density_p == NULL || vtk_density_n == NULL || vtk_density_t == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
 	#pragma omp parallel for
 	for(int i = 0; i < size; i++) {
 		vtk_density_p[i] = swap_endian(volume.v[i]);
@@ -269,6 +293,6 @@ void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, F
 
 }
 
-void set_output_file(char *output_file, char *output_directory, int i) {
-	sprintf(output_file, "%sout-%04d.vtk", output_directory, i);
+void set_output_filename(char *output_filename, char *output_directory, int i) {
+	sprintf(output_filename, "%sout-%04d.vtk", output_directory, i);
 }

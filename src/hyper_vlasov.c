@@ -29,26 +29,28 @@ SOFTWARE. */
 #include "sim_structs.h"
 
 void simulate(char *output_directory, TestParticles *part, WoodsSaxon *ws, Skyrme skm, Parameters param, World world, World world_visual) {
-	char output_file[32];
-	set_output_file(output_file, output_directory, 0);
-	FILE *out = fopen(output_file, "wb");
-	if(out == NULL) {
-		fprintf(stderr, "CANNOT OPEN FILE!");
-		exit(1);
-	}
 	chi_squared(*part, ws, skm, param.part_per_nucleon);
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
 	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
+	char output_filename[32];
 	ScalarField volume;
 	create_volumetric_density(&volume, world);
-	compute_volumetric_density_cic(&volume, part, param, world);
 	
-	output_volumetric_density(out, volume, world);
+	for(int i = 0; i < 1; i++) {
+		set_output_filename(output_filename, output_directory, i);
+		FILE *out = fopen(output_filename, "wb");
+		if(out == NULL) {
+			fprintf(stderr, "CANNOT OPEN FILE!\n");
+			exit(1);
+		}
+		compute_volumetric_density_cic(&volume, part, param, world);
+		output_volumetric_density(out, volume, world);
+		fclose(out);
+	}
 	
 	free_scalar_field(&volume);
-	fclose(out);
 	//ParticleCount part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);
