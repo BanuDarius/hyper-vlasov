@@ -268,3 +268,7 @@ void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, F
 	set_woods_saxon(&ws[1], V0, 0.8 * param->r_max, a);
 
 }
+
+void set_output_file(char *output_file, char *output_directory, int i) {
+	sprintf(output_file, "%sout-%04d.vtk", output_directory, i);
+}

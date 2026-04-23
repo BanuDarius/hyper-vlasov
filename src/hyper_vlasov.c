@@ -28,19 +28,27 @@ SOFTWARE. */
 #include "physics.h"
 #include "sim_structs.h"
 
-void simulate(FILE *out, TestParticles *part, WoodsSaxon *ws, Skyrme skm, Parameters param, World world, World world_visual) {
+void simulate(char *output_directory, TestParticles *part, WoodsSaxon *ws, Skyrme skm, Parameters param, World world, World world_visual) {
+	char output_file[32];
+	set_output_file(output_file, output_directory, 0);
+	FILE *out = fopen(output_file, "wb");
+	if(out == NULL) {
+		fprintf(stderr, "CANNOT OPEN FILE!");
+		exit(1);
+	}
 	chi_squared(*part, ws, skm, param.part_per_nucleon);
 	double msr_p = mean_squared_radius(*part, PROTONS);
 	double msr_n = mean_squared_radius(*part, NEUTRONS);
+	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
 	ScalarField volume;
 	create_volumetric_density(&volume, world);
 	compute_volumetric_density_cic(&volume, part, param, world);
 	
 	output_volumetric_density(out, volume, world);
-	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
 	free_scalar_field(&volume);
+	fclose(out);
 	//ParticleCount part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);
@@ -53,11 +61,11 @@ void simulate(FILE *out, TestParticles *part, WoodsSaxon *ws, Skyrme skm, Parame
 int main(int argc, char **argv) {
 	srand(128);
 	if(argc != 3) {
-		printf("BAD!\n");
+		fprintf(stderr, "NEED 3 ARGUMENTS!\n");
 		return 1;
 	}
 	double start_time = omp_get_wtime();
-	FILE *in = fopen(argv[1], "r"), *out = fopen(argv[2], "wb");
+	FILE *in = fopen(argv[1], "r");
 	
 	Skyrme skm;
 	Parameters param;
@@ -71,11 +79,11 @@ int main(int argc, char **argv) {
 	
 	printf("Simulation started.\n");
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
-	simulate(out, &part, ws, skm, param, world, world_visual);
+	simulate(argv[2], &part, ws, skm, param, world, world_visual);
 	printf("Simulation ended.\n");
 	printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
 	
-	fclose(out); fclose(in);
+	fclose(in);
 	free_particles(&part);
 	return 0;
 }
