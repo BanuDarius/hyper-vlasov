@@ -73,8 +73,6 @@ int main(int argc, char **argv) {
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
 	simulate(out, &part, ws, skm, param, world, world_visual);
 	printf("Simulation ended.\n");
-	
-	printf("FERMI P %0.2lf FERMI N %0.2lf\n", fermi_levels.epsilon_p, fermi_levels.epsilon_n);
 	printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
 	
 	fclose(out); fclose(in);

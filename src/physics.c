@@ -83,7 +83,8 @@ void initialize_particles(TestParticles *part, Parameters param, WoodsSaxon *ws,
 		printf("%i %i %i\n", check_less_n, check_equal_n, check_more_n);
 		printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
 		printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);
-		printf("DELTA EPSILON = %0.2lf\nITERATION = %i\n", total_delta_epsilon, it);
+		printf("FERMI P %0.2lf FERMI N %0.2lf\n", fermi_levels->epsilon_p, fermi_levels->epsilon_n);
+		printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it);
 		
 		it++;
 	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_ITERATIONS);	

@@ -32,11 +32,6 @@ SOFTWARE. */
 #include "sim_structs.h"
 
 double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z, int i) {
-	WoodsSaxon ws_c;
-	if(i < part->protons)
-		ws_c = ws[0];
-	else
-		ws_c = ws[1];
 	double r_vec[3], k_vec[3];
 	copy_particle_pos_to_vector(r_vec, *part, i);
 	copy_particle_vel_to_vector(k_vec, *part, i);
@@ -45,6 +40,7 @@ double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z
 	double k = magnitude(k_vec);
 	
 	double energy = 0.0;
+	WoodsSaxon ws_c = (i < part->protons) ? ws[0] : ws[1];
 	energy += woods_saxon_potential(ws_c, r);
 	energy += (k * k) * kinetic_energy();
 	
@@ -56,7 +52,8 @@ double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z
 }
 
 void compute_particle_energies(TestParticles *part, WoodsSaxon *ws, Parameters param) {
-	double sigma_k = param.sigma_k, z = param.z;
+	double sigma_k = param.sigma_k, z = (double)param.z;
+	#pragma omp parallel for
 	for(int i = 0; i < part->protons + part->neutrons; i++)
 		part->energy[i] = compute_energy(part, ws, sigma_k, z, i);
 }
@@ -338,14 +335,6 @@ double mean_squared_radius(TestParticles part, int type) {
 	return r_sqr / part_num;
 }
 
-void relax_woods_saxon(WoodsSaxon *ws, WoodsSaxon *ws_old, double coef) {
-	for(int i = 0; i < 2; i++) {
-		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;
-		ws[i].R12 = coef * ws[i].R12 + (1.0 - coef) * ws_old[i].R12;
-		ws[i].a = coef * ws[i].a + (1.0 - coef) * ws_old[i].a;
-	}
-}
-
 double kinetic_energy() {
 	double hc2 = H_BAR_C * H_BAR_C;
 	double e_kin = hc2 / (2.0 * MC2);
@@ -361,4 +350,12 @@ double calc_sigma(double fwhm) {
 	double t = 2.0 * sqrt(2.0 * log(2.0));
 	double sigma = fwhm / t;
 	return sigma;
+}
+
+void relax_woods_saxon(WoodsSaxon *ws, WoodsSaxon *ws_old, double coef) {
+	for(int i = 0; i < 2; i++) {
+		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;
+		ws[i].R12 = coef * ws[i].R12 + (1.0 - coef) * ws_old[i].R12;
+		ws[i].a = coef * ws[i].a + (1.0 - coef) * ws_old[i].a;
+	}
 }
