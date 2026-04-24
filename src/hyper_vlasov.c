@@ -54,10 +54,10 @@ void simulate(char *output_directory, TestParticles *part, WoodsSaxon *ws, Skyrm
 	//ParticleCount part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);
-	//free_particle_count(&part_count);
 	//compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
 	//output_centroids(out, part, PROTONS);
 	//output_particle_count(out, part_count, world);
+	//free_particle_count(&part_count);
 }
 
 int main(int argc, char **argv) {

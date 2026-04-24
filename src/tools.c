@@ -143,7 +143,7 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 		double t_x = 1.0 - d_x; double t_y = 1.0 - d_y; double t_z = 1.0 - d_z;
 		int x1 = x0 + 1; int y1 = y0 + 1; int z1 = z0 + 1;
 		
-		int offset = (i >= part->protons) ? size : 0;
+		int offset = (i < part->protons) ? 0 : size;
 		int idx000 = x0 * (y * z) + y0 * z + z0 + offset;
 		#pragma omp atomic update
 		volume->v[idx000] += t_x * t_y * t_z;
@@ -195,7 +195,7 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 		world_pos_to_vector(r_i, world, i % size);
 		
 		for(int j = 0; j < size; j++) {
-			int offset = (i >= size) ? size : 0;
+			int offset = (i < size) ? 0 : size;
 			int idx = j + offset;
 			double count = temp_volume.v[idx];
 			world_pos_to_vector(r_j, world, j);
