@@ -8,4 +8,4 @@
 #SBATCH --mem=16G
 #SBATCH --time=2:00:00
 
-srun bin/hyper_vlasov output/out.vtk
+srun bin/hyper_vlasov input/input.txt output/
