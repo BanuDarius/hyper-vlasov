@@ -92,6 +92,58 @@ void initialize_particles(TestParticles *part, Parameters param, WoodsSaxon *ws,
 	free_particles(&temp_part);
 }
 
+void compute_volumetric_potentials(ScalarField *potentials, ScalarField volume, Skyrme skm, World world) {
+	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;
+	#pragma omp parallel for
+	for(int i = 0; i < world_size; i++)
+		potentials->v[i] = skyrme_potential(skm, volume.v[i], volume.v[i + world_size], PROTONS);
+	#pragma omp parallel for
+	for(int i = world_size; i < 2 * world_size; i++)
+		potentials->v[i] = skyrme_potential(skm, volume.v[i - world_size], volume.v[i], NEUTRONS);
+}
+
+void compute_volumetric_forces(VectorField *forces, ScalarField potentials, World world) {
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
+	double dx = 2.0 * world.d_max[0] / (nx - 1), dy = 2.0 * world.d_max[1] / (ny - 1), dz = 2.0 * world.d_max[2] / (nz - 1);
+	
+	for(int x = 0; x < 2; x++) {
+		int offset = (x == 0) ? 0 : nx * ny * nz;
+		#pragma omp parallel for collapse(3)
+		for(int i = 0; i < nx; i++) {
+			for(int j = 0; j < ny; j++) {
+				for(int k = 0; k < nz; k++) {
+					double gradient[3];
+					
+					if(i == 0)
+						gradient[0] = (potentials.v[IDX(1, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k, nx, ny, nz) + offset]) / dx;
+					else if(i == nx - 1)
+						gradient[0] = (potentials.v[IDX(i, j, k, nx, ny, nz) + offset] - potentials.v[IDX(nx - 2, j, k, nx, ny, nz) + offset]) / dx;
+					else
+						gradient[0] = (potentials.v[IDX(i + 1, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i - 1, j, k, nx, ny, nz) + offset]) / (2.0 * dx);
+					
+					if(j == 0)
+						gradient[1] = (potentials.v[IDX(i, 1, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k, nx, ny, nz) + offset]) / dy;
+					else if(j == ny - 1)
+						gradient[1] = (potentials.v[IDX(i, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i, ny - 2, k, nx, ny, nz) + offset]) / dy;
+					else
+						gradient[1] = (potentials.v[IDX(i, j + 1, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j - 1, k, nx, ny, nz) + offset]) / (2.0 * dy);
+					
+					if(k == 0)
+						gradient[2] = (potentials.v[IDX(i, j, 1, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k, nx, ny, nz) + offset]) / dz;
+					else if(k == nz - 1)
+						gradient[2] = (potentials.v[IDX(i, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j, nz - 2, nx, ny, nz) + offset]) / dz;
+					else
+						gradient[2] = (potentials.v[IDX(i, j, k + 1, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k - 1, nx, ny, nz) + offset]) / (2.0 * dz);
+					
+					forces->x[IDX(i, j, k, nx, ny, nz) + offset] = -gradient[0];
+					forces->y[IDX(i, j, k, nx, ny, nz) + offset] = -gradient[1];
+					forces->z[IDX(i, j, k, nx, ny, nz) + offset] = -gradient[2];
+				}
+			}
+		}
+	}
+}
+
 double nuclear_radius(unsigned short a) {
 	double radius = 1.5 * pow((double)a, 1.0 / 3.0);
 	return radius;
@@ -102,26 +154,4 @@ int max_particles(double r_max, double k_max, int part_per_nucleon) {
 	double phase_space_volume = (16.0 / 9.0) * M_PI * M_PI * (t * t * t);
 	int max = part_per_nucleon * (int)floor(phase_space_volume / (ct * ct * ct) + 0.5);
 	return max;
-}
-
-double woods_saxon_potential(WoodsSaxon ws, double r) {
-	double v = ws.V0 / (1.0 + exp((r - ws.R12) / ws.a));
-	return v;
-}
-
-double skyrme_potential(Skyrme skm, double rho_p, double rho_n, int type) {
-	double tau = (type == PROTONS) ? -1.0 : +1.0;
-	double rho = rho_p + rho_n;
-	double t = rho / RHO_0;
-	double v = skm.A * t + skm.B * pow(t, skm.gamma) + 2.0 * tau * skm.C * ((rho_n - rho_p) / RHO_0);
-	return v;
-}
-
-double coulomb_potential(WoodsSaxon ws, double z, double r) {
-	double R12 = ws.R12, v;
-	if(r <= ws.R12)
-		v = 1.44 * (z - 1.0) / R12 * (1.5 - 0.5 * (r / R12) * (r / R12));
-	else
-		v = 1.44 * (z - 1.0) / r;
-	return v;
 }

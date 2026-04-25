@@ -23,11 +23,34 @@ SOFTWARE. */
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
+#include "sim_structs.h"
+
 void initialize_particles(TestParticles *part, Parameters param, WoodsSaxon *ws, Skyrme skm, Fermi *fermi_levels);
+void compute_volumetric_potentials(ScalarField *potentials, ScalarField volume, Skyrme skm, World world);
+void compute_volumetric_forces(VectorField *forces, ScalarField potentials, World world);
 double nuclear_radius(unsigned short a);
 int max_particles(double r_max, double k_max, int total_test_part);
-double woods_saxon_potential(WoodsSaxon ws, double r);
-double skyrme_potential(Skyrme skm, double rho_p, double rho_n, int type);
-double coulomb_potential(WoodsSaxon ws, double z, double r);
+
+static inline double woods_saxon_potential(WoodsSaxon ws, double r) {
+	double v = ws.V0 / (1.0 + exp((r - ws.R12) / ws.a));
+	return v;
+}
+
+static inline double skyrme_potential(Skyrme skm, double rho_p, double rho_n, int type) {
+	double tau = (type == PROTONS) ? -1.0 : +1.0;
+	double rho = rho_p + rho_n;
+	double t = rho / RHO_0;
+	double v = skm.A * t + skm.B * pow(t, skm.gamma) + 2.0 * tau * skm.C * ((rho_n - rho_p) / RHO_0);
+	return v;
+}
+
+static inline double coulomb_potential(WoodsSaxon ws, double z, double r) {
+	double R12 = ws.R12, v;
+	if(r <= ws.R12)
+		v = 1.44 * (z - 1.0) / R12 * (1.5 - 0.5 * (r / R12) * (r / R12));
+	else
+		v = 1.44 * (z - 1.0) / r;
+	return v;
+}
 
 #endif

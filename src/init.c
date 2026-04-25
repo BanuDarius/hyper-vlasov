@@ -83,16 +83,33 @@ void create_particle_count(ParticleCount *part_count, World world) {
 		part_count->count[i] = 0;
 }
 
-void create_volumetric_density(ScalarField *volume, World world) {
+void create_scalar_field(ScalarField *field, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
-	volume->v = malloc(2 * world_size * sizeof(double));
-	if(volume->v == NULL) {
+	field->v = malloc(2 * world_size * sizeof(double));
+	if(field->v == NULL) {
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
-		volume->v[i] = 0.0;
+		field->v[i] = 0.0;
+}
+
+void create_vector_field(VectorField *field, World world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	field->x = malloc(2 * world_size * sizeof(double));
+	field->y = malloc(2 * world_size * sizeof(double));
+	field->z = malloc(2 * world_size * sizeof(double));
+	if(field->x == NULL || field->y == NULL || field->z == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++) {
+		field->x[i] = 0.0;
+		field->y[i] = 0.0;
+		field->z[i] = 0.0;
+	}
 }
 
 void create_particles(TestParticles *part, int protons, int neutrons) {
@@ -140,80 +157,86 @@ void output_centroids(FILE *out, TestParticles part, int type) {
 	}
 }
 
-void output_particle_count(FILE *out, ParticleCount particle_count, World world) {
-	output_vtk_header_count(out, world);
-	int total = world.n[0] * world.n[1] * world.n[2];
-	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
-	if(vtk_count == NULL) {
-		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
-	}
-	#pragma omp parallel for
-	for(int i = 0; i < total; i++)
-		vtk_count[i] = __builtin_bswap32(particle_count.count[i]);
-	
-	fwrite(vtk_count, sizeof(uint32_t), total, out);
-	free(vtk_count);
-}
-
-void output_volumetric_density(FILE *out, ScalarField volume, World world) {
-	int size = world.n[0] * world.n[1] * world.n[2];
-	uint64_t *vtk_density_p = malloc(size * sizeof(uint64_t));
-	uint64_t *vtk_density_n = malloc(size * sizeof(uint64_t));
-	uint64_t *vtk_density_t = malloc(size * sizeof(uint64_t));
+void output_scalar_field(FILE *out, ScalarField field, World world, char *name) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	uint64_t *vtk_density_p = malloc(world_size * sizeof(uint64_t));
+	uint64_t *vtk_density_n = malloc(world_size * sizeof(uint64_t));
+	uint64_t *vtk_density_t = malloc(world_size * sizeof(uint64_t));
 	if(vtk_density_p == NULL || vtk_density_n == NULL || vtk_density_t == NULL) {
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
 	#pragma omp parallel for
-	for(int i = 0; i < size; i++) {
-		vtk_density_p[i] = swap_endian(volume.v[i]);
-		vtk_density_n[i] = swap_endian(volume.v[i + size]);
-		vtk_density_t[i] = swap_endian(volume.v[i] + volume.v[i + size]);
+	for(int i = 0; i < world_size; i++) {
+		vtk_density_p[i] = swap_endian(field.v[i]);
+		vtk_density_n[i] = swap_endian(field.v[i + world_size]);
+		vtk_density_t[i] = swap_endian(field.v[i] + field.v[i + world_size]);
 	}
+	output_vtk_header_scalar_next(out, name, PROTONS);
+	fwrite(vtk_density_p, sizeof(uint64_t), world_size, out);
 	
-	output_vtk_header_volumetric_start(out, world);
-	output_vtk_header_volumetric_next(out, PROTONS);
-	fwrite(vtk_density_p, sizeof(uint64_t), size, out);
-	output_vtk_header_volumetric_next(out, NEUTRONS);
-	fwrite(vtk_density_n, sizeof(uint64_t), size, out);
-	output_vtk_header_volumetric_next(out, PROTONS_AND_NEUTRONS);
-	fwrite(vtk_density_t, sizeof(uint64_t), size, out);
+	output_vtk_header_scalar_next(out, name, NEUTRONS);
+	fwrite(vtk_density_n, sizeof(uint64_t), world_size, out);
+	
+	output_vtk_header_scalar_next(out, name, PROTONS_AND_NEUTRONS);
+	fwrite(vtk_density_t, sizeof(uint64_t), world_size, out);
 	
 	free(vtk_density_p); free(vtk_density_n); free(vtk_density_t);
 }
 
-void output_vtk_header_count(FILE *out, World world) {
+void output_vector_field(FILE *out, VectorField field, World world, char *name) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	uint64_t *vtk_force_p = malloc(3 * world_size * sizeof(uint64_t));
+	uint64_t *vtk_force_n = malloc(3 * world_size * sizeof(uint64_t));
+	
+	if(vtk_force_p == NULL || vtk_force_n == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
+	#pragma omp parallel for
+	for(int i = 0; i < world_size; i++) {
+		vtk_force_p[3 * i] = swap_endian(field.x[i]);
+		vtk_force_p[3 * i + 1] = swap_endian(field.y[i]);
+		vtk_force_p[3 * i + 2] = swap_endian(field.z[i]);
+		
+		vtk_force_n[3 * i] = swap_endian(field.x[i + world_size]);
+		vtk_force_n[3 * i + 1] = swap_endian(field.y[i + world_size]);
+		vtk_force_n[3 * i + 2] = swap_endian(field.z[i + world_size]);
+	}
+	output_vtk_header_vector_next(out, name, PROTONS);
+	fwrite(vtk_force_p, sizeof(uint64_t), 3 * world_size, out);
+	
+	output_vtk_header_vector_next(out, name, NEUTRONS);
+	fwrite(vtk_force_n, sizeof(uint64_t), 3 * world_size, out);
+	
+	free(vtk_force_p); free(vtk_force_n);
+}
+
+void output_vtk_header_start(FILE *out, World world) {
 	fprintf(out, "# vtk DataFile Version 3.0\n");
-	fprintf(out, "Volumetric count\n");
+	fprintf(out, "Volumetric data\n");
 	fprintf(out, "BINARY\n");
 	fprintf(out, "DATASET STRUCTURED_POINTS\n");
 	fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
 	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
 	fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
 	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
-	fprintf(out, "SCALARS count int 1\n");
-	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
-void output_vtk_header_volumetric_start(FILE *out, World world) {
-	fprintf(out, "# vtk DataFile Version 3.0\n");
-	fprintf(out, "Volumetric density\n");
-	fprintf(out, "BINARY\n");
-	fprintf(out, "DATASET STRUCTURED_POINTS\n");
-	fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
-	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
-	fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
-	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
-}
-
-void output_vtk_header_volumetric_next(FILE *out, int type) {
+void output_vtk_header_scalar_next(FILE *out, char *name, int type) {
 	char tag;
 	if(type == PROTONS) tag = 'p';
 	else if(type == NEUTRONS) tag = 'n';
 	else tag = 't';
-	fprintf(out, "SCALARS density_%c double 1\n", tag);
+	fprintf(out, "SCALARS %s_%c double 1\n", name, tag);
 	fprintf(out, "LOOKUP_TABLE default\n");
+}
+
+void output_vtk_header_vector_next(FILE *out, char *name, int type) {
+	char tag;
+	if(type == PROTONS) tag = 'p';
+	else if(type == NEUTRONS) tag = 'n';
+	fprintf(out, "VECTORS %s_%c double\n", name, tag);
 }
 
 void free_particles(TestParticles *part) {
@@ -295,4 +318,33 @@ void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, F
 
 void set_output_filename(char *output_filename, char *output_directory, int i) {
 	sprintf(output_filename, "%sout-%04d.vtk", output_directory, i);
+}
+
+void output_vtk_header_count(FILE *out, World world) {
+	fprintf(out, "# vtk DataFile Version 3.0\n");
+	fprintf(out, "Volumetric count\n");
+	fprintf(out, "BINARY\n");
+	fprintf(out, "DATASET STRUCTURED_POINTS\n");
+	fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
+	fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
+	fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
+	fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
+	fprintf(out, "SCALARS count int 1\n");
+	fprintf(out, "LOOKUP_TABLE default\n");
+}
+
+void output_particle_count(FILE *out, ParticleCount particle_count, World world) {
+	output_vtk_header_count(out, world);
+	int total = world.n[0] * world.n[1] * world.n[2];
+	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
+	if(vtk_count == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
+	#pragma omp parallel for
+	for(int i = 0; i < total; i++)
+		vtk_count[i] = __builtin_bswap32(particle_count.count[i]);
+	
+	fwrite(vtk_count, sizeof(uint32_t), total, out);
+	free(vtk_count);
 }

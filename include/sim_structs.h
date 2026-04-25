@@ -36,6 +36,8 @@ SOFTWARE. */
 #define RHO_0 0.16
 #define K_MAX 1.5
 
+#define IDX(i, j, k, nx, ny, nz) (((i) * (ny) * (nz)) + ((j) * (nz)) + (k))
+
 typedef struct {
 	double sigma_k, sigma_r, r_max, t_f;
 	int part_per_nucleon, max_test_part, steps, z, n;
@@ -49,16 +51,17 @@ typedef struct {
 } TestParticles;
 
 typedef struct {
-	int *count;
-} ParticleCount;
-
-typedef struct {
 	double *v;
 } ScalarField;
 
 typedef struct {
 	double *x, *y, *z;
 } VectorField;
+
+typedef struct {
+	int n[3];
+	double d_max[3];
+} World;
 
 typedef struct {
 	double V0, R12, a;
@@ -73,8 +76,7 @@ typedef struct {
 } Fermi;
 
 typedef struct {
-	int n[3];
-	double d_max[3];
-} World;
+	int *count;
+} ParticleCount;
 
 #endif

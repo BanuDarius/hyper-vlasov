@@ -28,29 +28,37 @@ SOFTWARE. */
 #include "physics.h"
 #include "sim_structs.h"
 
-void simulate(char *output_directory, TestParticles *part, WoodsSaxon *ws, Skyrme skm, Parameters param, World world, World world_visual) {
-	chi_squared(*part, ws, skm, param.part_per_nucleon);
-	double msr_p = mean_squared_radius(*part, PROTONS);
-	double msr_n = mean_squared_radius(*part, NEUTRONS);
-	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
+void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameters param, World world, World world_visual) {
+	VectorField forces;
+	create_vector_field(&forces, world);
 	
-	char output_filename[32];
-	ScalarField volume;
-	create_volumetric_density(&volume, world);
+	ScalarField volume, potentials;
+	create_scalar_field(&volume, world);
+	create_scalar_field(&potentials, world);
 	
-	for(int i = 0; i < 1; i++) {
-		set_output_filename(output_filename, output_directory, i);
+	for(int step = 0; step < 1; step++) {
+		char output_filename[32];
+		set_output_filename(output_filename, output_directory, step);
 		FILE *out = fopen(output_filename, "wb");
 		if(out == NULL) {
 			fprintf(stderr, "CANNOT OPEN FILE!\n");
 			exit(1);
 		}
 		compute_volumetric_density_cic(&volume, part, param, world);
-		output_volumetric_density(out, volume, world);
+		compute_volumetric_potentials(&potentials, volume, skm, world);
+		compute_volumetric_forces(&forces, potentials, world);
+		
+		output_vtk_header_start(out, world);
+		output_scalar_field(out, volume, world, "density");
+		output_scalar_field(out, potentials, world, "potentials");
+		output_vector_field(out, forces, world, "forces");
+		
 		fclose(out);
 	}
 	
+	free_vector_field(&forces);
 	free_scalar_field(&volume);
+	free_scalar_field(&potentials);
 	//ParticleCount part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);
@@ -81,7 +89,13 @@ int main(int argc, char **argv) {
 	
 	printf("Simulation started.\n");
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
-	simulate(argv[2], &part, ws, skm, param, world, world_visual);
+	
+	chi_squared(part, ws, skm, param.part_per_nucleon);
+	double msr_p = mean_squared_radius(part, PROTONS);
+	double msr_n = mean_squared_radius(part, NEUTRONS);
+	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
+	
+	simulate(argv[2], &part, skm, param, world, world_visual);
 	printf("Simulation ended.\n");
 	printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
 	
