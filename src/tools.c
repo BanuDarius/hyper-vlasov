@@ -34,7 +34,13 @@ SOFTWARE. */
 void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Parameters param, World world) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
+	
 	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++)
+		volume->v[i] = 0.0;
+	
+	double *volume_ptr = volume->v;
+	#pragma omp parallel for reduction(+: volume_ptr[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *part, i);
@@ -54,42 +60,34 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 		
 		int offset = (i < part->protons) ? 0 : world_size;
 		int idx000 = x0 * (y * z) + y0 * z + z0 + offset;
-		#pragma omp atomic update
-		volume->v[idx000] += t_x * t_y * t_z;
+		volume_ptr[idx000] += t_x * t_y * t_z;
 		if (x1 < x) {
 			int idx100 = x1 * (y * z) + y0 * z + z0 + offset;
-			#pragma omp atomic update
-			volume->v[idx100] += d_x * t_y * t_z;
+			volume_ptr[idx100] += d_x * t_y * t_z;
 		}
 		if (y1 < y) {
 			int idx010 = x0 * (y * z) + y1 * z + z0 + offset;
-			#pragma omp atomic update
-			volume->v[idx010] += t_x * d_y * t_z;
+			volume_ptr[idx010] += t_x * d_y * t_z;
 		}
 		if (x1 < x && y1 < y) {
 			int idx110 = x1 * (y * z) + y1 * z + z0 + offset;
-			#pragma omp atomic update
-			volume->v[idx110] += d_x * d_y * t_z;
+			volume_ptr[idx110] += d_x * d_y * t_z;
 		}
 		if (z1 < z) {
 			int idx001 = x0 * (y * z) + y0 * z + z1 + offset;
-			#pragma omp atomic update
-			volume->v[idx001] += t_x * t_y * d_z;
+			volume_ptr[idx001] += t_x * t_y * d_z;
 		}
 		if (x1 < x && z1 < z) {
 			int idx101 = x1 * (y * z) + y0 * z + z1 + offset;
-			#pragma omp atomic update
-			volume->v[idx101] += d_x * t_y * d_z;
+			volume_ptr[idx101] += d_x * t_y * d_z;
 		}
 		if (y1 < y && z1 < z) {
 			int idx011 = x0 * (y * z) + y1 * z + z1 + offset;
-			#pragma omp atomic update
-			volume->v[idx011] += t_x * d_y * d_z;
+			volume_ptr[idx011] += t_x * d_y * d_z;
 		}
 		if (x1 < x && y1 < y && z1 < z) {
 			int idx111 = x1 * (y * z) + y1 * z + z1 + offset;
-			#pragma omp atomic update
-			volume->v[idx111] += d_x * d_y * d_z;
+			volume_ptr[idx111] += d_x * d_y * d_z;
 		}
 	}
 	ScalarField temp_volume;
