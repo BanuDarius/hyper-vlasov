@@ -37,7 +37,6 @@ void create_scalar_field_single(ScalarField *field, World world);
 void create_scalar_field_double(ScalarField *field, World world);
 void create_vector_field(VectorField *field, World world);
 void create_particles(TestParticles *part, int protons, int neutrons);
-void output_centroids(FILE *out, TestParticles part, int type);
 void output_scalar_field(FILE *out, ScalarField volume, World world, char *name);
 void output_vector_field(FILE *out, VectorField field, World world, char *name);
 void output_vtk_header_start(FILE *out, World world);
@@ -51,6 +50,7 @@ void read_input_file(FILE *in, Skyrme *skm, World *world, Fermi *fermi_levels, P
 void set_output_filename(char *output_filename, char *output_directory, int i);
 //void create_particle_count(ParticleCount *part_count, World world);
 //void output_particle_count(FILE *out, ParticleCount particle_count, World world);
+//void output_centroids(FILE *out, TestParticles part, int type);
 
 static inline uint64_t swap_endian(double v) {
 	uint64_t data;

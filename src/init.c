@@ -71,18 +71,6 @@ void set_world(World *world, double d_max, int n) {
 	}
 }
 
-void create_particle_count(ParticleCount *part_count, World world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
-	part_count->count = malloc(2 * world_size * sizeof(int));
-	if(part_count->count == NULL) {
-		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
-	}
-	#pragma omp parallel for simd
-	for(int i = 0; i < 2 * world_size; i++)
-		part_count->count[i] = 0;
-}
-
 void create_scalar_field_single(ScalarField *field, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	field->v = malloc(world_size * sizeof(double));
@@ -151,24 +139,6 @@ void create_particles(TestParticles *part, int protons, int neutrons) {
 	}
 }
 
-void output_centroids(FILE *out, TestParticles part, int type) {
-	int start, end;
-	if(type == PROTONS) { start = 0; end = part.protons; }
-	else if(type == NEUTRONS) { start = 0; end = part.protons + part.neutrons; }
-	else { start = 0; end = part.protons + part.neutrons; }
-	
-	for(int i = start; i < end; i++) {
-		fwrite(&part.x[i], sizeof(double), 1, out);
-		fwrite(&part.y[i], sizeof(double), 1, out);
-		fwrite(&part.z[i], sizeof(double), 1, out);
-		fwrite(&part.kx[i], sizeof(double), 1, out);
-		fwrite(&part.ky[i], sizeof(double), 1, out);
-		fwrite(&part.kz[i], sizeof(double), 1, out);
-		fwrite(&part.energy[i], sizeof(double), 1, out);
-		fwrite(&part.density_p[i], sizeof(double), 1, out);
-		fwrite(&part.density_n[i], sizeof(double), 1, out);
-	}
-}
 
 void output_scalar_field(FILE *out, ScalarField field, World world, char *name) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
@@ -373,4 +343,35 @@ void output_vtk_header_count(FILE *out, World world) {
 	
 	fwrite(vtk_count, sizeof(uint32_t), total, out);
 	free(vtk_count);
+}
+
+void create_particle_count(ParticleCount *part_count, World world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	part_count->count = malloc(2 * world_size * sizeof(int));
+	if(part_count->count == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
+	#pragma omp parallel for simd
+	for(int i = 0; i < 2 * world_size; i++)
+		part_count->count[i] = 0;
+}
+
+void output_centroids(FILE *out, TestParticles part, int type) {
+	int start, end;
+	if(type == PROTONS) { start = 0; end = part.protons; }
+	else if(type == NEUTRONS) { start = 0; end = part.protons + part.neutrons; }
+	else { start = 0; end = part.protons + part.neutrons; }
+	
+	for(int i = start; i < end; i++) {
+		fwrite(&part.x[i], sizeof(double), 1, out);
+		fwrite(&part.y[i], sizeof(double), 1, out);
+		fwrite(&part.z[i], sizeof(double), 1, out);
+		fwrite(&part.kx[i], sizeof(double), 1, out);
+		fwrite(&part.ky[i], sizeof(double), 1, out);
+		fwrite(&part.kz[i], sizeof(double), 1, out);
+		fwrite(&part.energy[i], sizeof(double), 1, out);
+		fwrite(&part.density_p[i], sizeof(double), 1, out);
+		fwrite(&part.density_n[i], sizeof(double), 1, out);
+	}
 }*/

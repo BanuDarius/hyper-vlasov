@@ -20,6 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
+#include <omp.h>
 #include <math.h>
 #include <stdio.h>
 
@@ -36,15 +37,19 @@ void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameter
 	create_scalar_field_single(&coulomb, world);
 	create_scalar_field_double(&volume, world);
 	create_scalar_field_double(&potentials, world);
+	set_initial_coulomb_boundaries(&coulomb, world, param.z);
 	
 	compute_volumetric_density_cic(&volume, part, param, world);
 	
 	compute_volumetric_skyrme_potentials(&potentials, volume, skm, world);
-	compute_volumetric_coulomb_potentials_sor(&coulomb, volume, world, param.z);
+	compute_volumetric_coulomb_potentials_sor(&coulomb, volume, world);
 	merge_volumetric_potentials(&potentials, coulomb, world);
 	compute_volumetric_forces_fdm(&forces, potentials, world);
 	
 	distribute_forces_to_particles_cic(part, forces, world);
+	char msr_filename[32];
+	sprintf(msr_filename, "%smsr.txt", output_directory);
+	FILE *msr_file = fopen(msr_filename, "w");
 	
 	for(int step = 1; step <= param.steps; step++) {
 		char output_filename[32];
@@ -68,7 +73,7 @@ void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameter
 		compute_volumetric_density_cic(&volume, part, param, world);
 		
 		compute_volumetric_skyrme_potentials(&potentials, volume, skm, world);
-		compute_volumetric_coulomb_potentials_sor(&coulomb, volume, world, param.z);
+		compute_volumetric_coulomb_potentials_sor(&coulomb, volume, world);
 		merge_volumetric_potentials(&potentials, coulomb, world);
 		compute_volumetric_forces_fdm(&forces, potentials, world);
 		
@@ -76,12 +81,23 @@ void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameter
 		
 		update_momenta_half(part, dt);
 		
+		for(int i = 0; i < part->protons + part->neutrons; i++) {
+			if(isnan(part->x[i])) {
+				printf("Particle %d became NaN at step %d\n", i, step);
+				exit(1);
+			}
+		}
 		printf("TIME STEP %i/%i\n", step, param.steps);
+		double msr_p = mean_squared_radius(*part, PROTONS);
+		double msr_n = mean_squared_radius(*part, NEUTRONS);
+		//fprintf(msr_file, "%0.4lf %0.4lf %0.4lf\n", sqrt(msr_n), sqrt(msr_p), step * dt);
+		//fprintf(msr_file, "%0.4lf\n", part->x[84526]);
 	}
 	free_vector_field(&forces);
 	free_scalar_field(&volume);
 	free_scalar_field(&coulomb);
 	free_scalar_field(&potentials);
+	fclose(msr_file);
 	//ParticleCount part_count;
 	//create_particle_count(&part_count, world);
 	//scatter_particles(&part_count, part, world);
@@ -112,11 +128,7 @@ int main(int argc, char **argv) {
 	printf("Simulation started.\n");
 	double start_time = omp_get_wtime();
 	initialize_particles(&part, param, ws, skm, &fermi_levels);
-	
 	chi_squared(part, ws, skm, param.part_per_nucleon);
-	double msr_p = mean_squared_radius(part, PROTONS);
-	double msr_n = mean_squared_radius(part, NEUTRONS);
-	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
 	simulate(argv[2], &part, skm, param, world);
 	printf("Simulation ended.\n");

@@ -26,7 +26,7 @@ SOFTWARE. */
 #include "sim_structs.h"
 
 void initialize_particles(TestParticles *part, Parameters param, WoodsSaxon *ws, Skyrme skm, Fermi *fermi_levels);
-void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField volume, World world, int z);
+void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField volume, World world);
 void compute_volumetric_forces_fdm(VectorField *forces, ScalarField potentials, World world);
 void compute_volumetric_skyrme_potentials(ScalarField *potentials, ScalarField volume, Skyrme skm, World world);
 void update_momenta_half(TestParticles *part, double dt);

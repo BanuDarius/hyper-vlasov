@@ -92,24 +92,9 @@ void initialize_particles(TestParticles *part, Parameters param, WoodsSaxon *ws,
 	free_particles(&temp_part);
 }
 
-void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField volume, World world, int z) {
+void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField volume, World world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	double dx = 2.0 * world.d_max[0] / nx, dy = 2.0 * world.d_max[1] / ny, dz = 2.0 * world.d_max[2] / nz;
-	
-	#pragma omp parallel for collapse(3)
-	for(int i = 0; i < nx; i++) {
-		for(int j = 0; j < ny; j++) {
-			for(int k = 0; k < nz; k++) {
-				int idx = IDX(i, j, k, nx, ny, nz);
-				if(i == 0 || j == 0 || k == 0 || i == nx - 1 || j == ny - 1 || k == nz - 1) {
-					double r_vec[3];
-					world_pos_to_vector(r_vec, world, idx);
-					double r = magnitude(r_vec);
-					coulomb->v[idx] = 1.44 * z / r;
-				}
-			}
-		}
-	}
 	double inv_dx2 = 1.0 / (2.0 / (dx * dx) + 2.0 / (dy * dy) + 2.0 / (dz * dz)), omega = 1.80, max_diff;
 	for(int it = 0; it < MAX_SOR_ITERATIONS; it++) {
 		max_diff = 0.0;
@@ -167,7 +152,6 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField
 void compute_volumetric_forces_fdm(VectorField *forces, ScalarField potentials, World world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	double dx = 2.0 * world.d_max[0] / nx, dy = 2.0 * world.d_max[1] / ny, dz = 2.0 * world.d_max[2] / nz;
-	
 	for(int x = 0; x < 2; x++) {
 		int offset = (x == 0) ? 0 : nx * ny * nz;
 		#pragma omp parallel for collapse(3)

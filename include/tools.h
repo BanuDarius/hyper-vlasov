@@ -23,18 +23,18 @@ SOFTWARE. */
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#include <omp.h>
 #include <stdlib.h>
 
 #include "sim_structs.h"
 
 void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Parameters param, World world);
 void distribute_forces_to_particles_cic(TestParticles *part, VectorField forces, World world);
+void compute_particle_densities(TestParticles *part, Parameters param);
 double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z, int i);
 void compute_particle_energies(TestParticles *part, WoodsSaxon *ws, Parameters param);
-void compute_particle_densities(TestParticles *part, Parameters param);
 void generate_random_particles(TestParticles *part, double r_max);
 void generate_checking_particles(TestParticles *part, WoodsSaxon *ws, Parameters param, Fermi *fermi_levels);
+void set_initial_coulomb_boundaries(ScalarField *coulomb, World world, int z);
 void merge_volumetric_potentials(ScalarField *potentials, ScalarField coulomb, World world);
 void copy_scalar_field(ScalarField *volume_a, ScalarField volume_b, World world);
 void chi_squared(TestParticles part, WoodsSaxon *ws, Skyrme skm, int part_per_nucleon);

@@ -1,6 +1,6 @@
-num_test_part 3000
-z 10
-n 10
+num_test_part 1000
+z 50
+n 82
 V0 -50.0
 a 0.66
 A -356.8
@@ -13,4 +13,4 @@ k_fwhm 0.346
 r_fwhm 1.444
 nx 16
 t_f 300
-steps 300
+steps 600

@@ -195,33 +195,6 @@ void distribute_forces_to_particles_cic(TestParticles *part, VectorField forces,
 	}
 }
 
-double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z, int i) {
-	double r_vec[3], k_vec[3];
-	copy_particle_pos_to_vector(r_vec, *part, i);
-	copy_particle_vel_to_vector(k_vec, *part, i);
-	
-	double r = magnitude(r_vec);
-	double k = magnitude(k_vec);
-	
-	double energy = 0.0;
-	WoodsSaxon ws_c = (i < part->protons) ? ws[0] : ws[1];
-	energy += woods_saxon_potential(ws_c, r);
-	energy += (k * k) * kinetic_energy();
-	
-	if(i < part->protons)
-		energy += coulomb_potential(ws_c, (double)z, r);
-	
-	energy += fluctuation_energy(sigma_k);
-	return energy;
-}
-
-void compute_particle_energies(TestParticles *part, WoodsSaxon *ws, Parameters param) {
-	double sigma_k = param.sigma_k, z = (double)param.z;
-	#pragma omp parallel for
-	for(int i = 0; i < part->protons + part->neutrons; i++)
-		part->energy[i] = compute_energy(part, ws, sigma_k, z, i);
-}
-
 void compute_particle_densities(TestParticles *part, Parameters param) {
 	int part_per_nucleon = param.part_per_nucleon, p = part->protons, n = part->neutrons, total = p + n;
 	
@@ -257,6 +230,32 @@ void compute_particle_densities(TestParticles *part, Parameters param) {
 	}
 }
 
+double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z, int i) {
+	double r_vec[3], k_vec[3];
+	copy_particle_pos_to_vector(r_vec, *part, i);
+	copy_particle_vel_to_vector(k_vec, *part, i);
+	
+	double r = magnitude(r_vec);
+	double k = magnitude(k_vec);
+	
+	double energy = 0.0;
+	WoodsSaxon ws_c = (i < part->protons) ? ws[0] : ws[1];
+	energy += woods_saxon_potential(ws_c, r);
+	energy += (k * k) * kinetic_energy();
+	
+	if(i < part->protons)
+		energy += coulomb_potential(ws_c, (double)z, r);
+	
+	energy += fluctuation_energy(sigma_k);
+	return energy;
+}
+
+void compute_particle_energies(TestParticles *part, WoodsSaxon *ws, Parameters param) {
+	double sigma_k = param.sigma_k, z = (double)param.z;
+	#pragma omp parallel for
+	for(int i = 0; i < part->protons + part->neutrons; i++)
+		part->energy[i] = compute_energy(part, ws, sigma_k, z, i);
+}
 
 void generate_random_particles(TestParticles *part, double r_max) {
 	int total = part->protons + part->neutrons, i = 0;
@@ -301,6 +300,24 @@ void generate_checking_particles(TestParticles *part, WoodsSaxon *ws, Parameters
 			copy_vector_to_particle_pos(part, r_new, i + 1);
 			copy_vector_to_particle_vel(part, k_new, i + 1);
 			i+=2;
+		}
+	}
+}
+
+void set_initial_coulomb_boundaries(ScalarField *coulomb, World world, int z) {
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
+	#pragma omp parallel for collapse(3)
+	for(int i = 0; i < nx; i++) {
+		for(int j = 0; j < ny; j++) {
+			for(int k = 0; k < nz; k++) {
+				if(i == 0 || j == 0 || k == 0 || i == nx - 1 || j == ny - 1 || k == nz - 1) {
+					int idx = IDX(i, j, k, nx, ny, nz);
+					double r_vec[3];
+					world_pos_to_vector(r_vec, world, idx);
+					double r = magnitude(r_vec);
+					coulomb->v[idx] = 1.44 * z / r;
+				}
+			}
 		}
 	}
 }
