@@ -33,7 +33,7 @@ SOFTWARE. */
 
 void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Parameters param, World world) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part->protons + part->neutrons;
 	
 	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
@@ -45,49 +45,49 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 		double r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *part, i);
 		
-		double cx = (x / 2.0) * (r_vec[0] / d_max_x + 1.0);
-		double cy = (y / 2.0) * (r_vec[1] / d_max_y + 1.0);
-		double cz = (z / 2.0) * (r_vec[2] / d_max_z + 1.0);
+		double cx = (nx / 2.0) * (r_vec[0] / d_max_x + 1.0);
+		double cy = (ny / 2.0) * (r_vec[1] / d_max_y + 1.0);
+		double cz = (nz / 2.0) * (r_vec[2] / d_max_z + 1.0);
 		
-		int x0 = (int)cx; int y0 = (int)cy; int z0 = (int)cz;
-		
-		if(x0 < 0 || y0 < 0 || z0 < 0 || x0 >= x || y0 >= y || z0 >= z)
+		if(cx < 0.0 || cy < 0.0 || cz < 0.0 || cx >= nx || cy >= ny || cz >= nz)
 			continue;
-			
-		double d_x = cx - x0; double d_y = cy - y0; double d_z = cz - z0;
-		double t_x = 1.0 - d_x; double t_y = 1.0 - d_y; double t_z = 1.0 - d_z;
-		int x1 = x0 + 1; int y1 = y0 + 1; int z1 = z0 + 1;
+		
+		int x0 = (int)cx, y0 = (int)cy, z0 = (int)cz;
+		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
+		double d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
+		double t_x = 1.0 - d_x, t_y = 1.0 - d_y, t_z = 1.0 - d_z;
 		
 		int offset = (i < part->protons) ? 0 : world_size;
 		
-		int idx000 = x0 * (y * z) + y0 * z + z0 + offset;
+		int idx000 = x0 * (ny * nz) + y0 * nz + z0 + offset;
 		volume_ptr[idx000] += t_x * t_y * t_z;
-		if (x1 < x) {
-			int idx100 = x1 * (y * z) + y0 * z + z0 + offset;
+		
+		if (x1 < nx) {
+			int idx100 = x1 * (ny * nz) + y0 * nz + z0 + offset;
 			volume_ptr[idx100] += d_x * t_y * t_z;
 		}
-		if (y1 < y) {
-			int idx010 = x0 * (y * z) + y1 * z + z0 + offset;
+		if (y1 < ny) {
+			int idx010 = x0 * (ny * nz) + y1 * nz + z0 + offset;
 			volume_ptr[idx010] += t_x * d_y * t_z;
 		}
-		if (x1 < x && y1 < y) {
-			int idx110 = x1 * (y * z) + y1 * z + z0 + offset;
+		if (x1 < nx && y1 < ny) {
+			int idx110 = x1 * (ny * nz) + y1 * nz + z0 + offset;
 			volume_ptr[idx110] += d_x * d_y * t_z;
 		}
-		if (z1 < z) {
-			int idx001 = x0 * (y * z) + y0 * z + z1 + offset;
+		if (z1 < nz) {
+			int idx001 = x0 * (ny * nz) + y0 * nz + z1 + offset;
 			volume_ptr[idx001] += t_x * t_y * d_z;
 		}
-		if (x1 < x && z1 < z) {
-			int idx101 = x1 * (y * z) + y0 * z + z1 + offset;
+		if (x1 < nx && z1 < nz) {
+			int idx101 = x1 * (ny * nz) + y0 * nz + z1 + offset;
 			volume_ptr[idx101] += d_x * t_y * d_z;
 		}
-		if (y1 < y && z1 < z) {
-			int idx011 = x0 * (y * z) + y1 * z + z1 + offset;
+		if (y1 < ny && z1 < nz) {
+			int idx011 = x0 * (ny * nz) + y1 * nz + z1 + offset;
 			volume_ptr[idx011] += t_x * d_y * d_z;
 		}
-		if (x1 < x && y1 < y && z1 < z) {
-			int idx111 = x1 * (y * z) + y1 * z + z1 + offset;
+		if (x1 < nx && y1 < ny && z1 < nz) {
+			int idx111 = x1 * (ny * nz) + y1 * nz + z1 + offset;
 			volume_ptr[idx111] += d_x * d_y * d_z;
 		}
 	}
@@ -136,16 +136,15 @@ void distribute_forces_to_particles_cic(TestParticles *part, VectorField forces,
 		double cy = (ny / 2.0) * (r_vec[1] / d_max_y + 1.0);
 		double cz = (nz / 2.0) * (r_vec[2] / d_max_z + 1.0);
 		
-		int x0 = (int)cx; int y0 = (int)cy; int z0 = (int)cz;
-		
-		if(x0 < 0 || y0 < 0 || z0 < 0 || x0 >= nx || y0 >= ny || z0 >= nz) {
+		if(cx < 0.0 || cy < 0.0 || cz < 0.0 || cx >= nx || cy >= ny || cz >= nz) {
 			part->fx[i] = 0.0; part->fy[i] = 0.0; part->fz[i] = 0.0;
 			continue;
 		}
 		
-		double d_x = cx - x0; double d_y = cy - y0; double d_z = cz - z0;
-		double t_x = 1.0 - d_x; double t_y = 1.0 - d_y; double t_z = 1.0 - d_z;
-		int x1 = x0 + 1; int y1 = y0 + 1; int z1 = z0 + 1;
+		int x0 = (int)cx, y0 = (int)cy, z0 = (int)cz;
+		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
+		double d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
+		double t_x = 1.0 - d_x, t_y = 1.0 - d_y, t_z = 1.0 - d_z;
 		
 		int offset = (i < part->protons) ? 0 : world_size;
 		double fx = 0.0, fy = 0.0, fz = 0.0;

@@ -8,4 +8,6 @@
 #SBATCH --mem=16G
 #SBATCH --time=2:00:00
 
+export OMP_PROC_BIND=true
+
 srun bin/hyper_vlasov input/input.txt output/
