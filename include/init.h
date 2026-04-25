@@ -48,7 +48,7 @@ void free_particles(TestParticles *part);
 void free_particle_count(ParticleCount *part_count);
 void free_vector_field(VectorField *field);
 void free_scalar_field(ScalarField *field);
-void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, Fermi *fermi_levels, Parameters *param, WoodsSaxon *ws);
+void read_input_file(FILE *in, Skyrme *skm, World *world, Fermi *fermi_levels, Parameters *param, WoodsSaxon *ws);
 void set_output_filename(char *output_filename, char *output_directory, int i);
 void output_particle_count(FILE *out, ParticleCount particle_count, World world);
 

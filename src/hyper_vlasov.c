@@ -28,7 +28,7 @@ SOFTWARE. */
 #include "physics.h"
 #include "sim_structs.h"
 
-void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameters param, World world, World world_visual) {
+void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameters param, World world) {
 	VectorField forces;
 	create_vector_field(&forces, world);
 	
@@ -100,14 +100,14 @@ int main(int argc, char **argv) {
 	}
 	
 	Skyrme skm;
+	World world;
 	Parameters param;
 	WoodsSaxon ws[2];
 	Fermi fermi_levels;
 	TestParticles part;
-	World world, world_visual;
 	
 	FILE *in = fopen(argv[1], "r");
-	read_input_file(in, &skm, &world, &world_visual, &fermi_levels, &param, ws);
+	read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
 	printf("MAX TEST PART %i\n", param.max_test_part);
 	
 	printf("Simulation started.\n");
@@ -119,7 +119,7 @@ int main(int argc, char **argv) {
 	double msr_n = mean_squared_radius(part, NEUTRONS);
 	printf("RADIUS N %0.2lf RADIUS P %0.2lf\n", sqrt(msr_n), sqrt(msr_p));
 	
-	simulate(argv[2], &part, skm, param, world, world_visual);
+	simulate(argv[2], &part, skm, param, world);
 	printf("Simulation ended.\n");
 	printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
 	

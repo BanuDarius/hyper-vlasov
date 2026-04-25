@@ -286,7 +286,7 @@ void free_scalar_field(ScalarField *field) {
 	free(field->v);
 }
 
-void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, Fermi *fermi_levels, Parameters *param, WoodsSaxon *ws) {
+void read_input_file(FILE *in, Skyrme *skm, World *world, Fermi *fermi_levels, Parameters *param, WoodsSaxon *ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f;
 	char current[32];
 	int i = 0, num_test_part, steps, nx, z, n;
@@ -335,7 +335,6 @@ void read_input_file(FILE *in, Skyrme *skm, World *world, World *world_visual, F
 	
 	set_skyrme(skm, A, B, C, gamma);
 	set_world(world, d_max, nx);
-	set_world(world_visual, d_max, 4 * nx);
 	set_fermi_levels(fermi_levels, epsilon_p, epsilon_n);
 	set_parameters(param, z, n, num_test_part, sigma_k, sigma_r, t_f, steps);
 	set_woods_saxon(&ws[0], V0, 0.8 * param->r_max, a);
