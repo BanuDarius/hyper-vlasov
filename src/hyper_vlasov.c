@@ -78,7 +78,6 @@ void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameter
 		
 		printf("TIME STEP %i/%i\n", step, param.steps);
 	}
-	
 	free_vector_field(&forces);
 	free_scalar_field(&volume);
 	free_scalar_field(&coulomb);

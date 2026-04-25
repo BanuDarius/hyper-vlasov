@@ -33,8 +33,6 @@ void distribute_forces_to_particles_cic(TestParticles *part, VectorField forces,
 double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z, int i);
 void compute_particle_energies(TestParticles *part, WoodsSaxon *ws, Parameters param);
 void compute_particle_densities(TestParticles *part, Parameters param);
-void compute_volumetric_density(ScalarField *volume, ParticleCount part_count, World world_visual, World world_data, Parameters param, int type);
-void scatter_particles(ParticleCount *part_count, TestParticles *part, World world);
 void generate_random_particles(TestParticles *part, double r_max);
 void generate_checking_particles(TestParticles *part, WoodsSaxon *ws, Parameters param, Fermi *fermi_levels);
 void merge_volumetric_potentials(ScalarField *potentials, ScalarField coulomb, World world);
@@ -45,6 +43,8 @@ void relax_woods_saxon(WoodsSaxon *ws, WoodsSaxon *ws_old, double coef);
 double kinetic_energy();
 double fluctuation_energy(double sigma_k);
 double calc_sigma(double fwhm);
+//void compute_volumetric_density(ScalarField *volume, ParticleCount part_count, World world_visual, World world_data, Parameters param, int type);
+//void scatter_particles(ParticleCount *part_count, TestParticles *part, World world);
 
 static inline double rand_val(double min, double max) {
 	double s = (double)rand() / (double)RAND_MAX;

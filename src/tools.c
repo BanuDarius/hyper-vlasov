@@ -35,7 +35,7 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
 	
-	#pragma omp parallel for
+	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
 		volume->v[i] = 0.0;
 	
@@ -118,10 +118,9 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 	free_scalar_field(&temp_volume);
 	
 	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
-	#pragma omp parallel for
-	for(int i = 0; i < 2 * world_size; i++) {
+	#pragma omp parallel for simd
+	for(int i = 0; i < 2 * world_size; i++)
 		volume->v[i] *= term;
-	}
 }
 
 void distribute_forces_to_particles_cic(TestParticles *part, VectorField forces, World world) {
@@ -227,7 +226,7 @@ void compute_particle_densities(TestParticles *part, Parameters param) {
 	int part_per_nucleon = param.part_per_nucleon, p = part->protons, n = part->neutrons, total = p + n;
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
-	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
+	double cutoff_squared = 16.0 * sigma_r * sigma_r;
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		double r_i[3], r_j[3], diff[3];
@@ -239,6 +238,8 @@ void compute_particle_densities(TestParticles *part, Parameters param) {
 			
 			sub_vec(diff, r_i, r_j);
 			dist_squared = dot(diff, diff);
+			if(dist_squared > cutoff_squared)
+				continue;
 			fact = exp(-dist_squared * exp_term);
 			if(j < p)
 				density_p += fact;
@@ -248,68 +249,14 @@ void compute_particle_densities(TestParticles *part, Parameters param) {
 		part->density_p[i] = density_p;
 		part->density_n[i] = density_n;
 	}
-	#pragma omp parallel for
+	double term = (1.0 / part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
+	#pragma omp parallel for simd
 	for(int i = 0; i < total; i++) {
 		part->density_p[i] *= term;
 		part->density_n[i] *= term;
 	}
 }
 
-void compute_volumetric_density(ScalarField *volume, ParticleCount part_count, World world_visual, World world_data, Parameters param, int type) {
-	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
-	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2];
-	
-	if(type == PROTONS) { start = 0; end = world_size_data; }
-	else if(type == NEUTRONS) { start = world_size_data; end = 2 * world_size_data; }
-	else { start = 0; end = 2 * world_size_data; }
-	
-	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
-	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
-	#pragma omp parallel for
-	for(int i = 0; i < world_size_visual; i++) {
-		double r_i[3], r_j[3], diff[3];
-		double fact, dist_squared, density = 0.0;
-		world_pos_to_vector(r_i, world_visual, i);
-		
-		for(int j = start; j < end; j++) {
-			int count = part_count.count[j];
-			world_pos_to_vector(r_j, world_data, j % world_size_data);
-			
-			sub_vec(diff, r_i, r_j);
-			dist_squared = dot(diff, diff);
-			fact = exp(-dist_squared * exp_term);
-			density += count * fact;
-		}
-		volume->v[i] += density;
-	}
-	#pragma omp parallel for
-	for(int i = 0; i < world_size_visual; i++)
-		volume->v[i] *= term;
-}
-
-void scatter_particles(ParticleCount *part_count, TestParticles *part, World world) {
-	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
-	#pragma omp parallel for
-	for(int i = 0; i < total; i++) {
-		double r_vec[3];
-		copy_particle_pos_to_vector(r_vec, *part, i);
-		
-		int x_idx = (int)(x / 2.0 * (r_vec[0] / d_max_x + 1.0));
-		int y_idx = (int)(y / 2.0 * (r_vec[1] / d_max_y + 1.0));
-		int z_idx = (int)(z / 2.0 * (r_vec[2] / d_max_z + 1.0));
-		
-		if(x_idx < 0 || y_idx < 0 || z_idx < 0 || x_idx >= x || y_idx >= y || z_idx >= z)
-			continue;
-		
-		int idx = x_idx * (y * z) + y_idx * z + z_idx;
-		if(i >= part->protons)
-			idx += world_size;
-		
-		#pragma omp atomic update
-		part_count->count[idx] += 1;
-	}
-}
 
 void generate_random_particles(TestParticles *part, double r_max) {
 	int total = part->protons + part->neutrons, i = 0;
@@ -442,3 +389,59 @@ void relax_woods_saxon(WoodsSaxon *ws, WoodsSaxon *ws_old, double coef) {
 		ws[i].a = coef * ws[i].a + (1.0 - coef) * ws_old[i].a;
 	}
 }
+
+/*void compute_volumetric_density(ScalarField *volume, ParticleCount part_count, World world_visual, World world_data, Parameters param, int type) {
+	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
+	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2];
+	
+	if(type == PROTONS) { start = 0; end = world_size_data; }
+	else if(type == NEUTRONS) { start = world_size_data; end = 2 * world_size_data; }
+	else { start = 0; end = 2 * world_size_data; }
+	
+	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
+	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
+	#pragma omp parallel for
+	for(int i = 0; i < world_size_visual; i++) {
+		double r_i[3], r_j[3], diff[3];
+		double fact, dist_squared, density = 0.0;
+		world_pos_to_vector(r_i, world_visual, i);
+		
+		for(int j = start; j < end; j++) {
+			int count = part_count.count[j];
+			world_pos_to_vector(r_j, world_data, j % world_size_data);
+			
+			sub_vec(diff, r_i, r_j);
+			dist_squared = dot(diff, diff);
+			fact = exp(-dist_squared * exp_term);
+			density += count * fact;
+		}
+		volume->v[i] += density;
+	}
+	#pragma omp parallel for
+	for(int i = 0; i < world_size_visual; i++)
+		volume->v[i] *= term;
+}
+
+void scatter_particles(ParticleCount *part_count, TestParticles *part, World world) {
+	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
+	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
+	#pragma omp parallel for
+	for(int i = 0; i < total; i++) {
+		double r_vec[3];
+		copy_particle_pos_to_vector(r_vec, *part, i);
+		
+		int x_idx = (int)(x / 2.0 * (r_vec[0] / d_max_x + 1.0));
+		int y_idx = (int)(y / 2.0 * (r_vec[1] / d_max_y + 1.0));
+		int z_idx = (int)(z / 2.0 * (r_vec[2] / d_max_z + 1.0));
+		
+		if(x_idx < 0 || y_idx < 0 || z_idx < 0 || x_idx >= x || y_idx >= y || z_idx >= z)
+			continue;
+		
+		int idx = x_idx * (y * z) + y_idx * z + z_idx;
+		if(i >= part->protons)
+			idx += world_size;
+		
+		#pragma omp atomic update
+		part_count->count[idx] += 1;
+	}
+}*/

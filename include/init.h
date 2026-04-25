@@ -33,7 +33,6 @@ void set_woods_saxon(WoodsSaxon *ws, double V0, double R12, double a);
 void set_skyrme(Skyrme *skm, double A, double B, double C, double gamma);
 void set_fermi_levels(Fermi *fermi, double epsilon_p, double epsilon_n);
 void set_world(World *world, double d_max, int n);
-void create_particle_count(ParticleCount *part_count, World world);
 void create_scalar_field_single(ScalarField *field, World world);
 void create_scalar_field_double(ScalarField *field, World world);
 void create_vector_field(VectorField *field, World world);
@@ -50,7 +49,8 @@ void free_vector_field(VectorField *field);
 void free_scalar_field(ScalarField *field);
 void read_input_file(FILE *in, Skyrme *skm, World *world, Fermi *fermi_levels, Parameters *param, WoodsSaxon *ws);
 void set_output_filename(char *output_filename, char *output_directory, int i);
-void output_particle_count(FILE *out, ParticleCount particle_count, World world);
+//void create_particle_count(ParticleCount *part_count, World world);
+//void output_particle_count(FILE *out, ParticleCount particle_count, World world);
 
 static inline uint64_t swap_endian(double v) {
 	uint64_t data;

@@ -78,7 +78,7 @@ void create_particle_count(ParticleCount *part_count, World world) {
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
-	#pragma omp parallel for
+	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
 		part_count->count[i] = 0;
 }
@@ -90,7 +90,7 @@ void create_scalar_field_single(ScalarField *field, World world) {
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
-	#pragma omp parallel for
+	#pragma omp parallel for simd
 	for(int i = 0; i < world_size; i++)
 		field->v[i] = 0.0;
 }
@@ -102,7 +102,7 @@ void create_scalar_field_double(ScalarField *field, World world) {
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
-	#pragma omp parallel for
+	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
 		field->v[i] = 0.0;
 }
@@ -117,7 +117,7 @@ void create_vector_field(VectorField *field, World world) {
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
-	#pragma omp parallel for
+	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++) {
 		field->x[i] = 0.0;
 		field->y[i] = 0.0;
@@ -331,7 +331,7 @@ void read_input_file(FILE *in, Skyrme *skm, World *world, Fermi *fermi_levels, P
 	}
 	
 	double sigma_k = calc_sigma(k_fwhm), sigma_r = calc_sigma(r_fwhm);
-	double d_max = 1.2 * nuclear_radius(z + n);
+	double d_max = 1.35 * nuclear_radius(z + n);
 	
 	set_skyrme(skm, A, B, C, gamma);
 	set_world(world, d_max, nx);
@@ -359,7 +359,7 @@ void output_vtk_header_count(FILE *out, World world) {
 	fprintf(out, "LOOKUP_TABLE default\n");
 }
 
-void output_particle_count(FILE *out, ParticleCount particle_count, World world) {
+/*void output_particle_count(FILE *out, ParticleCount particle_count, World world) {
 	output_vtk_header_count(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
@@ -373,4 +373,4 @@ void output_particle_count(FILE *out, ParticleCount particle_count, World world)
 	
 	fwrite(vtk_count, sizeof(uint32_t), total, out);
 	free(vtk_count);
-}
+}*/

@@ -209,7 +209,7 @@ void compute_volumetric_forces_fdm(VectorField *forces, ScalarField potentials, 
 void update_momenta_half(TestParticles *part, double dt) {
 	int total = part->protons + part->neutrons;
 	double fact = dt / (2.0 * H_BAR_C);
-	#pragma omp parallel for
+	#pragma omp parallel for simd
 	for(int i = 0; i < total; i++) {
 		part->kx[i] += fact * part->fx[i];
 		part->ky[i] += fact * part->fy[i];
@@ -220,7 +220,7 @@ void update_momenta_half(TestParticles *part, double dt) {
 void update_positions_full(TestParticles *part, double dt) {
 	int total = part->protons + part->neutrons;
 	double fact = dt * (H_BAR_C / MC2);
-	#pragma omp parallel for
+	#pragma omp parallel for simd
 	for(int i = 0; i < total; i++) {
 		part->x[i] += fact * part->kx[i];
 		part->y[i] += fact * part->ky[i];
