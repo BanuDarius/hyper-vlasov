@@ -36,6 +36,8 @@ void compute_volumetric_density(ScalarField *volume, ParticleCount part_count, W
 void scatter_particles(ParticleCount *part_count, TestParticles *part, World world);
 void generate_random_particles(TestParticles *part, double r_max);
 void generate_checking_particles(TestParticles *part, WoodsSaxon *ws, Parameters param, Fermi *fermi_levels);
+void merge_volumetric_potentials(ScalarField *potentials, ScalarField coulomb, World world);
+void copy_scalar_field(ScalarField *volume_a, ScalarField volume_b, World world);
 void chi_squared(TestParticles part, WoodsSaxon *ws, Skyrme skm, int part_per_nucleon);
 double mean_squared_radius(TestParticles part, int type);
 void relax_woods_saxon(WoodsSaxon *ws, WoodsSaxon *ws_old, double coef);
@@ -85,9 +87,4 @@ static inline void copy_vector_to_particle_vel(TestParticles *part, double *v, i
 	part->kz[i] = v[2];
 }
 
-static inline void copy_scalar_field(ScalarField *volume_a, ScalarField *volume_b, World world) {
-	#pragma omp parallel for
-	for(int i = 0; i < 2 * world.n[0] * world.n[1] * world.n[2]; i++)
-		volume_a->v[i] = volume_b->v[i];
-}
 #endif

@@ -91,8 +91,8 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 		}
 	}
 	ScalarField temp_volume;
-	create_scalar_field(&temp_volume, world);
-	copy_scalar_field(&temp_volume, volume, world);
+	create_scalar_field_double(&temp_volume, world);
+	copy_scalar_field(&temp_volume, *volume, world);
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
 	#pragma omp parallel for
@@ -284,6 +284,21 @@ void generate_checking_particles(TestParticles *part, WoodsSaxon *ws, Parameters
 			i+=2;
 		}
 	}
+}
+
+void merge_volumetric_potentials(ScalarField *potential_a, ScalarField potential_b, World world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	#pragma omp parallel for
+	for(int i = 0; i < world_size; i++) {
+		potential_a->v[i] += potential_b.v[i];
+	}
+}
+
+void copy_scalar_field(ScalarField *volume_a, ScalarField volume_b, World world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++)
+		volume_a->v[i] = volume_b.v[i];
 }
 
 void chi_squared(TestParticles part, WoodsSaxon *ws, Skyrme skm, int part_per_nucleon) {

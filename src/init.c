@@ -83,7 +83,19 @@ void create_particle_count(ParticleCount *part_count, World world) {
 		part_count->count[i] = 0;
 }
 
-void create_scalar_field(ScalarField *field, World world) {
+void create_scalar_field_single(ScalarField *field, World world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	field->v = malloc(world_size * sizeof(double));
+	if(field->v == NULL) {
+		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
+		exit(1);
+	}
+	#pragma omp parallel for
+	for(int i = 0; i < world_size; i++)
+		field->v[i] = 0.0;
+}
+
+void create_scalar_field_double(ScalarField *field, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	field->v = malloc(2 * world_size * sizeof(double));
 	if(field->v == NULL) {
@@ -94,6 +106,7 @@ void create_scalar_field(ScalarField *field, World world) {
 	for(int i = 0; i < 2 * world_size; i++)
 		field->v[i] = 0.0;
 }
+
 
 void create_vector_field(VectorField *field, World world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];

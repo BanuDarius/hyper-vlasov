@@ -32,9 +32,10 @@ void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameter
 	VectorField forces;
 	create_vector_field(&forces, world);
 	
-	ScalarField volume, potentials;
-	create_scalar_field(&volume, world);
-	create_scalar_field(&potentials, world);
+	ScalarField volume, potentials, coulomb;
+	create_scalar_field_single(&coulomb, world);
+	create_scalar_field_double(&volume, world);
+	create_scalar_field_double(&potentials, world);
 	
 	for(int step = 0; step < 1; step++) {
 		char output_filename[32];
@@ -45,8 +46,10 @@ void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameter
 			exit(1);
 		}
 		compute_volumetric_density_cic(&volume, part, param, world);
-		compute_volumetric_potentials(&potentials, volume, skm, world);
-		compute_volumetric_forces(&forces, potentials, world);
+		compute_volumetric_skyrme_potentials(&potentials, volume, skm, world);
+		compute_volumetric_coulomb_potentials_sor(&coulomb, volume, world, (double)param.z);
+		merge_volumetric_potentials(&potentials, coulomb, world);
+		compute_volumetric_forces_fdm(&forces, potentials, world);
 		
 		output_vtk_header_start(out, world);
 		output_scalar_field(out, volume, world, "density");
@@ -58,6 +61,7 @@ void simulate(char *output_directory, TestParticles *part, Skyrme skm, Parameter
 	
 	free_vector_field(&forces);
 	free_scalar_field(&volume);
+	free_scalar_field(&coulomb);
 	free_scalar_field(&potentials);
 	//ParticleCount part_count;
 	//create_particle_count(&part_count, world);
