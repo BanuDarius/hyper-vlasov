@@ -59,6 +59,7 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 		int x1 = x0 + 1; int y1 = y0 + 1; int z1 = z0 + 1;
 		
 		int offset = (i < part->protons) ? 0 : world_size;
+		
 		int idx000 = x0 * (y * z) + y0 * z + z0 + offset;
 		volume_ptr[idx000] += t_x * t_y * t_z;
 		if (x1 < x) {
@@ -120,6 +121,78 @@ void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Pa
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		volume->v[i] *= term;
+	}
+}
+
+void distribute_forces_to_particles_cic(TestParticles *part, VectorField forces, World world) {
+	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part->protons + part->neutrons;
+	
+	#pragma omp parallel for
+	for(int i = 0; i < total; i++) {
+		double r_vec[3];
+		copy_particle_pos_to_vector(r_vec, *part, i);
+		
+		double cx = (nx / 2.0) * (r_vec[0] / d_max_x + 1.0);
+		double cy = (ny / 2.0) * (r_vec[1] / d_max_y + 1.0);
+		double cz = (nz / 2.0) * (r_vec[2] / d_max_z + 1.0);
+		
+		int x0 = (int)cx; int y0 = (int)cy; int z0 = (int)cz;
+		
+		if(x0 < 0 || y0 < 0 || z0 < 0 || x0 >= nx || y0 >= ny || z0 >= nz) {
+			part->fx[i] = 0.0; part->fy[i] = 0.0; part->fz[i] = 0.0;
+			continue;
+		}
+		
+		double d_x = cx - x0; double d_y = cy - y0; double d_z = cz - z0;
+		double t_x = 1.0 - d_x; double t_y = 1.0 - d_y; double t_z = 1.0 - d_z;
+		int x1 = x0 + 1; int y1 = y0 + 1; int z1 = z0 + 1;
+		
+		int offset = (i < part->protons) ? 0 : world_size;
+		double fx = 0.0, fy = 0.0, fz = 0.0;
+		
+		int idx = IDX(x0, y0, z0, nx, ny, nz) + offset;
+		double w = t_x * t_y * t_z;
+		fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		
+		if(x1 < nx) {
+			idx = IDX(x1, y0, z0, nx, ny, nz) + offset;
+			w = d_x * t_y * t_z;
+			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		}
+		if(y1 < ny) {
+			idx = IDX(x0, y1, z0, nx, ny, nz) + offset;
+			w = t_x * d_y * t_z;
+			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		}
+		if(x1 < nx && y1 < ny) {
+			idx = IDX(x1, y1, z0, nx, ny, nz) + offset;
+			w = d_x * d_y * t_z;
+			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		}
+		if(z1 < nz) {
+			idx = IDX(x0, y0, z1, nx, ny, nz) + offset;
+			w = t_x * t_y * d_z;
+			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		}
+		if(x1 < nx && z1 < nz) {
+			idx = IDX(x1, y0, z1, nx, ny, nz) + offset;
+			w = d_x * t_y * d_z;
+			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		}
+		if(y1 < ny && z1 < nz) {
+			idx = IDX(x0, y1, z1, nx, ny, nz) + offset;
+			w = t_x * d_y * d_z;
+			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		}
+		if(x1 < nx && y1 < ny && z1 < nz) {
+			idx = IDX(x1, y1, z1, nx, ny, nz) + offset;
+			w = d_x * d_y * d_z;
+			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		}
+		part->fx[i] = fx;
+		part->fy[i] = fy;
+		part->fz[i] = fz;
 	}
 }
 
@@ -217,7 +290,6 @@ void compute_volumetric_density(ScalarField *volume, ParticleCount part_count, W
 void scatter_particles(ParticleCount *part_count, TestParticles *part, World world) {
 	double d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z, total = part->protons + part->neutrons;
-	
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		double r_vec[3];
@@ -303,7 +375,6 @@ void copy_scalar_field(ScalarField *volume_a, ScalarField volume_b, World world)
 
 void chi_squared(TestParticles part, WoodsSaxon *ws, Skyrme skm, int part_per_nucleon) {
 	int total = part.protons + part.neutrons;
-	
 	double chi_squared_p = 0.0, chi_squared_n = 0.0;
 	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
 	for(int i = 0; i < total; i++) {
@@ -335,7 +406,6 @@ double mean_squared_radius(TestParticles part, int type) {
 	double part_num;
 	if(type == PROTONS) { start = 0; end = part.protons; part_num = (double)part.protons;}
 	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; part_num = (double)part.neutrons; }
-	
 	double r_sqr = 0.0;
 	#pragma omp parallel for reduction(+:r_sqr)
 	for(int i = start; i < end; i++) {

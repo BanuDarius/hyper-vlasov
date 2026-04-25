@@ -47,10 +47,10 @@ typedef struct {
 } Parameters;
 
 typedef struct {
+	double *fx, *fy, *fz;
 	int protons, neutrons;
 	double *x, *y, *z, *kx, *ky, *kz;
 	double *energy, *density_p, *density_n;
-	double *fx, *fy, *fz;
 } TestParticles;
 
 typedef struct {

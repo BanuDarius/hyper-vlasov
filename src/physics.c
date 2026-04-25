@@ -92,16 +92,6 @@ void initialize_particles(TestParticles *part, Parameters param, WoodsSaxon *ws,
 	free_particles(&temp_part);
 }
 
-void compute_volumetric_skyrme_potentials(ScalarField *potentials, ScalarField volume, Skyrme skm, World world) {
-	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;
-	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++)
-		potentials->v[i] = skyrme_potential(skm, volume.v[i], volume.v[i + world_size], PROTONS);
-	#pragma omp parallel for
-	for(int i = world_size; i < 2 * world_size; i++)
-		potentials->v[i] = skyrme_potential(skm, volume.v[i - world_size], volume.v[i], NEUTRONS);
-}
-
 void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField volume, World world, int z) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	double dx = 2.0 * world.d_max[0] / nx, dy = 2.0 * world.d_max[1] / ny, dz = 2.0 * world.d_max[2] / nz;
@@ -120,9 +110,9 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField
 			}
 		}
 	}
-	double inv_dx2 = 1.0 / (2.0 / (dx * dx) + 2.0 / (dy * dy) + 2.0 / (dz * dz)), omega = 1.80;
+	double inv_dx2 = 1.0 / (2.0 / (dx * dx) + 2.0 / (dy * dy) + 2.0 / (dz * dz)), omega = 1.80, max_diff;
 	for(int it = 0; it < MAX_SOR_ITERATIONS; it++) {
-		double max_diff = 0.0;
+		max_diff = 0.0;
 		#pragma omp parallel for collapse(3) reduction(max:max_diff)
 		for(int i = 1; i < nx - 1; i++) {
 			for(int j = 1; j < ny - 1; j++) {
@@ -170,6 +160,8 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField *coulomb, ScalarField
 		if(max_diff < SOR_TOLERANCE)
 			break;
 	}
+	if(max_diff > SOR_TOLERANCE)
+		fprintf(stderr, "SOR COULOMB DID NOT CONVERGE!\n");
 }
 
 void compute_volumetric_forces_fdm(VectorField *forces, ScalarField potentials, World world) {
@@ -212,6 +204,38 @@ void compute_volumetric_forces_fdm(VectorField *forces, ScalarField potentials, 
 			}
 		}
 	}
+}
+
+void update_momenta_half(TestParticles *part, double dt) {
+	int total = part->protons + part->neutrons;
+	double fact = dt / (2.0 * H_BAR_C);
+	#pragma omp parallel for
+	for(int i = 0; i < total; i++) {
+		part->kx[i] += fact * part->fx[i];
+		part->ky[i] += fact * part->fy[i];
+		part->kz[i] += fact * part->fz[i];
+	}
+}
+
+void update_positions_full(TestParticles *part, double dt) {
+	int total = part->protons + part->neutrons;
+	double fact = dt * (H_BAR_C / MC2);
+	#pragma omp parallel for
+	for(int i = 0; i < total; i++) {
+		part->x[i] += fact * part->kx[i];
+		part->y[i] += fact * part->ky[i];
+		part->z[i] += fact * part->kz[i];
+	}
+}
+
+void compute_volumetric_skyrme_potentials(ScalarField *potentials, ScalarField volume, Skyrme skm, World world) {
+	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;
+	#pragma omp parallel for
+	for(int i = 0; i < world_size; i++)
+		potentials->v[i] = skyrme_potential(skm, volume.v[i], volume.v[i + world_size], PROTONS);
+	#pragma omp parallel for
+	for(int i = world_size; i < 2 * world_size; i++)
+		potentials->v[i] = skyrme_potential(skm, volume.v[i - world_size], volume.v[i], NEUTRONS);
 }
 
 double nuclear_radius(unsigned short a) {

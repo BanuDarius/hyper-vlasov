@@ -29,6 +29,7 @@ SOFTWARE. */
 #include "sim_structs.h"
 
 void compute_volumetric_density_cic(ScalarField *volume, TestParticles *part, Parameters param, World world);
+void distribute_forces_to_particles_cic(TestParticles *part, VectorField forces, World world);
 double compute_energy(TestParticles *part, WoodsSaxon *ws, double sigma_k, int z, int i);
 void compute_particle_energies(TestParticles *part, WoodsSaxon *ws, Parameters param);
 void compute_particle_densities(TestParticles *part, Parameters param);

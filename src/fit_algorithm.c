@@ -91,15 +91,15 @@ void minim_woods_saxon(TestParticles *part, WoodsSaxon *ws, Skyrme skm) {
 		int part_type = (type == 0) ? PROTONS : NEUTRONS;
 		int start = (type == 0) ? 0 : part->protons;
 		int total = (type == 0) ? part->protons : part->neutrons;
-		set_fit_function(&fit, part, skm, part_type, start, total);
 		
+		set_fit_function(&fit, part, skm, part_type, start, total);
 		gsl_multifit_nlinear_fdf magic_solver;
+		magic_solver.p = 3;
+		magic_solver.n = total;
+		magic_solver.fvv = NULL;
+		magic_solver.params = &fit;
 		magic_solver.f = woods_saxon_f;
 		magic_solver.df = woods_saxon_df;
-		magic_solver.fvv = NULL;
-		magic_solver.n = total;
-		magic_solver.p = 3;
-		magic_solver.params = &fit;
 		
 		gsl_multifit_nlinear_workspace *magic_workspace = gsl_multifit_nlinear_alloc(T_MAGIC, &fdf_params, total, 3);
 		
