@@ -1,6 +1,6 @@
-num_test_part 1000
-z 16
-n 16
+num_test_part 2000
+z 10
+n 10
 V0 -50.0
 a 0.66
 A -356.8
@@ -11,6 +11,6 @@ epsilon_p -8.0
 epsilon_n -12.0
 k_fwhm 0.346
 r_fwhm 1.444
-nx 16
+nx 32
 t_f 50
 steps 50

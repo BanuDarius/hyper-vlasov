@@ -158,7 +158,7 @@ void output_centroids(FILE *out, TestParticles part, int type) {
 }
 
 void output_scalar_field(FILE *out, ScalarField field, World world, char *name) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	uint64_t *vtk_density_p = malloc(world_size * sizeof(uint64_t));
 	uint64_t *vtk_density_n = malloc(world_size * sizeof(uint64_t));
 	uint64_t *vtk_density_t = malloc(world_size * sizeof(uint64_t));
@@ -166,11 +166,18 @@ void output_scalar_field(FILE *out, ScalarField field, World world, char *name) 
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
-	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++) {
-		vtk_density_p[i] = swap_endian(field.v[i]);
-		vtk_density_n[i] = swap_endian(field.v[i + world_size]);
-		vtk_density_t[i] = swap_endian(field.v[i] + field.v[i + world_size]);
+	#pragma omp parallel for collapse(3)
+	for(int k = 0; k < nz; k++) {
+		for(int j = 0; j < ny; j++) {
+			for(int i = 0; i < nx; i++) {
+				int idx = IDX(i, j, k, nx, ny, nz);
+				int write_idx = (k * ny * nx) + (j * nx) + i;
+				
+				vtk_density_p[write_idx] = swap_endian(field.v[idx]);
+				vtk_density_n[write_idx] = swap_endian(field.v[idx + world_size]);
+				vtk_density_t[write_idx] = swap_endian(field.v[idx] + field.v[idx + world_size]);
+			}
+		}
 	}
 	output_vtk_header_scalar_next(out, name, PROTONS);
 	fwrite(vtk_density_p, sizeof(uint64_t), world_size, out);
@@ -185,7 +192,7 @@ void output_scalar_field(FILE *out, ScalarField field, World world, char *name) 
 }
 
 void output_vector_field(FILE *out, VectorField field, World world, char *name) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	uint64_t *vtk_force_p = malloc(3 * world_size * sizeof(uint64_t));
 	uint64_t *vtk_force_n = malloc(3 * world_size * sizeof(uint64_t));
 	
@@ -193,15 +200,22 @@ void output_vector_field(FILE *out, VectorField field, World world, char *name) 
 		fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
-	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++) {
-		vtk_force_p[3 * i] = swap_endian(field.x[i]);
-		vtk_force_p[3 * i + 1] = swap_endian(field.y[i]);
-		vtk_force_p[3 * i + 2] = swap_endian(field.z[i]);
-		
-		vtk_force_n[3 * i] = swap_endian(field.x[i + world_size]);
-		vtk_force_n[3 * i + 1] = swap_endian(field.y[i + world_size]);
-		vtk_force_n[3 * i + 2] = swap_endian(field.z[i + world_size]);
+	#pragma omp parallel for collapse(3)
+	for(int k = 0; k < nz; k++) {
+		for(int j = 0; j < ny; j++) {
+			for(int i = 0; i < nx; i++) {
+				int idx = IDX(i, j, k, nx, ny, nz);
+				int write_idx = (k * ny * nx) + (j * nx) + i;
+				
+				vtk_force_p[3 * write_idx] = swap_endian(field.x[idx]);
+				vtk_force_p[3 * write_idx + 1] = swap_endian(field.y[idx]);
+				vtk_force_p[3 * write_idx + 2] = swap_endian(field.z[idx]);
+				
+				vtk_force_n[3 * write_idx] = swap_endian(field.x[idx + world_size]);
+				vtk_force_n[3 * write_idx + 1] = swap_endian(field.y[idx + world_size]);
+				vtk_force_n[3 * write_idx + 2] = swap_endian(field.z[idx + world_size]);
+			}
+		}
 	}
 	output_vtk_header_vector_next(out, name, PROTONS);
 	fwrite(vtk_force_p, sizeof(uint64_t), 3 * world_size, out);

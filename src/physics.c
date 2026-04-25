@@ -104,7 +104,7 @@ void compute_volumetric_potentials(ScalarField *potentials, ScalarField volume, 
 
 void compute_volumetric_forces(VectorField *forces, ScalarField potentials, World world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
-	double dx = 2.0 * world.d_max[0] / (nx - 1), dy = 2.0 * world.d_max[1] / (ny - 1), dz = 2.0 * world.d_max[2] / (nz - 1);
+	double dx = 2.0 * world.d_max[0] / nx, dy = 2.0 * world.d_max[1] / ny, dz = 2.0 * world.d_max[2] / nz;
 	
 	for(int x = 0; x < 2; x++) {
 		int offset = (x == 0) ? 0 : nx * ny * nz;
