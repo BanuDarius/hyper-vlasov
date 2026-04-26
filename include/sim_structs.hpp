@@ -32,7 +32,7 @@ SOFTWARE. */
 #define DELTA_EPSILON_TOLERANCE 0.1
 #define SOR_TOLERANCE 1e-4
 
-#define INPUT_FILE_COUNT 16
+#define INPUT_FILE_COUNT 17
 
 #define K_MAX 1.5
 #define MC2 935.0
@@ -44,7 +44,7 @@ SOFTWARE. */
 template <typename T>
 struct Parameters {
 	T sigma_k, sigma_r, r_max, t_f;
-	int part_per_nucleon, max_test_part, steps, z, n;
+	int part_per_nucleon, max_test_part, substeps, steps, z, n;
 };
 
 template <typename T>

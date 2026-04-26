@@ -48,11 +48,12 @@ static inline auto swap_endian(T v) {
 }
 
 template <typename T>
-void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, T sigma_k, T sigma_r, T t_f, int steps) {
+void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, int steps, int substeps, T sigma_k, T sigma_r, T t_f) {
 	param->z = z;
 	param->n = n;
 	param->t_f = t_f;
 	param->steps = steps;
+	param->substeps = substeps;
 	param->sigma_k = sigma_k;
 	param->sigma_r = sigma_r;
 	
@@ -286,7 +287,7 @@ void free_scalar_field(ScalarField<T> *field) {
 template <typename T>
 void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_levels, Parameters<T> *param, WoodsSaxon<T> *ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f;
-	int i = 0, num_test_part, steps, nx, z, n;
+	int i = 0, num_test_part, substeps, steps, nx, z, n;
 	char current[32];
 	
 	while(std::fscanf(in, "%s", current) != EOF) {
@@ -322,6 +323,8 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 			i += std:: fscanf(in, "%i", &n);
 		else if(!std::strcmp(current, "z"))
 			i += std::fscanf(in, "%i", &z);
+		else if(!std::strcmp(current, "substeps"))
+			i += std::fscanf(in, "%i", &substeps);
 	}
 	if(i != INPUT_FILE_COUNT) {
 		std::fprintf(stderr, "Error: Invalid input file.\n");
@@ -334,7 +337,7 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 	set_skyrme(skm, T(A), T(B), T(C), gamma);
 	set_world(world, T(d_max), nx);
 	set_fermi_levels(fermi_levels, T(epsilon_p), T(epsilon_n));
-	set_parameters(param, z, n, num_test_part, T(sigma_k), T(sigma_r), T(t_f), steps);
+	set_parameters(param, z, n, num_test_part, steps, substeps, T(sigma_k), T(sigma_r), T(t_f));
 	set_woods_saxon(&ws[0], T(V0), T(0.8) * T(param->r_max), a);
 	set_woods_saxon(&ws[1], T(V0), T(0.8) * T(param->r_max), a);
 }

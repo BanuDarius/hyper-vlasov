@@ -52,20 +52,27 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 	std::sprintf(stats_filename, "%sstats.txt", output_directory);
 	FILE *stats = fopen(stats_filename, "w");
 	
-	for(int step = 1; step <= param.steps; step++) {
-		char output_filename[32];
-		set_output_filename(output_filename, output_directory, step);
-		FILE *out = fopen(output_filename, "wb");
-		if(out != NULL) {
-			output_vtk_header_start(out, world);
-			output_scalar_field(out, volume, world, "density");
-			output_scalar_field(out, potentials, world, "potentials");
-			output_vector_field(out, forces, world, "forces");
-			fclose(out);
-		}
-		else {
-			std::fprintf(stderr, "CANNOT OPEN FILE!\n");
-			exit(1);
+	for(int step = 0; step < param.steps; step++) {
+		if(step % param.substeps == 0) {
+			std::printf("TIME STEP %i/%i\n", step + 1, param.steps);
+			T msr_p = mean_squared_radius(*part, world, PROTONS);
+			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
+			std::fprintf(stats, "%0.4lf %0.4lf %0.4lf\n", step * dt, std::sqrt(msr_n), std::sqrt(msr_p));
+			
+			char output_filename[32];
+			set_output_filename(output_filename, output_directory, step / param.substeps);
+			FILE *out = fopen(output_filename, "wb");
+			if(out != NULL) {
+				output_vtk_header_start(out, world);
+				output_scalar_field(out, volume, world, "density");
+				output_scalar_field(out, potentials, world, "potentials");
+				output_vector_field(out, forces, world, "forces");
+				fclose(out);
+			}
+			else {
+				std::fprintf(stderr, "CANNOT OPEN FILE!\n");
+				exit(1);
+			}
 		}
 		T dt = param.t_f / param.steps;
 		update_momenta_half(part, dt);
@@ -81,11 +88,6 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 		distribute_forces_to_particles_cic(part, forces, world);
 		
 		update_momenta_half(part, dt);
-		
-		T msr_p = mean_squared_radius(*part, world, PROTONS);
-		T msr_n = mean_squared_radius(*part, world, NEUTRONS);
-		std::fprintf(stats, "%0.4lf %0.4lf %0.4lf\n", std::sqrt(msr_n), std::sqrt(msr_p), step * dt);
-		std::printf("TIME STEP %i/%i\n", step, param.steps);
 	}
 	free_vector_field(&forces);
 	free_scalar_field(&volume);
