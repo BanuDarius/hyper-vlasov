@@ -32,7 +32,7 @@ SOFTWARE. */
 template <typename T>
 void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	VectorField<T> forces;
-	create_vector_field(&forces, world);
+	create_vector_field_double(&forces, world);
 	
 	ScalarField<T> volume, potentials, coulomb;
 	create_scalar_field_single(&coulomb, world);
@@ -82,10 +82,10 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 		
 		update_momenta_half(part, dt);
 		
-		std::printf("TIME STEP %i/%i\n", step, param.steps);
-		T msr_p = mean_squared_radius(*part, PROTONS);
-		T msr_n = mean_squared_radius(*part, NEUTRONS);
+		T msr_p = mean_squared_radius(*part, world, PROTONS);
+		T msr_n = mean_squared_radius(*part, world, NEUTRONS);
 		std::fprintf(stats, "%0.4lf %0.4lf %0.4lf\n", std::sqrt(msr_n), std::sqrt(msr_p), step * dt);
+		std::printf("TIME STEP %i/%i\n", step, param.steps);
 	}
 	free_vector_field(&forces);
 	free_scalar_field(&volume);

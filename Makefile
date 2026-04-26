@@ -1,5 +1,6 @@
 CC = g++
-CFLAGS = -std=c++20 -Iinclude -fopenmp -flto -O3 -march=native -MMD -MP -g -Wall -Wextra -Wshadow
+OPT_FLAG = -O3
+CFLAGS = -std=c++20 -Iinclude -fopenmp -flto $(OPT_FLAG) -march=native -MMD -MP -g -Wall -Wextra -Wshadow
 LDLIBS = -lm -lgsl -lgslcblas
 
 SRC_DIR = src
@@ -13,6 +14,9 @@ SRCS = $(SRC_DIR)/hyper_vlasov.cpp
 OBJS = $(BUILD_DIR)/hyper_vlasov.o
 
 all: output_dirs $(TARGET)
+
+fast: OPT_FLAG = -Ofast
+fast: all
 
 $(TARGET): $(OBJS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
@@ -31,4 +35,4 @@ clean:
 
 -include $(OBJS:.o=.d)
 
-.PHONY: all clean output_dirs
+.PHONY: all clean output_dirs fast

@@ -100,7 +100,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
 	T inv_dx2 = T(1.0) / (T(2.0) / (dx * dx) + T(2.0) / (dy * dy) + T(2.0) / (dz * dz)), omega = T(1.50), max_diff;
 	for(int it = 0; it < MAX_SOR_ITERATIONS; it++) {
-		max_diff = 0.0;
+		max_diff = T(0.0);
 		#pragma omp parallel for collapse(3) reduction(max:max_diff)
 		for(int i = 1; i < nx - 1; i++) {
 			for(int j = 1; j < ny - 1; j++) {

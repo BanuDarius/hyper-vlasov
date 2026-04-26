@@ -120,7 +120,7 @@ void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
 }
 
 template <typename T>
-void create_vector_field(VectorField<T> *field, const World<T> &world) {
+void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	field->x = (T*)malloc(2 * world_size * sizeof(T));
 	field->y = (T*)malloc(2 * world_size * sizeof(T));

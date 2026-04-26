@@ -98,6 +98,7 @@ void compute_volumetric_density_cic(ScalarField<T> *volume, TestParticles<T> *pa
 	copy_scalar_field(&temp_volume, *volume, world);
 	
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
+	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		T r_i[3], r_j[3], diff[3];
@@ -112,6 +113,8 @@ void compute_volumetric_density_cic(ScalarField<T> *volume, TestParticles<T> *pa
 			
 			sub_vec(diff, r_i, r_j);
 			dist_squared = dot(diff, diff);
+			if(dist_squared > cutoff_squared)
+				continue;
 			fact = std::exp(-dist_squared * exp_term);
 			density += count * fact;
 		}
@@ -359,22 +362,28 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 }
 
 template <typename T>
-T mean_squared_radius(const TestParticles<T> &part, int type) {
-	int start, end;
-	T part_num, r_sqr = T(0.0);
+T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type) {
+	int start, end, part_num = 0;
+	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2], r_sqr = T(0.0);
 	
-	if(type == PROTONS) { start = 0; end = part.protons; part_num = part.protons; }
-	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; part_num = part.neutrons; }
+	if(type == PROTONS) { start = 0; end = part.protons; }
+	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
 	
-	#pragma omp parallel for reduction(+:r_sqr)
+	#pragma omp parallel for reduction(+:r_sqr, part_num)
 	for(int i = start; i < end; i++) {
-		T r_vec[3], r2;
-		
+		T r_vec[3];
 		copy_particle_pos_to_vector(r_vec, part, i);
-		r2 = dot(r_vec, r_vec);
+		
+		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
+		|| r_vec[1] < -d_max_y || r_vec[1] > +d_max_y
+		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
+			continue;
+		
+		double r2 = dot(r_vec, r_vec);
 		r_sqr += r2;
+		part_num++;
 	}
-	return r_sqr / part_num;
+	return r_sqr / (T)part_num;
 }
 
 template <typename T>
