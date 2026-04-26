@@ -31,6 +31,7 @@ SOFTWARE. */
 
 template <typename T>
 void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
+	T dt = param.t_f / param.steps;
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
 	
@@ -51,6 +52,10 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 	char stats_filename[32];
 	std::sprintf(stats_filename, "%sstats.txt", output_directory);
 	FILE *stats = fopen(stats_filename, "w");
+	if(stats == NULL) {
+		std::fprintf(stderr, "CANNOT OPEN FILE!\n");
+		exit(1);
+	}
 	
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
@@ -58,7 +63,7 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 			T msr_p = mean_squared_radius(*part, world, PROTONS);
 			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
 			std::fprintf(stats, "%0.4lf %0.4lf %0.4lf\n", step * dt, std::sqrt(msr_n), std::sqrt(msr_p));
-			
+
 			char output_filename[32];
 			set_output_filename(output_filename, output_directory, step / param.substeps);
 			FILE *out = fopen(output_filename, "wb");
@@ -68,13 +73,11 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 				output_scalar_field(out, potentials, world, "potentials");
 				output_vector_field(out, forces, world, "forces");
 				fclose(out);
-			}
-			else {
+			} else {
 				std::fprintf(stderr, "CANNOT OPEN FILE!\n");
 				exit(1);
 			}
 		}
-		T dt = param.t_f / param.steps;
 		update_momenta_half(part, dt);
 		update_positions_full(part, dt);
 		
