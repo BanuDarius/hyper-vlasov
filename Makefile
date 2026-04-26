@@ -1,5 +1,5 @@
-CC = gcc
-CFLAGS = -Iinclude -fopenmp -flto -O3 -march=native -MMD -MP -g -Wall -Wextra -Wshadow
+CC = g++
+CFLAGS = -std=c++20 -Iinclude -fopenmp -flto -O3 -march=native -MMD -MP -g -Wall -Wextra -Wshadow
 LDLIBS = -lm -lgsl -lgslcblas
 
 SRC_DIR = src
@@ -9,16 +9,15 @@ OUTPUT_DIR = output
 
 TARGET = $(BIN_DIR)/hyper_vlasov
 
-SRCS = $(SRC_DIR)/hyper_vlasov.c $(SRC_DIR)/init.c $(SRC_DIR)/tools.c $(SRC_DIR)/physics.c  $(SRC_DIR)/fit_algorithm.c
+SRCS = $(SRC_DIR)/hyper_vlasov.cpp
+OBJS = $(BUILD_DIR)/hyper_vlasov.o
 
-OBJS = $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(SRCS))
-
-all: $(TARGET) output_dirs
+all: output_dirs $(TARGET)
 
 $(TARGET): $(OBJS) | $(BIN_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
 
-$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(BIN_DIR) $(BUILD_DIR):
@@ -30,4 +29,6 @@ output_dirs:
 clean:
 	rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR)
 
-.PHONY: all clean
+-include $(OBJS:.o=.d)
+
+.PHONY: all clean output_dirs
