@@ -23,8 +23,8 @@ SOFTWARE. */
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#include <cmath>
 #include <omp.h>
+#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 

@@ -1,6 +1,6 @@
-num_test_part 7000
-z 10
-n 12
+num_test_part 1200
+z 50
+n 82
 V0 -50.0
 a 0.66
 A -356.8

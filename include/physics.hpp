@@ -65,8 +65,8 @@ void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, Wo
 		T delta_epsilon_n = T(0.5) * delta_part_n / (more_n - less_n);
 		T delta_epsilon_p = T(0.5) * delta_part_p / (more_p - less_p);
 		
-		if(fabs(delta_epsilon_p) > T(0.5)) delta_epsilon_p *= relax_coef;
-		if(fabs(delta_epsilon_n) > T(0.5)) delta_epsilon_n *= relax_coef;
+		if(std::abs(delta_epsilon_p) > T(0.5)) delta_epsilon_p *= relax_coef;
+		if(std::abs(delta_epsilon_n) > T(0.5)) delta_epsilon_n *= relax_coef;
 		
 		fermi_levels->epsilon_p += delta_epsilon_p;
 		fermi_levels->epsilon_n += delta_epsilon_n;
@@ -81,12 +81,12 @@ void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, Wo
 		relax_woods_saxon(ws, ws_old, relax_coef);
 		
 		total_delta_epsilon = std::abs(delta_epsilon_n) + std::abs(delta_epsilon_p);
+		std::printf("----------------\n");
 		std::printf("EQUAL P %i EQUAL N %i\n", equal_p, equal_n);
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);
 		std::printf("FERMI P %0.2lf FERMI N %0.2lf\n", fermi_levels->epsilon_p, fermi_levels->epsilon_n);
 		std::printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it);
-		std::printf("----------------\n");
 		
 		it++;
 	} while(total_delta_epsilon > delta_epsilon_tolerance<T> && it < MAX_INIT_ITERATIONS);	
@@ -118,8 +118,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb->v[idx] - phi_old);
-						if(diff > max_diff)
-							max_diff = diff;
+						if(diff > max_diff) max_diff = diff;
 					}
 				}
 			}
@@ -141,8 +140,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb->v[idx] - phi_old);
-						if(diff > max_diff)
-							max_diff = diff;
+						if(diff > max_diff) max_diff = diff;
 					}
 				}
 			}
