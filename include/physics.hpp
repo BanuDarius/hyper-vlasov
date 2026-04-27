@@ -33,7 +33,7 @@ SOFTWARE. */
 
 template <typename T>
 void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, WoodsSaxon<T> *ws, const Skyrme<T> &skm, Fermi<T> *fermi_levels) {
-	T r_max = param.r_max, total_delta_epsilon, relax_coef = T(0.6);
+	T total_delta_epsilon, relax_coef = T(0.6);
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon, it = 0;
 	
@@ -41,29 +41,29 @@ void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, Wo
 	create_particles(part, total_p, total_n);
 	create_particles(&temp_part, max_part, max_part);
 	do {
-		generate_random_particles(&temp_part, r_max);
+		generate_random_particles(&temp_part, param.r_max);
 		compute_particle_energies(&temp_part, ws, param);
-		int check_less_p = 0, check_equal_p = 0, check_more_p = 0;
-		int check_less_n = 0, check_equal_n = 0, check_more_n = 0;
+		int less_p = 0, equal_p = 0, more_p = 0;
+		int less_n = 0, equal_n = 0, more_n = 0;
 		for(int i = 0; i < max_part; i++) {
 			if(temp_part.energy[i] < fermi_levels->epsilon_p)
-				check_equal_p += 2;
+				equal_p += 2;
 			if(temp_part.energy[i] < fermi_levels->epsilon_p + T(0.5))
-				check_more_p += 2;
+				more_p += 2;
 			if(temp_part.energy[i] < fermi_levels->epsilon_p - T(0.5))
-				check_less_p += 2;
+				less_p += 2;
 			
 			if(temp_part.energy[i + max_part] < fermi_levels->epsilon_n)
-				check_equal_n += 2;
+				equal_n += 2;
 			if(temp_part.energy[i + max_part] < fermi_levels->epsilon_n + T(0.5))
-				check_more_n += 2;
+				more_n += 2;
 			if(temp_part.energy[i + max_part] < fermi_levels->epsilon_n - T(0.5))
-				check_less_n += 2;
+				less_n += 2;
 		}
-		T delta_part_n = total_n - check_equal_n;
-		T delta_part_p = total_p - check_equal_p;
-		T delta_epsilon_n = T(0.5) * delta_part_n / (check_more_n - check_less_n);
-		T delta_epsilon_p = T(0.5) * delta_part_p / (check_more_p - check_less_p);
+		T delta_part_n = total_n - equal_n;
+		T delta_part_p = total_p - equal_p;
+		T delta_epsilon_n = T(0.5) * delta_part_n / (more_n - less_n);
+		T delta_epsilon_p = T(0.5) * delta_part_p / (more_p - less_p);
 		
 		if(fabs(delta_epsilon_p) > T(0.5)) delta_epsilon_p *= relax_coef;
 		if(fabs(delta_epsilon_n) > T(0.5)) delta_epsilon_n *= relax_coef;
@@ -81,10 +81,9 @@ void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, Wo
 		relax_woods_saxon(ws, ws_old, relax_coef);
 		
 		total_delta_epsilon = std::abs(delta_epsilon_n) + std::abs(delta_epsilon_p);
-		std::printf("LESS P %i EQUAL P %i MORE P %i\n", check_less_p, check_equal_p, check_more_p);
-		std::printf("LESS N %i EQUAL N %i MORE N %i\n", check_less_n, check_equal_n, check_more_n);
-		std::printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
-		std::printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);
+		std::printf("EQUAL P %i EQUAL N %i\n", equal_p, equal_n);
+		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
+		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);
 		std::printf("FERMI P %0.2lf FERMI N %0.2lf\n", fermi_levels->epsilon_p, fermi_levels->epsilon_n);
 		std::printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it);
 		std::printf("----------------\n");
