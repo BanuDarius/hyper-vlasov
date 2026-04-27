@@ -43,8 +43,8 @@ int max_particles(T r_max, T k_max, int part_per_nucleon) {
 
 template <typename T>
 T kinetic_energy() {
-	T hc2 = T(H_BAR_C) * T(H_BAR_C);
-	T e_kin = hc2 / (T(2.0) * T(MC2));
+	T hc2 = h_bar_c<T> * h_bar_c<T>;
+	T e_kin = hc2 / (T(2.0) * mc2<T>);
 	return e_kin;
 }
 
@@ -71,8 +71,8 @@ template <typename T>
 static inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int type) {
 	T tau = (type == PROTONS) ? T(-1.0) : T(+1.0);
 	T rho = rho_p + rho_n;
-	T t = rho / T(RHO_0);
-	T v = skm.A * t + skm.B * std::pow(t, T(skm.gamma)) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / T(RHO_0));
+	T t = rho / rho_0<T>;
+	T v = skm.A * t + skm.B * std::pow(t, T(skm.gamma)) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / rho_0<T>);
 	return v;
 }
 

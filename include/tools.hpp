@@ -202,7 +202,7 @@ void distribute_forces_to_particles_cic(TestParticles<T> *part, const VectorFiel
 
 template <typename T>
 void compute_particle_densities(TestParticles<T> *part, const Parameters<T> &param) {
-	int part_per_nucleon = param.part_per_nucleon, p = part->protons, n = part->neutrons, total = p + n;
+	int part_per_nucleon = param.part_per_nucleon, protons = part->protons, neutrons = part->neutrons, total = protons + neutrons;
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
 	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
 	#pragma omp parallel for
@@ -219,7 +219,7 @@ void compute_particle_densities(TestParticles<T> *part, const Parameters<T> &par
 			if(dist_squared > cutoff_squared)
 				continue;
 			fact = exp(-dist_squared * exp_term);
-			if(j < p)
+			if(j < protons)
 				density_p += fact;
 			else
 				density_n += fact;
@@ -278,8 +278,8 @@ void generate_random_particles(TestParticles<T> *part, T r_max) {
 	i = 0;
 	while(i < total) {
 		T k_new[3];
-		random_vec(k_new, T(K_MAX));
-		if(dot(k_new, k_new) < K_MAX * K_MAX) {
+		random_vec(k_new, k_max<T>);
+		if(dot(k_new, k_new) < k_max<T> * k_max<T>) {
 			copy_vector_to_particle_vel(part, k_new, i);
 			i++;
 		}
@@ -298,7 +298,7 @@ void generate_checking_particles(TestParticles<T> *part, const WoodsSaxon<T> *ws
 		
 		T r_new[3], k_new[3];
 		random_vec(r_new, r_max);
-		random_vec(k_new, T(K_MAX));
+		random_vec(k_new, k_max<T>);
 		copy_vector_to_particle_pos(part, r_new, i);
 		copy_vector_to_particle_vel(part, k_new, i);
 		T energy = compute_energy(part, ws, sigma_k, z, i);

@@ -30,16 +30,25 @@ SOFTWARE. */
 #define MAX_INIT_ITERATIONS 32
 #define MAX_SOR_ITERATIONS 128
 #define DELTA_EPSILON_TOLERANCE 0.1
-#define SOR_TOLERANCE 1e-4
 
 #define INPUT_FILE_COUNT 17
 
-#define K_MAX 1.5
-#define MC2 935.0
-#define RHO_0 0.16
-#define H_BAR_C 197.33
-
 #define IDX(i, j, k, nx, ny, nz) (((i) * (ny) * (nz)) + ((j) * (nz)) + (k))
+
+template <typename T>
+constexpr T mc2 = T(935.0);
+
+template <typename T>
+constexpr T rho_0 = T(0.16);
+
+template <typename T>
+constexpr T h_bar_c = T(197.33);
+
+template <typename T>
+constexpr T k_max = T(1.5);
+
+template <typename T>
+constexpr T sor_tolerance = T(1e-4);
 
 template <typename T>
 struct Parameters {

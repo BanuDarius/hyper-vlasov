@@ -32,6 +32,13 @@ SOFTWARE. */
 template <typename T>
 void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	T dt = param.t_f / param.steps;
+	char stats_filename[32];
+	set_stats_filename(stats_filename, output_directory);
+	FILE *stats = fopen(stats_filename, "w");
+	if(stats == nullptr) {
+		std::fprintf(stderr, "CANNOT OPEN FILE!\n");
+		exit(1);
+	}
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
 	
@@ -49,13 +56,6 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 	compute_volumetric_forces_fdm(&forces, potentials, world);
 	
 	distribute_forces_to_particles_cic(part, forces, world);
-	char stats_filename[32];
-	set_stats_filename(stats_filename, output_directory);
-	FILE *stats = fopen(stats_filename, "w");
-	if(stats == NULL) {
-		std::fprintf(stderr, "CANNOT OPEN FILE!\n");
-		exit(1);
-	}
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
 			std::printf("TIME STEP %i/%i\n", step, param.steps);
@@ -66,7 +66,7 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 			char output_filename[32];
 			set_output_filename(output_filename, output_directory, step / param.substeps);
 			FILE *out = fopen(output_filename, "wb");
-			if(out == NULL) {
+			if(out == nullptr) {
 				std::fprintf(stderr, "CANNOT OPEN OUTPUT FILE!\n");
 				exit(1);
 			}
@@ -114,9 +114,9 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 		TestParticles<T> part;
 		
 		FILE *in = fopen(input_filename, "r");
-		if(in == NULL) {
-				std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n");
-				exit(1);
+		if(in == nullptr) {
+			std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n");
+			exit(1);
 		}
 		read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
 		std::printf("MAX TEST PART %i\n", param.max_test_part);

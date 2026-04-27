@@ -145,10 +145,10 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 				}
 			}
 		}
-		if(max_diff < SOR_TOLERANCE)
+		if(max_diff < sor_tolerance<T>)
 			break;
 	}
-	if(max_diff > SOR_TOLERANCE)
+	if(max_diff > sor_tolerance<T>)
 		std::fprintf(stderr, "SOR COULOMB DID NOT CONVERGE!\n");
 }
 
@@ -197,7 +197,7 @@ void compute_volumetric_forces_fdm(VectorField<T> *forces, ScalarField<T> potent
 template <typename T>
 void update_momenta_half(TestParticles<T> *part, T dt) {
 	int total = part->protons + part->neutrons;
-	T fact = dt / (T(2.0) * T(H_BAR_C));
+	T fact = dt / (T(2.0) * h_bar_c<T>);
 	#pragma omp parallel for simd
 	for(int i = 0; i < total; i++) {
 		part->kx[i] += fact * part->fx[i];
@@ -209,7 +209,7 @@ void update_momenta_half(TestParticles<T> *part, T dt) {
 template <typename T>
 void update_positions_full(TestParticles<T> *part, T dt) {
 	int total = part->protons + part->neutrons;
-	T fact = dt * T(H_BAR_C) / T(MC2);
+	T fact = (dt * h_bar_c<T>) / mc2<T>;
 	#pragma omp parallel for simd
 	for(int i = 0; i < total; i++) {
 		part->x[i] += fact * part->kx[i];

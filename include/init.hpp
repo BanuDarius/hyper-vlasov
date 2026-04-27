@@ -53,7 +53,7 @@ void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, in
 	param->part_per_nucleon = part_per_nucleon;
 	param->r_max = nuclear_radius<T>(z + n);
 	
-	param->max_test_part = max_particles(T(param->r_max), T(K_MAX), param->part_per_nucleon);
+	param->max_test_part = max_particles(T(param->r_max), k_max<T>, param->part_per_nucleon);
 }
 
 template <typename T>
@@ -90,7 +90,7 @@ void create_scalar_field_single(ScalarField<T> *field, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	field->v = (T*)malloc(world_size * sizeof(T));
 	
-	if(field->v == NULL) {
+	if(field->v == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
@@ -104,7 +104,7 @@ void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	field->v = (T*)malloc(2 * world_size * sizeof(T));
 	
-	if(field->v == NULL) {
+	if(field->v == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
@@ -120,7 +120,7 @@ void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
 	field->y = (T*)malloc(2 * world_size * sizeof(T));
 	field->z = (T*)malloc(2 * world_size * sizeof(T));
 	
-	if(field->x == NULL || field->y == NULL || field->z == NULL) {
+	if(field->x == nullptr || field->y == nullptr || field->z == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
@@ -150,10 +150,10 @@ void create_particles(TestParticles<T> *part, int protons, int neutrons) {
 	part->density_p = (T*)malloc(total * sizeof(T));
 	part->density_n = (T*)malloc(total * sizeof(T));
 	
-	if(part->x == NULL || part->y == NULL || part->z == NULL
-	|| part->kx == NULL || part->ky == NULL || part->kz == NULL
-	|| part->fx == NULL || part->fy == NULL || part->fz == NULL
-	|| part->energy == NULL || part->density_p == NULL || part->density_n == NULL) {
+	if(part->x == nullptr || part->y == nullptr || part->z == nullptr
+	|| part->kx == nullptr || part->ky == nullptr || part->kz == nullptr
+	|| part->fx == nullptr || part->fy == nullptr || part->fz == nullptr
+	|| part->energy == nullptr || part->density_p == nullptr || part->density_n == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
@@ -193,7 +193,7 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 	uint32_t *vtk_density_p = (uint32_t*)malloc(world_size * sizeof(uint32_t));
 	uint32_t *vtk_density_n = (uint32_t*)malloc(world_size * sizeof(uint32_t));
 	uint32_t *vtk_density_t = (uint32_t*)malloc(world_size * sizeof(uint32_t));
-	if(vtk_density_p == NULL || vtk_density_n == NULL || vtk_density_t == NULL) {
+	if(vtk_density_p == nullptr || vtk_density_n == nullptr || vtk_density_t == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
@@ -228,7 +228,7 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 	uint32_t *vtk_force_p = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
 	uint32_t *vtk_force_n = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
 	
-	if(vtk_force_p == NULL || vtk_force_n == NULL) {
+	if(vtk_force_p == nullptr || vtk_force_n == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
@@ -361,7 +361,7 @@ void output_particle_count(FILE *out, ParticleCount<T> particle_count, World<T> 
 	output_vtk_header_count(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));
-	if(vtk_count == NULL) {
+	if(vtk_count == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
@@ -376,7 +376,7 @@ void output_particle_count(FILE *out, ParticleCount<T> particle_count, World<T> 
 void create_particle_count(ParticleCount<T> *part_count, World<T> world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	part_count->count = malloc(2 * world_size * sizeof(int));
-	if(part_count->count == NULL) {
+	if(part_count->count == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
 	}
