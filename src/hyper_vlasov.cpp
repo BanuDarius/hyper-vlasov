@@ -63,7 +63,7 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 			T msr_p = mean_squared_radius(*part, world, PROTONS);
 			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
 			std::fprintf(stats, "%0.4lf %0.4lf %0.4lf\n", step * dt, std::sqrt(msr_n), std::sqrt(msr_p));
-
+			
 			char output_filename[32];
 			set_output_filename(output_filename, output_directory, step / param.substeps);
 			FILE *out = fopen(output_filename, "wb");

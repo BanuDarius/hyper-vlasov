@@ -89,7 +89,9 @@ void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, Wo
 		std::printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it);
 		
 		it++;
-	} while(total_delta_epsilon > delta_epsilon_tolerance<T> && it < MAX_INIT_ITERATIONS);	
+	} while(total_delta_epsilon > delta_epsilon_tolerance<T> && it < MAX_INIT_ITERATIONS);
+	if(it == MAX_INIT_ITERATIONS)
+		fprintf(stderr, "INITIALIZATION DID NOT CONVERGE!\n");
 	compute_particle_energies(part, ws, param);
 	free_particles(&temp_part);
 }
