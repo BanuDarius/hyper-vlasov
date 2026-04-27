@@ -335,11 +335,15 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 	set_woods_saxon(&ws[1], T(V0), T(0.8) * T(param->r_max), T(a));
 }
 
-void set_output_filename(char *output_filename, char *output_directory, int i) {
+void set_output_filename(char *output_filename, const char *output_directory, int i) {
 	std::sprintf(output_filename, "%sout-%04d.vtk", output_directory, i);
 }
 
-template <typename T>
+void set_stats_filename(char *stats_filename, const char *output_directory) {
+	std::sprintf(stats_filename, "%sstats.txt", output_directory);
+}
+
+/*template <typename T>
 void output_vtk_header_count(FILE *out, const World<T> &world) {
 	std::fprintf(out, "# vtk DataFile Version 3.0\n");
 	std::fprintf(out, "Volumetric count\n");
@@ -353,7 +357,7 @@ void output_vtk_header_count(FILE *out, const World<T> &world) {
 	std::fprintf(out, "LOOKUP_TABLE default\n");
 }
 
-/*void output_particle_count(FILE *out, ParticleCount<T> particle_count, World<T> world) {
+void output_particle_count(FILE *out, ParticleCount<T> particle_count, World<T> world) {
 	output_vtk_header_count(out, world);
 	int total = world.n[0] * world.n[1] * world.n[2];
 	uint32_t *vtk_count = malloc(total * sizeof(uint32_t));

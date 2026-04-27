@@ -30,7 +30,7 @@ SOFTWARE. */
 #include "sim_structs.hpp"
 
 template <typename T>
-void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
+void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	T dt = param.t_f / param.steps;
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
@@ -50,13 +50,12 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 	
 	distribute_forces_to_particles_cic(part, forces, world);
 	char stats_filename[32];
-	std::sprintf(stats_filename, "%sstats.txt", output_directory);
+	set_stats_filename(stats_filename, output_directory);
 	FILE *stats = fopen(stats_filename, "w");
 	if(stats == NULL) {
 		std::fprintf(stderr, "CANNOT OPEN FILE!\n");
 		exit(1);
 	}
-	
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
 			std::printf("TIME STEP %i/%i\n", step, param.steps);
@@ -67,16 +66,15 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 			char output_filename[32];
 			set_output_filename(output_filename, output_directory, step / param.substeps);
 			FILE *out = fopen(output_filename, "wb");
-			if(out != NULL) {
-				output_vtk_header_start(out, world);
-				output_scalar_field(out, volume, world, "density");
-				output_scalar_field(out, potentials, world, "potentials");
-				output_vector_field(out, forces, world, "forces");
-				fclose(out);
-			} else {
-				std::fprintf(stderr, "CANNOT OPEN FILE!\n");
+			if(out == NULL) {
+				std::fprintf(stderr, "CANNOT OPEN OUTPUT FILE!\n");
 				exit(1);
 			}
+			output_vtk_header_start(out, world);
+			output_scalar_field(out, volume, world, "density");
+			output_scalar_field(out, potentials, world, "potentials");
+			output_vector_field(out, forces, world, "forces");
+			fclose(out);
 		}
 		update_momenta_half(part, dt);
 		update_positions_full(part, dt);
@@ -106,9 +104,34 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 	//free_particle_count(&part_count);
 }
 
+template <typename T>
+void run_simulation(const char *input_filename, const char *output_filename) {
+		Skyrme<T> skm;
+		World<T> world;
+		Parameters<T> param;
+		WoodsSaxon<T> ws[2];
+		Fermi<T> fermi_levels;
+		TestParticles<T> part;
+		
+		FILE *in = fopen(input_filename, "r");
+		if(in == NULL) {
+				std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n");
+				exit(1);
+		}
+		read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
+		std::printf("MAX TEST PART %i\n", param.max_test_part);
+		
+		initialize_particles(&part, param, ws, skm, &fermi_levels);
+		chi_squared(part, ws, skm, param.part_per_nucleon);
+		simulate(output_filename, &part, skm, param, world);
+		
+		free_particles(&part);
+		fclose(in);
+}
+
 int main(int argc, char **argv) {
 	srand(128);
-	if(argc != 3 && argc != 4) {
+	if(argc < 3) {
 		std::fprintf(stderr, "BAD ARGUMENTS!\n");
 		return 1;
 	}
@@ -116,41 +139,10 @@ int main(int argc, char **argv) {
 	std::printf("Simulation started.\n");
 	double start_time = omp_get_wtime();
 	
-	if(!strcmp(argv[1], "--float")) {
-		Skyrme<float> skm;
-		World<float> world;
-		Parameters<float> param;
-		WoodsSaxon<float> ws[2];
-		Fermi<float> fermi_levels;
-		TestParticles<float> part;
-		
-		FILE *in = fopen(argv[2], "r");
-		read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
-		std::printf("MAX TEST PART %i\n", param.max_test_part);
-		initialize_particles(&part, param, ws, skm, &fermi_levels);
-		chi_squared(part, ws, skm, param.part_per_nucleon);
-		simulate(argv[3], &part, skm, param, world);
-		
-		free_particles(&part);
-		fclose(in);
-	} else {
-		Skyrme<double> skm;
-		World<double> world;
-		Parameters<double> param;
-		WoodsSaxon<double> ws[2];
-		Fermi<double> fermi_levels;
-		TestParticles<double> part;
-		
-		FILE *in = fopen(argv[1], "r");
-		read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
-		std::printf("MAX TEST PART %i\n", param.max_test_part);
-		initialize_particles(&part, param, ws, skm, &fermi_levels);
-		chi_squared(part, ws, skm, param.part_per_nucleon);
-		simulate(argv[2], &part, skm, param, world);
-		
-		free_particles(&part);
-		fclose(in);
-	}
+	if(!std::strcmp(argv[1], "--float"))
+		run_simulation<float>(argv[2], argv[3]);
+	else
+		run_simulation<double>(argv[1], argv[2]);
 	
 	std::printf("Simulation ended.\n");
 	std::printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
