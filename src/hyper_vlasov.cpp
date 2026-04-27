@@ -42,16 +42,17 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
 	
-	ScalarField<T> potentials, coulomb, volume;
+	ScalarField<T> potentials, coulomb, temp_density, density;
 	create_scalar_field_single(&coulomb, world);
-	create_scalar_field_double(&volume, world);
+	create_scalar_field_double(&density, world);
 	create_scalar_field_double(&potentials, world);
+	create_scalar_field_double(&temp_density, world);
 	set_initial_coulomb_boundaries(&coulomb, world, param.z);
 	
-	compute_volumetric_density_cic(&volume, part, param, world);
+	compute_volumetric_density_cic(&density, &temp_density, part, param, world);
 	
-	compute_volumetric_skyrme_potentials(&potentials, volume, skm, world);
-	compute_volumetric_coulomb_potentials_sor(&coulomb, volume, world);
+	compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
+	compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
 	merge_volumetric_potentials(&potentials, coulomb, world);
 	compute_volumetric_forces_fdm(&forces, potentials, world);
 	
@@ -71,18 +72,18 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 				exit(1);
 			}
 			output_vtk_header_start(out, world);
-			output_scalar_field(out, volume, world, "density");
-			output_scalar_field(out, potentials, world, "potentials");
 			output_vector_field(out, forces, world, "forces");
+			output_scalar_field(out, density, world, "density");
+			output_scalar_field(out, potentials, world, "potentials");
 			fclose(out);
 		}
 		update_momenta_half(part, dt);
 		update_positions_full(part, dt);
 		
-		compute_volumetric_density_cic(&volume, part, param, world);
+		compute_volumetric_density_cic(&density, &temp_density, part, param, world);
 		
-		compute_volumetric_skyrme_potentials(&potentials, volume, skm, world);
-		compute_volumetric_coulomb_potentials_sor(&coulomb, volume, world);
+		compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
+		compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
 		merge_volumetric_potentials(&potentials, coulomb, world);
 		compute_volumetric_forces_fdm(&forces, potentials, world);
 		
@@ -91,14 +92,15 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 		update_momenta_half(part, dt);
 	}
 	free_vector_field(&forces);
-	free_scalar_field(&volume);
+	free_scalar_field(&density);
 	free_scalar_field(&coulomb);
 	free_scalar_field(&potentials);
+	free_scalar_field(&temp_density);
 	fclose(stats);
 	/*ParticleCount<T> part_count;
 	create_particle_count(&part_count, world);
 	scatter_particles(&part_count, part, world);
-	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
+	compute_volumetric_density(&density, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
 	output_centroids(out, part, PROTONS);
 	output_particle_count(out, part_count, world);
 	free_particle_count(&part_count);*/

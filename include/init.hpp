@@ -325,7 +325,7 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 	}
 	
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
-	T d_max = T(1.35) * nuclear_radius<T>(z + n);
+	T d_max = T(1.3) * nuclear_radius<T>(z + n);
 	
 	set_skyrme(skm, T(A), T(B), T(C), T(gamma));
 	set_world(world, T(d_max), nx);

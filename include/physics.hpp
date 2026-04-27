@@ -95,7 +95,7 @@ void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, Wo
 }
 
 template <typename T>
-void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const ScalarField<T> &volume, const World<T> &world) {
+void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const ScalarField<T> &density, const World<T> &world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
 	T inv_dx2 = T(1.0) / (T(2.0) / (dx * dx) + T(2.0) / (dy * dy) + T(2.0) / (dz * dz)), omega = T(1.50), max_diff;
@@ -107,13 +107,13 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 				for(int k = 1; k < nz - 1; k++) {
 					if((i + j + k) % 2 == 0) {
 						int idx = IDX(i, j, k, nx, ny, nz);
-						T density = volume.v[idx];
+						T rho = density.v[idx];
 						
 						T phi_x = (coulomb->v[IDX(i + 1, j, k, nx, ny, nz)] + coulomb->v[IDX(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
 						T phi_y = (coulomb->v[IDX(i, j + 1, k, nx, ny, nz)] + coulomb->v[IDX(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
 						T phi_z = (coulomb->v[IDX(i, j, k + 1, nx, ny, nz)] + coulomb->v[IDX(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
 						
-						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * density) * inv_dx2;
+						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * rho) * inv_dx2;
 						T phi_old = coulomb->v[idx];
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
@@ -129,13 +129,13 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 				for(int k = 1; k < nz - 1; k++) {
 					if((i + j + k) % 2 != 0) {
 						int idx = IDX(i, j, k, nx, ny, nz);
-						T density = volume.v[idx];
+						T rho = density.v[idx];
 						
 						T phi_x = (coulomb->v[IDX(i + 1, j, k, nx, ny, nz)] + coulomb->v[IDX(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
 						T phi_y = (coulomb->v[IDX(i, j + 1, k, nx, ny, nz)] + coulomb->v[IDX(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
 						T phi_z = (coulomb->v[IDX(i, j, k + 1, nx, ny, nz)] + coulomb->v[IDX(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
 						
-						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * density) * inv_dx2;
+						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * rho) * inv_dx2;
 						T phi_old = coulomb->v[idx];
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
@@ -218,14 +218,14 @@ void update_positions_full(TestParticles<T> *part, T dt) {
 	}
 }
 template <typename T>
-void compute_volumetric_skyrme_potentials(ScalarField<T> *potentials, const ScalarField<T> &volume, const Skyrme<T> &skm, const World<T> &world) {
+void compute_volumetric_skyrme_potentials(ScalarField<T> *potentials, const ScalarField<T> &density, const Skyrme<T> &skm, const World<T> &world) {
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;
 	#pragma omp parallel for
 	for(int i = 0; i < world_size; i++)
-		potentials->v[i] = skyrme_potential(skm, volume.v[i], volume.v[i + world_size], PROTONS);
+		potentials->v[i] = skyrme_potential(skm, density.v[i], density.v[i + world_size], PROTONS);
 	#pragma omp parallel for
 	for(int i = world_size; i < 2 * world_size; i++)
-		potentials->v[i] = skyrme_potential(skm, volume.v[i - world_size], volume.v[i], NEUTRONS);
+		potentials->v[i] = skyrme_potential(skm, density.v[i - world_size], density.v[i], NEUTRONS);
 }
 
 #endif

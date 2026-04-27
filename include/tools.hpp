@@ -33,16 +33,16 @@ SOFTWARE. */
 #include "physics_formulas.hpp"
 
 template <typename T>
-void compute_volumetric_density_cic(ScalarField<T> *volume, TestParticles<T> *part, const Parameters<T> &param, const World<T> &world) {
+void compute_volumetric_density_cic(ScalarField<T> *density, ScalarField<T> *temp_density, TestParticles<T> *part, const Parameters<T> &param, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part->protons + part->neutrons;
 	
 	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
-		volume->v[i] = 0.0;
+		density->v[i] = 0.0;
 	
-	T *volume_ptr = volume->v;
-	#pragma omp parallel for reduction(+: volume_ptr[0 : 2 * world_size])
+	T *density_ptr = density->v;
+	#pragma omp parallel for reduction(+: density_ptr[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		T r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *part, i);
@@ -62,53 +62,51 @@ void compute_volumetric_density_cic(ScalarField<T> *volume, TestParticles<T> *pa
 		int offset = (i < part->protons) ? 0 : world_size;
 		
 		int idx000 = x0 * (ny * nz) + y0 * nz + z0 + offset;
-		volume_ptr[idx000] += t_x * t_y * t_z;
+		density_ptr[idx000] += t_x * t_y * t_z;
 		
 		if (x1 < nx) {
 			int idx100 = x1 * (ny * nz) + y0 * nz + z0 + offset;
-			volume_ptr[idx100] += d_x * t_y * t_z;
+			density_ptr[idx100] += d_x * t_y * t_z;
 		}
 		if (y1 < ny) {
 			int idx010 = x0 * (ny * nz) + y1 * nz + z0 + offset;
-			volume_ptr[idx010] += t_x * d_y * t_z;
+			density_ptr[idx010] += t_x * d_y * t_z;
 		}
 		if (x1 < nx && y1 < ny) {
 			int idx110 = x1 * (ny * nz) + y1 * nz + z0 + offset;
-			volume_ptr[idx110] += d_x * d_y * t_z;
+			density_ptr[idx110] += d_x * d_y * t_z;
 		}
 		if (z1 < nz) {
 			int idx001 = x0 * (ny * nz) + y0 * nz + z1 + offset;
-			volume_ptr[idx001] += t_x * t_y * d_z;
+			density_ptr[idx001] += t_x * t_y * d_z;
 		}
 		if (x1 < nx && z1 < nz) {
 			int idx101 = x1 * (ny * nz) + y0 * nz + z1 + offset;
-			volume_ptr[idx101] += d_x * t_y * d_z;
+			density_ptr[idx101] += d_x * t_y * d_z;
 		}
 		if (y1 < ny && z1 < nz) {
 			int idx011 = x0 * (ny * nz) + y1 * nz + z1 + offset;
-			volume_ptr[idx011] += t_x * d_y * d_z;
+			density_ptr[idx011] += t_x * d_y * d_z;
 		}
 		if (x1 < nx && y1 < ny && z1 < nz) {
 			int idx111 = x1 * (ny * nz) + y1 * nz + z1 + offset;
-			volume_ptr[idx111] += d_x * d_y * d_z;
+			density_ptr[idx111] += d_x * d_y * d_z;
 		}
 	}
-	ScalarField<T> temp_volume;
-	create_scalar_field_double(&temp_volume, world);
-	copy_scalar_field(&temp_volume, *volume, world);
+	copy_scalar_field(temp_density, *density, world);
 	
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
 	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		T r_i[3], r_j[3], diff[3];
-		T fact, dist_squared, density = T(0.0);
+		T fact, dist_squared, rho_f = T(0.0);
 		world_pos_to_vector(r_i, world, i % world_size);
 		
 		for(int j = 0; j < world_size; j++) {
 			int offset = (i < world_size) ? 0 : world_size;
 			int idx = j + offset;
-			T count = temp_volume.v[idx];
+			T rho = temp_density->v[idx];
 			world_pos_to_vector(r_j, world, j);
 			
 			sub_vec(diff, r_i, r_j);
@@ -116,16 +114,15 @@ void compute_volumetric_density_cic(ScalarField<T> *volume, TestParticles<T> *pa
 			if(dist_squared > cutoff_squared)
 				continue;
 			fact = std::exp(-dist_squared * exp_term);
-			density += count * fact;
+			rho_f += rho * fact;
 		}
-		volume->v[i] = density;
+		density->v[i] = rho_f;
 	}
-	free_scalar_field(&temp_volume);
 	
 	T term = (T(1.0) / param.part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
 	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
-		volume->v[i] *= term;
+		density->v[i] *= term;
 }
 
 template <typename T>
@@ -405,11 +402,11 @@ void merge_volumetric_potentials(ScalarField<T> *potential_a, const ScalarField<
 }
 
 template <typename T>
-void copy_scalar_field(ScalarField<T> *volume_a, const ScalarField<T> &volume_b, const World<T> &world) {
+void copy_scalar_field(ScalarField<T> *density_a, const ScalarField<T> &density_b, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
-		volume_a->v[i] = volume_b.v[i];
+		density_a->v[i] = density_b.v[i];
 }
 
 template <typename T>
@@ -449,7 +446,7 @@ static inline void copy_vector_to_particle_vel(const TestParticles<T> *part, con
 	part->kz[i] = v[2];
 }
 
-/*void compute_volumetric_density(ScalarField<T> *volume, ParticleCount<T> part_count, World<T> world_visual, World<T> world_data, Parameters<T> param, int type) {
+/*void compute_volumetric_density(ScalarField<T> *density, ParticleCount<T> part_count, World<T> world_visual, World<T> world_data, Parameters<T> param, int type) {
 	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
 	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2];
 	
@@ -474,11 +471,11 @@ static inline void copy_vector_to_particle_vel(const TestParticles<T> *part, con
 			fact = exp(-dist_squared * exp_term);
 			density += count * fact;
 		}
-		volume->v[i] += density;
+		density->v[i] += density;
 	}
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++)
-		volume->v[i] *= term;
+		density->v[i] *= term;
 }
 
 void scatter_particles(ParticleCount<T> *part_count, TestParticles<T> *part, World<T> world) {
