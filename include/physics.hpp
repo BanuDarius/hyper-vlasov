@@ -164,32 +164,33 @@ void compute_volumetric_forces_fdm(VectorField<T> *forces, ScalarField<T> potent
 		for(int i = 0; i < nx; i++) {
 			for(int j = 0; j < ny; j++) {
 				for(int k = 0; k < nz; k++) {
+					int idx = IDX(i, j, k, nx, ny, nz);
 					T gradient_x, gradient_y, gradient_z;
 					
 					if(i == 0)
-						gradient_x = (potentials.v[IDX(1, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k, nx, ny, nz) + offset]) / dx;
+						gradient_x = (potentials.v[IDX(1, j, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dx;
 					else if(i == nx - 1)
-						gradient_x = (potentials.v[IDX(i, j, k, nx, ny, nz) + offset] - potentials.v[IDX(nx - 2, j, k, nx, ny, nz) + offset]) / dx;
+						gradient_x = (potentials.v[idx + offset] - potentials.v[IDX(nx - 2, j, k, nx, ny, nz) + offset]) / dx;
 					else
 						gradient_x = (potentials.v[IDX(i + 1, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i - 1, j, k, nx, ny, nz) + offset]) / (T(2.0) * dx);
 					
 					if(j == 0)
-						gradient_y = (potentials.v[IDX(i, 1, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k, nx, ny, nz) + offset]) / dy;
+						gradient_y = (potentials.v[IDX(i, 1, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dy;
 					else if(j == ny - 1)
-						gradient_y = (potentials.v[IDX(i, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i, ny - 2, k, nx, ny, nz) + offset]) / dy;
+						gradient_y = (potentials.v[idx + offset] - potentials.v[IDX(i, ny - 2, k, nx, ny, nz) + offset]) / dy;
 					else
 						gradient_y = (potentials.v[IDX(i, j + 1, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j - 1, k, nx, ny, nz) + offset]) / (T(2.0) * dy);
 					
 					if(k == 0)
-						gradient_z = (potentials.v[IDX(i, j, 1, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k, nx, ny, nz) + offset]) / dz;
+						gradient_z = (potentials.v[IDX(i, j, 1, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dz;
 					else if(k == nz - 1)
-						gradient_z = (potentials.v[IDX(i, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j, nz - 2, nx, ny, nz) + offset]) / dz;
+						gradient_z = (potentials.v[idx + offset] - potentials.v[IDX(i, j, nz - 2, nx, ny, nz) + offset]) / dz;
 					else
 						gradient_z = (potentials.v[IDX(i, j, k + 1, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k - 1, nx, ny, nz) + offset]) / (T(2.0) * dz);
 					
-					forces->x[IDX(i, j, k, nx, ny, nz) + offset] = -gradient_x;
-					forces->y[IDX(i, j, k, nx, ny, nz) + offset] = -gradient_y;
-					forces->z[IDX(i, j, k, nx, ny, nz) + offset] = -gradient_z;
+					forces->x[idx + offset] = -gradient_x;
+					forces->y[idx + offset] = -gradient_y;
+					forces->z[idx + offset] = -gradient_z;
 				}
 			}
 		}

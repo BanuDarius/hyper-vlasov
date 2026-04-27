@@ -1,10 +1,10 @@
-num_test_part 1200
-z 50
-n 82
+num_test_part 2000
+z 16
+n 20
 nx 16
-t_f 300
-steps 300
-substeps 2
+t_f 1200
+steps 1200
+substeps 4
 V0 -50.0
 a 0.66
 A -356.8
