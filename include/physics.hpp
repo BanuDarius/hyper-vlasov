@@ -34,8 +34,8 @@ SOFTWARE. */
 template <typename T>
 void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, WoodsSaxon<T> *ws, const Skyrme<T> &skm, Fermi<T> *fermi_levels) {
 	T r_max = param.r_max, total_delta_epsilon, relax_coef = T(0.6);
-	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon, it = 0;
-	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
+	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon;
+	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon, it = 0;
 	
 	TestParticles<T> temp_part;
 	create_particles(part, total_p, total_n);
@@ -80,16 +80,17 @@ void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, Wo
 		minim_woods_saxon(part, ws, skm);
 		relax_woods_saxon(ws, ws_old, relax_coef);
 		
-		total_delta_epsilon = fabs(delta_epsilon_n) + fabs(delta_epsilon_p);
-		std::printf("%i %i %i\n", check_less_p, check_equal_p, check_more_p);
-		std::printf("%i %i %i\n", check_less_n, check_equal_n, check_more_n);
+		total_delta_epsilon = std::abs(delta_epsilon_n) + std::abs(delta_epsilon_p);
+		std::printf("LESS P %i EQUAL P %i MORE P %i\n", check_less_p, check_equal_p, check_more_p);
+		std::printf("LESS N %i EQUAL N %i MORE N %i\n", check_less_n, check_equal_n, check_more_n);
 		std::printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
 		std::printf("WS PARAM %0.2lf %0.2lf %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);
 		std::printf("FERMI P %0.2lf FERMI N %0.2lf\n", fermi_levels->epsilon_p, fermi_levels->epsilon_n);
 		std::printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it);
+		std::printf("----------------\n");
 		
 		it++;
-	} while(total_delta_epsilon > DELTA_EPSILON_TOLERANCE && it < MAX_INIT_ITERATIONS);	
+	} while(total_delta_epsilon > delta_epsilon_tolerance<T> && it < MAX_INIT_ITERATIONS);	
 	compute_particle_energies(part, ws, param);
 	free_particles(&temp_part);
 }
@@ -113,12 +114,13 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 						T phi_y = (coulomb->v[IDX(i, j + 1, k, nx, ny, nz)] + coulomb->v[IDX(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
 						T phi_z = (coulomb->v[IDX(i, j, k + 1, nx, ny, nz)] + coulomb->v[IDX(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
 						
-						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * M_PI * T(1.44) * density) * inv_dx2;
+						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * density) * inv_dx2;
 						T phi_old = coulomb->v[idx];
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb->v[idx] - phi_old);
-						if(diff > max_diff) max_diff = diff;
+						if(diff > max_diff)
+							max_diff = diff;
 					}
 				}
 			}
@@ -135,12 +137,13 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 						T phi_y = (coulomb->v[IDX(i, j + 1, k, nx, ny, nz)] + coulomb->v[IDX(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
 						T phi_z = (coulomb->v[IDX(i, j, k + 1, nx, ny, nz)] + coulomb->v[IDX(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
 						
-						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * M_PI * T(1.44) * density) * inv_dx2;
+						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * density) * inv_dx2;
 						T phi_old = coulomb->v[idx];
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb->v[idx] - phi_old);
-						if(diff > max_diff) max_diff = diff;
+						if(diff > max_diff)
+							max_diff = diff;
 					}
 				}
 			}

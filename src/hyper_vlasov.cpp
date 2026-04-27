@@ -42,7 +42,7 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
 	
-	ScalarField<T> volume, potentials, coulomb;
+	ScalarField<T> potentials, coulomb, volume;
 	create_scalar_field_single(&coulomb, world);
 	create_scalar_field_double(&volume, world);
 	create_scalar_field_double(&potentials, world);
@@ -95,38 +95,38 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 	free_scalar_field(&coulomb);
 	free_scalar_field(&potentials);
 	fclose(stats);
-	//ParticleCount<T> part_count;
-	//create_particle_count(&part_count, world);
-	//scatter_particles(&part_count, part, world);
-	//compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
-	//output_centroids(out, part, PROTONS);
-	//output_particle_count(out, part_count, world);
-	//free_particle_count(&part_count);
+	/*ParticleCount<T> part_count;
+	create_particle_count(&part_count, world);
+	scatter_particles(&part_count, part, world);
+	compute_volumetric_density(&volume, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
+	output_centroids(out, part, PROTONS);
+	output_particle_count(out, part_count, world);
+	free_particle_count(&part_count);*/
 }
 
 template <typename T>
 void run_simulation(const char *input_filename, const char *output_filename) {
-		Skyrme<T> skm;
-		World<T> world;
-		Parameters<T> param;
-		WoodsSaxon<T> ws[2];
-		Fermi<T> fermi_levels;
-		TestParticles<T> part;
-		
-		FILE *in = fopen(input_filename, "r");
-		if(in == nullptr) {
-			std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n");
-			exit(1);
-		}
-		read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
-		std::printf("MAX TEST PART %i\n", param.max_test_part);
-		
-		initialize_particles(&part, param, ws, skm, &fermi_levels);
-		chi_squared(part, ws, skm, param.part_per_nucleon);
-		simulate(output_filename, &part, skm, param, world);
-		
-		free_particles(&part);
-		fclose(in);
+	Skyrme<T> skm;
+	World<T> world;
+	Parameters<T> param;
+	WoodsSaxon<T> ws[2];
+	Fermi<T> fermi_levels;
+	TestParticles<T> part;
+	
+	FILE *in = fopen(input_filename, "r");
+	if(in == nullptr) {
+		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n");
+		exit(1);
+	}
+	read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
+	std::printf("MAX TEST PART %i\n", param.max_test_part);
+	
+	initialize_particles(&part, param, ws, skm, &fermi_levels);
+	chi_squared(part, ws, skm, param.part_per_nucleon);
+	simulate(output_filename, &part, skm, param, world);
+	
+	free_particles(&part);
+	fclose(in);
 }
 
 int main(int argc, char **argv) {

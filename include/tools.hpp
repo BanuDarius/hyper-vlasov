@@ -122,7 +122,7 @@ void compute_volumetric_density_cic(ScalarField<T> *volume, TestParticles<T> *pa
 	}
 	free_scalar_field(&temp_volume);
 	
-	T term = (T(1.0) / param.part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * M_PI * sigma_r * sigma_r, T(1.5)));
+	T term = (T(1.0) / param.part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
 	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
 		volume->v[i] *= term;
@@ -227,7 +227,7 @@ void compute_particle_densities(TestParticles<T> *part, const Parameters<T> &par
 		part->density_p[i] = density_p;
 		part->density_n[i] = density_n;
 	}
-	T term = (T(1.0) / part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * M_PI * sigma_r * sigma_r, T(1.5)));
+	T term = (T(1.0) / part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
 	#pragma omp parallel for simd
 	for(int i = 0; i < total; i++) {
 		part->density_p[i] *= term;
@@ -379,7 +379,7 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
 			continue;
 		
-		double r2 = dot(r_vec, r_vec);
+		T r2 = dot(r_vec, r_vec);
 		r_sqr += r2;
 		part_num++;
 	}
@@ -458,7 +458,7 @@ static inline void copy_vector_to_particle_vel(const TestParticles<T> *part, con
 	else { start = 0; end = 2 * world_size_data; }
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);
-	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * M_PI * sigma_r * sigma_r, 1.5)));
+	double term = (1.0 / param.part_per_nucleon) * (1.0 / (pow(2.0 * pi<T> * sigma_r * sigma_r, 1.5)));
 	#pragma omp parallel for
 	for(int i = 0; i < world_size_visual; i++) {
 		double r_i[3], r_j[3], diff[3];

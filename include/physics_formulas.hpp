@@ -35,8 +35,8 @@ T nuclear_radius(int a) {
 
 template <typename T>
 int max_particles(T r_max, T k_max, int part_per_nucleon) {
-	T t = r_max * k_max, ct = T(2.0) * M_PI;
-	T phase_space_volume = T(16.0 / 9.0) * M_PI * M_PI * (t * t * t);
+	T t = r_max * k_max, ct = T(2.0) * pi<T>;
+	T phase_space_volume = T(16.0) / T(9.0) * pi<T> * pi<T> * (t * t * t);
 	int max = part_per_nucleon * (int)std::floor(phase_space_volume / (ct * ct * ct) + T(0.5));
 	return max;
 }
@@ -72,7 +72,7 @@ static inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int typ
 	T tau = (type == PROTONS) ? T(-1.0) : T(+1.0);
 	T rho = rho_p + rho_n;
 	T t = rho / rho_0<T>;
-	T v = skm.A * t + skm.B * std::pow(t, T(skm.gamma)) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / rho_0<T>);
+	T v = skm.A * t + skm.B * std::pow(t, skm.gamma) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / rho_0<T>);
 	return v;
 }
 
