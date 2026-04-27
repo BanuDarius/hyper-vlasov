@@ -34,17 +34,10 @@ SOFTWARE. */
 #include "sim_structs.hpp"
 #include "physics_formulas.hpp"
 
-template <typename T>
-static inline auto swap_endian(T v) {
-	if constexpr(sizeof(T) == 8) {
-		uint64_t data;
-		std::memcpy(&data, &v, 8);
-		return __builtin_bswap64(data);
-	} else {
-		uint32_t data;
-		std::memcpy(&data, &v, 4);
-		return __builtin_bswap32(data);
-	}
+static inline uint32_t swap_endian(float v) {
+	uint32_t data;
+	std::memcpy(&data, &v, 4);
+	return __builtin_bswap32(data);
 }
 
 template <typename T>
@@ -60,7 +53,7 @@ void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, in
 	param->part_per_nucleon = part_per_nucleon;
 	param->r_max = nuclear_radius<T>(z + n);
 	
-	param->max_test_part = max_particles(param->r_max, K_MAX, param->part_per_nucleon);
+	param->max_test_part = max_particles(T(param->r_max), T(K_MAX), param->part_per_nucleon);
 }
 
 template <typename T>
@@ -183,7 +176,7 @@ void output_vtk_header_scalar_next(FILE *out, const char *name, int type) {
 	if(type == PROTONS) tag = 'p';
 	else if(type == NEUTRONS) tag = 'n';
 	else tag = 't';
-	std::fprintf(out, "SCALARS %s_%c double 1\n", name, tag);
+	std::fprintf(out, "SCALARS %s_%c float 1\n", name, tag);
 	std::fprintf(out, "LOOKUP_TABLE default\n");
 }
 
@@ -191,15 +184,15 @@ void output_vtk_header_vector_next(FILE *out, const char *name, int type) {
 	char tag;
 	if(type == PROTONS) tag = 'p';
 	else if(type == NEUTRONS) tag = 'n';
-	std::fprintf(out, "VECTORS %s_%c double\n", name, tag);
+	std::fprintf(out, "VECTORS %s_%c float\n", name, tag);
 }
 
 template <typename T>
 void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
-	uint64_t *vtk_density_p = (uint64_t*)malloc(world_size * sizeof(uint64_t));
-	uint64_t *vtk_density_n = (uint64_t*)malloc(world_size * sizeof(uint64_t));
-	uint64_t *vtk_density_t = (uint64_t*)malloc(world_size * sizeof(uint64_t));
+	uint32_t *vtk_density_p = (uint32_t*)malloc(world_size * sizeof(uint32_t));
+	uint32_t *vtk_density_n = (uint32_t*)malloc(world_size * sizeof(uint32_t));
+	uint32_t *vtk_density_t = (uint32_t*)malloc(world_size * sizeof(uint32_t));
 	if(vtk_density_p == NULL || vtk_density_n == NULL || vtk_density_t == NULL) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
 		exit(1);
@@ -211,20 +204,20 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 				int idx = IDX(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
-				vtk_density_p[write_idx] = swap_endian(field.v[idx]);
-				vtk_density_n[write_idx] = swap_endian(field.v[idx + world_size]);
-				vtk_density_t[write_idx] = swap_endian(field.v[idx] + field.v[idx + world_size]);
+				vtk_density_p[write_idx] = swap_endian(static_cast<float>(field.v[idx]));
+				vtk_density_n[write_idx] = swap_endian(static_cast<float>(field.v[idx + world_size]));
+				vtk_density_t[write_idx] = swap_endian(static_cast<float>(field.v[idx] + field.v[idx + world_size]));
 			}
 		}
 	}
 	output_vtk_header_scalar_next(out, name, PROTONS);
-	fwrite(vtk_density_p, sizeof(uint64_t), world_size, out);
+	fwrite(vtk_density_p, sizeof(uint32_t), world_size, out);
 	
 	output_vtk_header_scalar_next(out, name, NEUTRONS);
-	fwrite(vtk_density_n, sizeof(uint64_t), world_size, out);
+	fwrite(vtk_density_n, sizeof(uint32_t), world_size, out);
 	
 	output_vtk_header_scalar_next(out, name, PROTONS_AND_NEUTRONS);
-	fwrite(vtk_density_t, sizeof(uint64_t), world_size, out);
+	fwrite(vtk_density_t, sizeof(uint32_t), world_size, out);
 	
 	free(vtk_density_p); free(vtk_density_n); free(vtk_density_t);
 }
@@ -232,8 +225,8 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 template <typename T>
 void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> &world, const char *name) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
-	uint64_t *vtk_force_p = (uint64_t*)malloc(3 * world_size * sizeof(uint64_t));
-	uint64_t *vtk_force_n = (uint64_t*)malloc(3 * world_size * sizeof(uint64_t));
+	uint32_t *vtk_force_p = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
+	uint32_t *vtk_force_n = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
 	
 	if(vtk_force_p == NULL || vtk_force_n == NULL) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
@@ -246,21 +239,21 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 				int idx = IDX(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
-				vtk_force_p[3 * write_idx] = swap_endian(field.x[idx]);
-				vtk_force_p[3 * write_idx + 1] = swap_endian(field.y[idx]);
-				vtk_force_p[3 * write_idx + 2] = swap_endian(field.z[idx]);
+				vtk_force_p[3 * write_idx] = swap_endian(static_cast<float>(field.x[idx]));
+				vtk_force_p[3 * write_idx + 1] = swap_endian(static_cast<float>(field.y[idx]));
+				vtk_force_p[3 * write_idx + 2] = swap_endian(static_cast<float>(field.z[idx]));
 				
-				vtk_force_n[3 * write_idx] = swap_endian(field.x[idx + world_size]);
-				vtk_force_n[3 * write_idx + 1] = swap_endian(field.y[idx + world_size]);
-				vtk_force_n[3 * write_idx + 2] = swap_endian(field.z[idx + world_size]);
+				vtk_force_n[3 * write_idx] = swap_endian(static_cast<float>(field.x[idx + world_size]));
+				vtk_force_n[3 * write_idx + 1] = swap_endian(static_cast<float>(field.y[idx + world_size]));
+				vtk_force_n[3 * write_idx + 2] = swap_endian(static_cast<float>(field.z[idx + world_size]));
 			}
 		}
 	}
 	output_vtk_header_vector_next(out, name, PROTONS);
-	fwrite(vtk_force_p, sizeof(uint64_t), 3 * world_size, out);
+	fwrite(vtk_force_p, sizeof(uint32_t), 3 * world_size, out);
 	
 	output_vtk_header_vector_next(out, name, NEUTRONS);
-	fwrite(vtk_force_n, sizeof(uint64_t), 3 * world_size, out);
+	fwrite(vtk_force_n, sizeof(uint32_t), 3 * world_size, out);
 	
 	free(vtk_force_p); free(vtk_force_n);
 }
@@ -334,12 +327,12 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
 	T d_max = T(1.35) * nuclear_radius<T>(z + n);
 	
-	set_skyrme(skm, T(A), T(B), T(C), gamma);
+	set_skyrme(skm, T(A), T(B), T(C), T(gamma));
 	set_world(world, T(d_max), nx);
 	set_fermi_levels(fermi_levels, T(epsilon_p), T(epsilon_n));
 	set_parameters(param, z, n, num_test_part, steps, substeps, T(sigma_k), T(sigma_r), T(t_f));
-	set_woods_saxon(&ws[0], T(V0), T(0.8) * T(param->r_max), a);
-	set_woods_saxon(&ws[1], T(V0), T(0.8) * T(param->r_max), a);
+	set_woods_saxon(&ws[0], T(V0), T(0.8) * T(param->r_max), T(a));
+	set_woods_saxon(&ws[1], T(V0), T(0.8) * T(param->r_max), T(a));
 }
 
 void set_output_filename(char *output_filename, char *output_directory, int i) {

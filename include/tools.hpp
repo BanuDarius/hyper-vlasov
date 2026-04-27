@@ -278,7 +278,7 @@ void generate_random_particles(TestParticles<T> *part, T r_max) {
 	i = 0;
 	while(i < total) {
 		T k_new[3];
-		random_vec(k_new, K_MAX);
+		random_vec(k_new, T(K_MAX));
 		if(dot(k_new, k_new) < K_MAX * K_MAX) {
 			copy_vector_to_particle_vel(part, k_new, i);
 			i++;
@@ -298,14 +298,14 @@ void generate_checking_particles(TestParticles<T> *part, const WoodsSaxon<T> *ws
 		
 		T r_new[3], k_new[3];
 		random_vec(r_new, r_max);
-		random_vec(k_new, K_MAX);
+		random_vec(k_new, T(K_MAX));
 		copy_vector_to_particle_pos(part, r_new, i);
 		copy_vector_to_particle_vel(part, k_new, i);
 		T energy = compute_energy(part, ws, sigma_k, z, i);
 		
 		if(energy < epsilon) {
-			mult_vec(r_new, r_new, -1.0);
-			mult_vec(k_new, k_new, -1.0);
+			mult_vec(r_new, r_new, T(-1.0));
+			mult_vec(k_new, k_new, T(-1.0));
 			copy_vector_to_particle_pos(part, r_new, i + 1);
 			copy_vector_to_particle_vel(part, k_new, i + 1);
 			i+=2;

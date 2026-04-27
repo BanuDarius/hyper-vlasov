@@ -59,7 +59,7 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 	
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
-			std::printf("TIME STEP %i/%i\n", step + 1, param.steps);
+			std::printf("TIME STEP %i/%i\n", step, param.steps);
 			T msr_p = mean_squared_radius(*part, world, PROTONS);
 			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
 			std::fprintf(stats, "%0.4lf %0.4lf %0.4lf\n", step * dt, std::sqrt(msr_n), std::sqrt(msr_p));
@@ -108,32 +108,51 @@ void simulate(char *output_directory, TestParticles<T> *part, const Skyrme<T> &s
 
 int main(int argc, char **argv) {
 	srand(128);
-	if(argc != 3) {
-		std::fprintf(stderr, "NEED 3 ARGUMENTS!\n");
+	if(argc != 3 && argc != 4) {
+		std::fprintf(stderr, "BAD ARGUMENTS!\n");
 		return 1;
 	}
 	
-	Skyrme<double> skm;
-	World<double> world;
-	Parameters<double> param;
-	WoodsSaxon<double> ws[2];
-	Fermi<double> fermi_levels;
-	TestParticles<double> part;
-	
-	FILE *in = fopen(argv[1], "r");
-	read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
-	std::printf("MAX TEST PART %i\n", param.max_test_part);
-	
 	std::printf("Simulation started.\n");
 	double start_time = omp_get_wtime();
-	initialize_particles(&part, param, ws, skm, &fermi_levels);
-	chi_squared(part, ws, skm, param.part_per_nucleon);
 	
-	simulate(argv[2], &part, skm, param, world);
+	if(!strcmp(argv[1], "--float")) {
+		Skyrme<float> skm;
+		World<float> world;
+		Parameters<float> param;
+		WoodsSaxon<float> ws[2];
+		Fermi<float> fermi_levels;
+		TestParticles<float> part;
+		
+		FILE *in = fopen(argv[2], "r");
+		read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
+		std::printf("MAX TEST PART %i\n", param.max_test_part);
+		initialize_particles(&part, param, ws, skm, &fermi_levels);
+		chi_squared(part, ws, skm, param.part_per_nucleon);
+		simulate(argv[3], &part, skm, param, world);
+		
+		free_particles(&part);
+		fclose(in);
+	} else {
+		Skyrme<double> skm;
+		World<double> world;
+		Parameters<double> param;
+		WoodsSaxon<double> ws[2];
+		Fermi<double> fermi_levels;
+		TestParticles<double> part;
+		
+		FILE *in = fopen(argv[1], "r");
+		read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
+		std::printf("MAX TEST PART %i\n", param.max_test_part);
+		initialize_particles(&part, param, ws, skm, &fermi_levels);
+		chi_squared(part, ws, skm, param.part_per_nucleon);
+		simulate(argv[2], &part, skm, param, world);
+		
+		free_particles(&part);
+		fclose(in);
+	}
+	
 	std::printf("Simulation ended.\n");
 	std::printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
-	
-	free_particles(&part);
-	fclose(in);
 	return 0;
 }
