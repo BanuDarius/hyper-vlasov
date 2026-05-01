@@ -32,7 +32,7 @@ SOFTWARE. */
 #include "fit_algorithm.hpp"
 
 template <typename T>
-void initialize_particles(TestParticles<T> *part, const Parameters<T> &param, WoodsSaxon<T> *ws, const Skyrme<T> &skm, Fermi<T> *fermi_levels) {
+void initialize_particles(TestParticles<T> *part, WoodsSaxon<T> *ws, const Skyrme<T> &skm, Fermi<T> *fermi_levels, const Parameters<T> &param) {
 	T total_delta_epsilon, relax_coef = T(0.6);
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon, it = 0;
@@ -155,7 +155,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 }
 
 template <typename T>
-void compute_volumetric_forces_fdm(VectorField<T> *forces, ScalarField<T> potentials, World<T> world) {
+void compute_volumetric_forces_fdm(VectorField<T> *forces, ScalarField<T> potentials, const World<T> &world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
 	for(int x = 0; x < 2; x++) {
@@ -198,6 +198,40 @@ void compute_volumetric_forces_fdm(VectorField<T> *forces, ScalarField<T> potent
 }
 
 template <typename T>
+void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *temp_density, const Parameters<T> &param, const World<T> &world) {
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
+	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
+	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
+	
+	copy_scalar_field(temp_density, *density, world);
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++) {
+		T r_i[3], r_j[3], diff[3];
+		T fact, dist_squared, rho_f = T(0.0);
+		world_pos_to_vector(r_i, world, i % world_size);
+		
+		for(int j = 0; j < world_size; j++) {
+			int offset = (i < world_size) ? 0 : world_size;
+			int idx = j + offset;
+			T rho = temp_density->v[idx];
+			world_pos_to_vector(r_j, world, j);
+			
+			sub_vec(diff, r_i, r_j);
+			dist_squared = dot(diff, diff);
+			if(dist_squared > cutoff_squared)
+				continue;
+			fact = std::exp(-dist_squared * exp_term);
+			rho_f += rho * fact;
+		}
+		density->v[i] = rho_f;
+	}
+	T term = (T(1.0) / param.part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
+	#pragma omp parallel for simd
+	for(int i = 0; i < 2 * world_size; i++)
+		density->v[i] *= term;
+}
+
+template <typename T>
 void update_momenta_half(TestParticles<T> *part, T dt) {
 	int total = part->protons + part->neutrons;
 	T fact = dt / (T(2.0) * h_bar_c<T>);
@@ -220,6 +254,7 @@ void update_positions_full(TestParticles<T> *part, T dt) {
 		part->z[i] += fact * part->kz[i];
 	}
 }
+
 template <typename T>
 void compute_volumetric_skyrme_potentials(ScalarField<T> *potentials, const ScalarField<T> &density, const Skyrme<T> &skm, const World<T> &world) {
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;

@@ -46,13 +46,11 @@ void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, in
 	param->n = n;
 	param->t_f = t_f;
 	param->steps = steps;
-	param->substeps = substeps;
 	param->sigma_k = sigma_k;
 	param->sigma_r = sigma_r;
-	
-	param->part_per_nucleon = part_per_nucleon;
+	param->substeps = substeps;
 	param->r_max = nuclear_radius<T>(z + n);
-	
+	param->part_per_nucleon = part_per_nucleon;
 	param->max_test_part = max_particles(T(param->r_max), k_max<T>, param->part_per_nucleon);
 }
 
@@ -91,8 +89,7 @@ void create_scalar_field_single(ScalarField<T> *field, const World<T> &world) {
 	field->v = (T*)malloc(world_size * sizeof(T));
 	
 	if(field->v == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
+		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for simd
 	for(int i = 0; i < world_size; i++)
@@ -105,8 +102,7 @@ void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
 	field->v = (T*)malloc(2 * world_size * sizeof(T));
 	
 	if(field->v == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
+		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++)
@@ -121,8 +117,7 @@ void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
 	field->z = (T*)malloc(2 * world_size * sizeof(T));
 	
 	if(field->x == nullptr || field->y == nullptr || field->z == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
+		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for simd
 	for(int i = 0; i < 2 * world_size; i++) {
@@ -154,8 +149,7 @@ void create_particles(TestParticles<T> *part, int protons, int neutrons) {
 	|| part->kx == nullptr || part->ky == nullptr || part->kz == nullptr
 	|| part->fx == nullptr || part->fy == nullptr || part->fz == nullptr
 	|| part->energy == nullptr || part->density_p == nullptr || part->density_n == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
+		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 }
 
@@ -194,8 +188,7 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 	uint32_t *vtk_density_n = (uint32_t*)malloc(world_size * sizeof(uint32_t));
 	uint32_t *vtk_density_t = (uint32_t*)malloc(world_size * sizeof(uint32_t));
 	if(vtk_density_p == nullptr || vtk_density_n == nullptr || vtk_density_t == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
+		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for collapse(3)
 	for(int k = 0; k < nz; k++) {
@@ -229,8 +222,7 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 	uint32_t *vtk_force_n = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
 	
 	if(vtk_force_p == nullptr || vtk_force_n == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n");
-		exit(1);
+		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for collapse(3)
 	for(int k = 0; k < nz; k++) {
@@ -320,10 +312,8 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 			i += std::fscanf(in, "%i", &substeps);
 	}
 	if(i != INPUT_FILE_COUNT) {
-		std::fprintf(stderr, "Error: Invalid input file.\n");
-		exit(1);
+		std::fprintf(stderr, "Error: Invalid input file.\n"); exit(1);
 	}
-	
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
 	T d_max = T(1.3) * nuclear_radius<T>(z + n);
 	

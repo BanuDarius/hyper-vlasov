@@ -36,8 +36,7 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 	set_stats_filename(stats_filename, output_directory);
 	FILE *stats = fopen(stats_filename, "w");
 	if(stats == nullptr) {
-		std::fprintf(stderr, "CANNOT OPEN STATS FILE!\n");
-		exit(1);
+		std::fprintf(stderr, "CANNOT OPEN STATS FILE!\n"); exit(1);
 	}
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
@@ -47,10 +46,11 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 	create_scalar_field_double(&density, world);
 	create_scalar_field_double(&potentials, world);
 	create_scalar_field_double(&temp_density, world);
+	
+	distribute_volumetric_particles_cic(&density, part, world);
+	compute_volumetric_densities(&density, &temp_density, param, world);
+	
 	set_initial_coulomb_boundaries(&coulomb, world, param.z);
-	
-	compute_volumetric_density_cic(&density, &temp_density, part, param, world);
-	
 	compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
 	compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
 	merge_volumetric_potentials(&potentials, coulomb, world);
@@ -80,7 +80,8 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 		update_momenta_half(part, dt);
 		update_positions_full(part, dt);
 		
-		compute_volumetric_density_cic(&density, &temp_density, part, param, world);
+		distribute_volumetric_particles_cic(&density, part, world);
+		compute_volumetric_densities(&density, &temp_density, param, world);
 		
 		compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
 		compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
@@ -91,12 +92,12 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 		
 		update_momenta_half(part, dt);
 	}
+	fclose(stats);
 	free_vector_field(&forces);
 	free_scalar_field(&density);
 	free_scalar_field(&coulomb);
 	free_scalar_field(&potentials);
 	free_scalar_field(&temp_density);
-	fclose(stats);
 	/*ParticleCount<T> part_count;
 	create_particle_count(&part_count, world);
 	scatter_particles(&part_count, part, world);
@@ -117,13 +118,12 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 	
 	FILE *in = fopen(input_filename, "r");
 	if(in == nullptr) {
-		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n");
-		exit(1);
+		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); exit(1);
 	}
 	read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
 	std::printf("MAX TEST PART %i\n", param.max_test_part);
 	
-	initialize_particles(&part, param, ws, skm, &fermi_levels);
+	initialize_particles(&part, ws, skm, &fermi_levels, param);
 	chi_squared(part, ws, skm, param.part_per_nucleon);
 	simulate(output_filename, &part, skm, param, world);
 	
