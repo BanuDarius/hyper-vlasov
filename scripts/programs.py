@@ -60,7 +60,10 @@ def output_init_file(sim_parameters):
 def run_simulation(sim_parameters):
     output_init_file(sim_parameters)
     
-    arguments = [BIN_DIR / "hyper_vlasov", sim_parameters.input_file, sim_parameters.output_directory]
+    if(sim_parameters.use_floats == False):
+        arguments = [BIN_DIR / "hyper_vlasov", sim_parameters.input_file, sim_parameters.output_directory]
+    else:
+        arguments = [BIN_DIR / "hyper_vlasov", "--float", sim_parameters.input_file, sim_parameters.output_directory]
     
     subprocess.run(arguments, text=True)
 
