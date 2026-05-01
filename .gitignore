@@ -2,3 +2,4 @@ bin/
 input/
 build/
 output/
+scripts/__pycache__/
