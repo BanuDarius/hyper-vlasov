@@ -6,6 +6,7 @@ LDLIBS = -lm -lgsl -lgslcblas
 SRC_DIR = src
 BUILD_DIR = build
 BIN_DIR = bin
+INPUT_DIR = input
 OUTPUT_DIR = output
 
 TARGET = $(BIN_DIR)/hyper_vlasov
@@ -28,10 +29,10 @@ $(BIN_DIR) $(BUILD_DIR):
 	mkdir -p $@
 
 output_dirs:
-	mkdir -p $(OUTPUT_DIR)
+	mkdir -p $(OUTPUT_DIR) $(INPUT_DIR)
 
 clean:
-	rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR)
+	rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR) $(INPUT_DIR)
 
 -include $(OBJS:.o=.d)
 

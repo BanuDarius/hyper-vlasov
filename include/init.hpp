@@ -281,7 +281,7 @@ template <typename T>
 void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_levels, Parameters<T> *param, WoodsSaxon<T> *ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f;
 	int i = 0, num_test_part, substeps, steps, nx, z, n;
-	char current[32];
+	char current[STRING_SIZE];
 	
 	while(std::fscanf(in, "%s", current) != EOF) {
 		if(!std::strcmp(current, "V0"))
@@ -336,11 +336,11 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 }
 
 void set_output_filename(char *output_filename, const char *output_directory, int i) {
-	std::sprintf(output_filename, "%sout-%04d.vtk", output_directory, i);
+	std::sprintf(output_filename, "%s/out-%04d.vtk", output_directory, i);
 }
 
 void set_stats_filename(char *stats_filename, const char *output_directory) {
-	std::sprintf(stats_filename, "%sstats.txt", output_directory);
+	std::sprintf(stats_filename, "%s/stats.txt", output_directory);
 }
 
 /*template <typename T>

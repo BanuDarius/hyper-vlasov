@@ -32,6 +32,7 @@ SOFTWARE. */
 #define MAX_INIT_ITERATIONS 32
 #define MAX_SOR_ITERATIONS 512
 
+#define STRING_SIZE 128
 #define INPUT_FILE_COUNT 17
 
 #define IDX(i, j, k, nx, ny, nz) (((i) * (ny) * (nz)) + ((j) * (nz)) + (k))

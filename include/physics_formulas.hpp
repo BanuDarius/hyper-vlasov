@@ -78,12 +78,10 @@ static inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int typ
 
 template <typename T>
 static inline T coulomb_potential(const WoodsSaxon<T> &ws, T z, T r) {
-	T R12 = ws.R12, v;
 	if(r <= ws.R12)
-		v = T(1.44) * (z - T(1.0)) / R12 * (T(1.5) - T(0.5) * (r / R12) * (r / R12));
+		return T(1.44) * (z - T(1.0)) / ws.R12 * (T(1.5) - T(0.5) * (r / ws.R12) * (r / ws.R12));
 	else
-		v = T(1.44) * (z - T(1.0)) / r;
-	return v;
+		return T(1.44) * (z - T(1.0)) / r;
 }
 
 #endif
