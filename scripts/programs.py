@@ -24,7 +24,7 @@ SOFTWARE.'''
 
 import numpy as np
 from scipy.fft import fft, fftfreq
-from scipi import signal
+from scipy import signal
 import subprocess
 from pathlib import Path
 
