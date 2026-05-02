@@ -83,7 +83,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 			std::printf("Processed step: %i/%i.\n", step, param.steps);
 			fclose(out);
 		}
-		if(step * dt > param.t_exc && !excited_nucleus) {
+		if(step * dt >= param.t_exc && !excited_nucleus) {
 			excited_nucleus = true;
 			nuclear_excitation(part, param);
 		}

@@ -1,7 +1,7 @@
 from pathlib import Path
 
-SCRIPT_DIR = Path(__file__).resolve().parent
-PROJECT_ROOT = SCRIPT_DIR.parent
+MAIN_DIR = Path(__file__).resolve().parent
+PROJECT_ROOT = MAIN_DIR.parent
 INPUT_DIR = PROJECT_ROOT / "input"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 

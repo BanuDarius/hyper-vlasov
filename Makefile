@@ -8,6 +8,7 @@ BUILD_DIR = build
 BIN_DIR = bin
 INPUT_DIR = input
 OUTPUT_DIR = output
+OUTPUT_IMAGE = output-image
 
 TARGET = $(BIN_DIR)/hyper_vlasov
 
@@ -29,10 +30,10 @@ $(BIN_DIR) $(BUILD_DIR):
 	mkdir -p $@
 
 output_dirs:
-	mkdir -p $(OUTPUT_DIR) $(INPUT_DIR)
+	mkdir -p $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
 
 clean:
-	rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR) $(INPUT_DIR)
+	rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
 
 -include $(OBJS:.o=.d)
 
