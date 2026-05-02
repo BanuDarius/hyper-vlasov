@@ -23,7 +23,7 @@ SOFTWARE.'''
 # ---------------------------------------------------------- #
 
 import numpy as np
-from scipy.fft  import fft, fftfreq
+from scipy.fft import fft, fftfreq
 import subprocess
 from pathlib import Path
 
@@ -78,7 +78,7 @@ def run_simulation(sim_parameters):
     
 # ---------------------------------------------------------- #
 
-def compute_strength_function(sim_parameters):
+def compute_energy_spectrum(sim_parameters):
     z = sim_parameters.z
     n = sim_parameters.n
     t_f = sim_parameters.t_f
@@ -112,9 +112,9 @@ def compute_strength_function(sim_parameters):
     energy = omega[pos_mask] * h_bar_c
     strength = strength[pos_mask]
     
-    out_file = OUTPUT_DIR / "strength_spectrum.txt"
+    out_file = OUTPUT_DIR / "energy_spectrum.txt"
     np.savetxt(out_file, np.column_stack((energy, strength)), fmt="%e")
     
-    print("Computed strength function S(E).")
+    print("Computed energy spectrum.")
     
 # ---------------------------------------------------------- #

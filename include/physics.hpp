@@ -81,7 +81,7 @@ void initialize_particles(TestParticles<T> *part, WoodsSaxon<T> *ws, const Skyrm
 		relax_woods_saxon(ws, ws_old, relax_coef);
 		
 		total_delta_epsilon = std::abs(delta_epsilon_n) + std::abs(delta_epsilon_p);
-		std::printf("----------------\n");
+		std::printf("---------------------------\n");
 		std::printf("EQUAL P %i EQUAL N %i\n", equal_p, equal_n);
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);

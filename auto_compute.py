@@ -31,14 +31,14 @@ import scripts.plotting as plotting
 use_gpu = False
 use_floats = False
 
-num_test_part = 1000
+num_test_part = 1500
 z = 50
 n = 82
 nx = 16
-t_f = 600.0
+t_f = 800.0
 t_exc = 100.0
 eta_exc = 0.05
-steps = 600
+steps = 1600
 substeps = 4
 
 d_max_scale = 1.3
@@ -61,8 +61,12 @@ if __name__ == "__main__":
     
     programs.run_simulation(sim_parameters)
     
-    programs.compute_strength_function(sim_parameters)
+    programs.compute_energy_spectrum(sim_parameters)
     
-    print("Simulation finished.\a")
+    plotting.plot_radius()
+    plotting.plot_center_of_mass()
+    plotting.plot_energy_spectrum()
+    
+    print("Hyper-Vlasov finished!\a")
 
 # ---------------------------------------------------------- #

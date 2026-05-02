@@ -266,6 +266,7 @@ void generate_checking_particles(TestParticles<T> *part, const WoodsSaxon<T> *ws
 		T r_new[3], k_new[3];
 		random_vec(r_new, r_max);
 		random_vec(k_new, k_max<T>);
+		
 		copy_vector_to_particle_pos(part, r_new, i);
 		copy_vector_to_particle_vel(part, k_new, i);
 		T energy = compute_energy(part, ws, sigma_k, z, i);
@@ -296,34 +297,6 @@ void set_initial_coulomb_boundaries(ScalarField<T> *coulomb, const World<T> &wor
 			}
 		}
 	}
-}
-
-template <typename T>
-void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T> skm, int part_per_nucleon) {
-	int total = part.protons + part.neutrons;
-	T chi_squared_p = 0.0, chi_squared_n = 0.0;
-	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
-	for(int i = 0; i < total; i++) {
-		int type;
-		WoodsSaxon<T> ws_c;
-		if(i >= part.protons) { type = NEUTRONS; ws_c = ws[1]; }
-		else { type = PROTONS; ws_c = ws[0]; }
-		
-		T r_vec[3];
-		copy_particle_pos_to_vector(r_vec, part, i);
-		T density_p = part.density_p[i];
-		T density_n = part.density_n[i];
-		T r = magnitude(r_vec);
-		T v_ws = woods_saxon_potential(ws_c, r);
-		T v_skyrme = skyrme_potential(skm, density_p, density_n, type);
-		T diff = v_ws - v_skyrme;
-		if(type == PROTONS)
-			chi_squared_p += diff * diff;
-		else
-			chi_squared_n += diff * diff;
-	}
-	chi_squared_n /= part_per_nucleon; chi_squared_p /= part_per_nucleon;
-	std::printf("CHI SQUARED P %0.2lf CHI SQUARED N %0.2lf\n", chi_squared_p, chi_squared_n);
 }
 
 template <typename T>
@@ -367,6 +340,34 @@ T center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) 
 		part_num++;
 	}
 	return center / part_num;
+}
+
+template <typename T>
+void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T> skm, int part_per_nucleon) {
+	int total = part.protons + part.neutrons;
+	T chi_squared_p = 0.0, chi_squared_n = 0.0;
+	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
+	for(int i = 0; i < total; i++) {
+		int type;
+		WoodsSaxon<T> ws_c;
+		if(i >= part.protons) { type = NEUTRONS; ws_c = ws[1]; }
+		else { type = PROTONS; ws_c = ws[0]; }
+		
+		T r_vec[3];
+		copy_particle_pos_to_vector(r_vec, part, i);
+		T density_p = part.density_p[i];
+		T density_n = part.density_n[i];
+		T r = magnitude(r_vec);
+		T v_ws = woods_saxon_potential(ws_c, r);
+		T v_skyrme = skyrme_potential(skm, density_p, density_n, type);
+		T diff = v_ws - v_skyrme;
+		if(type == PROTONS)
+			chi_squared_p += diff * diff;
+		else
+			chi_squared_n += diff * diff;
+	}
+	chi_squared_n /= part_per_nucleon; chi_squared_p /= part_per_nucleon;
+	std::printf("CHI SQUARED P %0.2lf CHI SQUARED N %0.2lf\n", chi_squared_p, chi_squared_n);
 }
 
 template <typename T>
