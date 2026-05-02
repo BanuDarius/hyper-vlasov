@@ -27,14 +27,16 @@ import scripts.programs as programs
 
 # ---------------------------------------------------------- #
 
-num_test_part = 1000
+use_gpu = False
+use_floats = False
+
+num_test_part = 3000
 z = 16
 n = 20
 nx = 16
 t_f = 600
 steps = 1200
 substeps = 4
-use_floats = False
 
 V0 = -50.0
 a = 0.66
@@ -50,7 +52,7 @@ r_fwhm = 1.444
 # ---------------------------------------------------------- #
 
 if __name__ == "__main__":
-    sim_parameters = sim_init.SimParameters(num_test_part, z, n, nx, t_f, steps, substeps, V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, use_floats)
+    sim_parameters = sim_init.SimParameters(num_test_part, z, n, nx, t_f, steps, substeps, V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, use_floats, use_gpu)
     
     programs.run_simulation(sim_parameters)
     

@@ -50,6 +50,7 @@ def output_init_file(sim_parameters):
         file.write(f"gamma {sim_parameters.gamma}\n")
         file.write(f"r_fwhm {sim_parameters.r_fwhm}\n")
         file.write(f"k_fwhm {sim_parameters.k_fwhm}\n")
+        file.write(f"use_gpu {int(sim_parameters.use_gpu)}\n")
         file.write(f"substeps {sim_parameters.substeps}\n")
         file.write(f"epsilon_p {sim_parameters.epsilon_p}\n")
         file.write(f"epsilon_n {sim_parameters.epsilon_n}\n")

@@ -8,7 +8,7 @@ OUTPUT_DIR = PROJECT_ROOT / "output"
 # ---------------------------------------------------------- #
 
 class SimParameters():
-    def __init__(self, num_test_part, z, n, nx, t_f, steps, substeps, V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, use_floats):
+    def __init__(self, num_test_part, z, n, nx, t_f, steps, substeps, V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, use_floats, use_gpu):
         self.a = a
         self.A = A
         self.B = B
@@ -22,6 +22,7 @@ class SimParameters():
         self.gamma = gamma
         self.r_fwhm = r_fwhm
         self.k_fwhm = k_fwhm
+        self.use_gpu = use_gpu
         self.substeps = substeps
         self.epsilon_p = epsilon_p
         self.epsilon_n = epsilon_n

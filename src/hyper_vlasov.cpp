@@ -30,7 +30,7 @@ SOFTWARE. */
 #include "sim_structs.hpp"
 
 template <typename T>
-void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
+void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	T dt = param.t_f / param.steps;
 	char stats_filename[STRING_SIZE];
 	set_stats_filename(stats_filename, output_directory);
@@ -107,6 +107,11 @@ void simulate(const char *output_directory, TestParticles<T> *part, const Skyrme
 	free_particle_count(&part_count);*/
 }
 
+/*template <typename T>
+void gpu_simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
+	return;
+}*/ //Will add this GPU function after all the CPU functions have been implemented
+
 template <typename T>
 void run_simulation(const char *input_filename, const char *output_filename) {
 	Skyrme<T> skm;
@@ -125,7 +130,11 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 	
 	initialize_particles(&part, ws, skm, &fermi_levels, param);
 	chi_squared(part, ws, skm, param.part_per_nucleon);
-	simulate(output_filename, &part, skm, param, world);
+	if(param.use_gpu == true)
+		//gpu_simulate(output_filename, &part, skm, param, world);
+		return;
+	else
+		cpu_simulate(output_filename, &part, skm, param, world);
 	
 	free_particles(&part);
 	fclose(in);
@@ -137,7 +146,6 @@ int main(int argc, char **argv) {
 		std::fprintf(stderr, "BAD ARGUMENTS!\n");
 		return 1;
 	}
-	
 	std::printf("Simulation started.\n");
 	double start_time = omp_get_wtime();
 	

@@ -269,7 +269,6 @@ void generate_checking_particles(TestParticles<T> *part, const WoodsSaxon<T> *ws
 		copy_vector_to_particle_pos(part, r_new, i);
 		copy_vector_to_particle_vel(part, k_new, i);
 		T energy = compute_energy(part, ws, sigma_k, z, i);
-		
 		if(energy < epsilon) {
 			mult_vec(r_new, r_new, T(-1.0));
 			mult_vec(k_new, k_new, T(-1.0));
@@ -314,7 +313,6 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 		copy_particle_pos_to_vector(r_vec, part, i);
 		T density_p = part.density_p[i];
 		T density_n = part.density_n[i];
-		
 		T r = magnitude(r_vec);
 		T v_ws = woods_saxon_potential(ws_c, r);
 		T v_skyrme = skyrme_potential(skm, density_p, density_n, type);
