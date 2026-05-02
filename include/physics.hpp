@@ -226,16 +226,27 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *temp_
 		density->v[i] = rho_f;
 	}
 	T term = (T(1.0) / param.part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
 		density->v[i] *= term;
+}
+
+template <typename T>
+void nuclear_excitation(TestParticles<T> *part, const Parameters<T> &param) {
+	int protons = part->protons, neutrons = part->neutrons;
+	#pragma omp parallel for
+	for(int i = 0; i < protons; i++)
+		part->kz[i] += param.eta_exc * (T)param.n / (T)(param.z + param.n);
+	#pragma omp parallel for
+	for(int i = protons; i < protons + neutrons; i++)
+		part->kz[i] -= param.eta_exc * (T)param.z / (T)(param.z + param.n);
 }
 
 template <typename T>
 void update_momenta_half(TestParticles<T> *part, T dt) {
 	int total = part->protons + part->neutrons;
 	T fact = dt / (T(2.0) * h_bar_c<T>);
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		part->kx[i] += fact * part->fx[i];
 		part->ky[i] += fact * part->fy[i];
@@ -247,7 +258,7 @@ template <typename T>
 void update_positions_full(TestParticles<T> *part, T dt) {
 	int total = part->protons + part->neutrons;
 	T fact = (dt * h_bar_c<T>) / mc2<T>;
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		part->x[i] += fact * part->kx[i];
 		part->y[i] += fact * part->ky[i];

@@ -41,14 +41,16 @@ static inline uint32_t swap_endian(float v) {
 }
 
 template <typename T>
-void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, int steps, int substeps, bool use_gpu, T sigma_k, T sigma_r, T t_f) {
+void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, int steps, int substeps, bool use_gpu, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc) {
 	param->z = z;
 	param->n = n;
 	param->t_f = t_f;
+	param->t_exc = t_exc;
 	param->steps = steps;
 	param->use_gpu = use_gpu;
 	param->sigma_k = sigma_k;
 	param->sigma_r = sigma_r;
+	param->eta_exc = eta_exc;
 	param->substeps = substeps;
 	param->r_max = nuclear_radius<T>(z + n);
 	param->part_per_nucleon = part_per_nucleon;
@@ -92,7 +94,7 @@ void create_scalar_field_single(ScalarField<T> *field, const World<T> &world) {
 	if(field->v == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < world_size; i++)
 		field->v[i] = T(0.0);
 }
@@ -105,7 +107,7 @@ void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
 	if(field->v == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
 		field->v[i] = T(0.0);
 }
@@ -120,7 +122,7 @@ void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
 	if(field->x == nullptr || field->y == nullptr || field->z == nullptr) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		field->x[i] = T(0.0);
 		field->y[i] = T(0.0);
@@ -272,7 +274,7 @@ void free_scalar_field(ScalarField<T> *field) {
 
 template <typename T>
 void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_levels, Parameters<T> *param, WoodsSaxon<T> *ws) {
-	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f;
+	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f, t_exc, eta_exc, d_max_scale;
 	int i = 0, num_test_part, use_gpu, substeps, steps, nx, z, n;
 	char current[STRING_SIZE];
 	
@@ -299,6 +301,12 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 			i += std::fscanf(in, "%lf", &r_fwhm);
 		else if(!std::strcmp(current, "t_f"))
 			i += std::fscanf(in, "%lf", &t_f);
+		else if(!std::strcmp(current, "t_exc"))
+			i += std::fscanf(in, "%lf", &t_exc);
+		else if(!std::strcmp(current, "eta_exc"))
+			i += std::fscanf(in, "%lf", &eta_exc);
+		else if(!std::strcmp(current, "d_max_scale"))
+			i += std::fscanf(in, "%lf", &d_max_scale);
 		else if(!std::strcmp(current, "nx"))
 			i += std::fscanf(in, "%i", &nx);
 		else if(!std::strcmp(current, "num_test_part"))
@@ -318,12 +326,12 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 		std::fprintf(stderr, "Error: Invalid input file.\n"); exit(1);
 	}
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
-	T d_max = T(1.3) * nuclear_radius<T>(z + n);
+	T d_max = T(d_max_scale) * nuclear_radius<T>(z + n);
 	
 	set_skyrme(skm, T(A), T(B), T(C), T(gamma));
 	set_world(world, T(d_max), nx);
 	set_fermi_levels(fermi_levels, T(epsilon_p), T(epsilon_n));
-	set_parameters(param, z, n, num_test_part, steps, substeps, (bool)use_gpu, T(sigma_k), T(sigma_r), T(t_f));
+	set_parameters(param, z, n, num_test_part, steps, substeps, (bool)use_gpu, T(sigma_k), T(sigma_r), T(t_f), T(t_exc), T(eta_exc));
 	set_woods_saxon(&ws[0], T(V0), T(0.8) * T(param->r_max), T(a));
 	set_woods_saxon(&ws[1], T(V0), T(0.8) * T(param->r_max), T(a));
 }

@@ -31,13 +31,16 @@ SOFTWARE. */
 
 template <typename T>
 void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
+	bool excited_nucleus = false;
 	T dt = param.t_f / param.steps;
+	
 	char stats_filename[STRING_SIZE];
 	set_stats_filename(stats_filename, output_directory);
 	FILE *stats = fopen(stats_filename, "w");
 	if(stats == nullptr) {
 		std::fprintf(stderr, "CANNOT OPEN STATS FILE!\n"); exit(1);
 	}
+	
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
 	
@@ -59,10 +62,12 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 	distribute_forces_to_particles_cic(part, forces, world);
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
-			std::printf("Processed step: %i/%i.\n", step, param.steps);
+			T x_p = center_of_mass(*part, world, PROTONS);
+			T x_n = center_of_mass(*part, world, NEUTRONS);
 			T msr_p = mean_squared_radius(*part, world, PROTONS);
 			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
-			std::fprintf(stats, "%0.4lf %0.4lf %0.4lf\n", step * dt, std::sqrt(msr_n), std::sqrt(msr_p));
+			std::fprintf(stats, "%e %e %e %e %e\n",
+			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p, x_n);
 			
 			char output_filename[STRING_SIZE];
 			set_output_filename(output_filename, output_directory, step / param.substeps);
@@ -75,7 +80,12 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 			output_vector_field(out, forces, world, "forces");
 			output_scalar_field(out, density, world, "density");
 			output_scalar_field(out, potentials, world, "potentials");
+			std::printf("Processed step: %i/%i.\n", step, param.steps);
 			fclose(out);
+		}
+		if(step * dt > param.t_exc && !excited_nucleus) {
+			excited_nucleus = true;
+			nuclear_excitation(part, param);
 		}
 		update_momenta_half(part, dt);
 		update_positions_full(part, dt);

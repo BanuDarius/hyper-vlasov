@@ -46,14 +46,17 @@ def output_init_file(sim_parameters):
         file.write(f"nx {sim_parameters.nx}\n")
         file.write(f"V0 {sim_parameters.V0}\n")
         file.write(f"t_f {sim_parameters.t_f}\n")
+        file.write(f"t_exc {sim_parameters.t_exc}\n")
+        file.write(f"eta_exc {sim_parameters.eta_exc}\n")
         file.write(f"steps {sim_parameters.steps}\n")
         file.write(f"gamma {sim_parameters.gamma}\n")
         file.write(f"r_fwhm {sim_parameters.r_fwhm}\n")
         file.write(f"k_fwhm {sim_parameters.k_fwhm}\n")
-        file.write(f"use_gpu {int(sim_parameters.use_gpu)}\n")
         file.write(f"substeps {sim_parameters.substeps}\n")
+        file.write(f"use_gpu {int(sim_parameters.use_gpu)}\n")
         file.write(f"epsilon_p {sim_parameters.epsilon_p}\n")
         file.write(f"epsilon_n {sim_parameters.epsilon_n}\n")
+        file.write(f"d_max_scale {sim_parameters.d_max_scale}\n")
         file.write(f"num_test_part {sim_parameters.num_test_part}\n")
         
 # ---------------------------------------------------------- #

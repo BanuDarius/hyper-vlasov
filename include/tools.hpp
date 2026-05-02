@@ -352,6 +352,24 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 }
 
 template <typename T>
+T center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) {
+	int start, end, part_num = 0;
+	if(type == PROTONS) { start = 0; end = part.protons; }
+	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
+	
+	T d_max_z = world.d_max[2], center = T(0.0);
+	#pragma omp parallel for reduction(+:center, part_num)
+	for(int i = start; i < end; i++) {
+		if(part.z[i] < -d_max_z || part.z[i] > +d_max_z)
+			continue;
+		
+		center += part.z[i];
+		part_num++;
+	}
+	return center / part_num;
+}
+
+template <typename T>
 void relax_woods_saxon(WoodsSaxon<T> *ws, WoodsSaxon<T> *ws_old, T coef) {
 	for(int i = 0; i < 2; i++) {
 		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;
