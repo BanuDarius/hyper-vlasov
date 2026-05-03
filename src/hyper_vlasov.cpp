@@ -119,8 +119,84 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 
 /*template <typename T>
 void gpu_simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
-	return;
-}*/ //Will add this GPU function after all the CPU functions have been implemented
+	bool excited_nucleus = false;
+	T dt = param.t_f / param.steps;
+	
+	char stats_filename[STRING_SIZE];
+	set_stats_filename(stats_filename, output_directory);
+	FILE *stats = fopen(stats_filename, "w");
+	if(stats == nullptr) {
+		std::fprintf(stderr, "CANNOT OPEN STATS FILE!\n"); exit(1);
+	}
+	
+	VectorField<T> forces;
+	gpu_create_vector_field_double(&forces, world);
+	
+	ScalarField<T> potentials, coulomb, temp_density, density;
+	gpu_create_scalar_field_single(&coulomb, world);
+	gpu_create_scalar_field_double(&density, world);
+	gpu_create_scalar_field_double(&potentials, world);
+	gpu_create_scalar_field_double(&temp_density, world);
+	
+	distribute_volumetric_particles_cic(&density, part, world);
+	compute_volumetric_densities(&density, &temp_density, param, world);
+	
+	set_initial_coulomb_boundaries(&coulomb, world, param.z);
+	compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
+	compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
+	merge_volumetric_potentials(&potentials, coulomb, world);
+	compute_volumetric_forces_fdm(&forces, potentials, world);
+	
+	distribute_forces_to_particles_cic(part, forces, world);
+	for(int step = 0; step < param.steps; step++) {
+		if(step % param.substeps == 0) {
+			T x_p = center_of_mass(*part, world, PROTONS);
+			T x_n = center_of_mass(*part, world, NEUTRONS);
+			T msr_p = mean_squared_radius(*part, world, PROTONS);
+			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
+			std::fprintf(stats, "%e %e %e %e %e\n",
+			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p, x_n);
+			
+			char output_filename[STRING_SIZE];
+			set_output_filename(output_filename, output_directory, step / param.substeps);
+			FILE *out = fopen(output_filename, "wb");
+			if(out == nullptr) {
+				std::fprintf(stderr, "CANNOT OPEN OUTPUT FILE!\n");
+				exit(1);
+			}
+			output_vtk_header_start(out, world);
+			output_vector_field(out, forces, world, "forces");
+			output_scalar_field(out, density, world, "density");
+			output_scalar_field(out, potentials, world, "potentials");
+			std::printf("Processed step: %i/%i.\n", step, param.steps);
+			fclose(out);
+		}
+		if(step * dt >= param.t_exc && !excited_nucleus) {
+			excited_nucleus = true;
+			nuclear_excitation(part, param);
+		}
+		gpu_update_momenta_half(part, dt);
+		gpu_update_positions_full(part, dt);
+		
+		distribute_volumetric_particles_cic(&density, part, world);
+		compute_volumetric_densities(&density, &temp_density, param, world);
+		
+		compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
+		compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
+		merge_volumetric_potentials(&potentials, coulomb, world);
+		compute_volumetric_forces_fdm(&forces, potentials, world);
+		
+		distribute_forces_to_particles_cic(part, forces, world);
+		
+		gpu_update_momenta_half(part, dt);
+	}
+	fclose(stats);
+	free_vector_field(&forces);
+	free_scalar_field(&density);
+	free_scalar_field(&coulomb);
+	free_scalar_field(&potentials);
+	free_scalar_field(&temp_density);
+}*/
 
 template <typename T>
 void run_simulation(const char *input_filename, const char *output_filename) {
@@ -141,8 +217,11 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 	initialize_particles(&part, ws, skm, &fermi_levels, param);
 	chi_squared(part, ws, skm, param.part_per_nucleon);
 	if(param.use_gpu == true)
-		//gpu_simulate(output_filename, &part, skm, param, world);
 		return;
+	/*{
+		TestParticles<T> h_part;
+		gpu_create_particles(&h_part, param.part_per_nucleon * param.z, param.part_per_nucleon * param.n);
+	}*/
 	else
 		cpu_simulate(output_filename, &part, skm, param, world);
 	
