@@ -97,7 +97,7 @@ def compute_energy_spectrum(sim_parameters):
     cm_neutrons = data[start_idx:, 4]
     
     dipole = (n * z) / (n + z) * (cm_protons - cm_neutrons)
-    signal.detrend(dipole)
+    dipole = signal.detrend(dipole)
     
     t0 = time[0]
     dt = t_f / steps * substeps
