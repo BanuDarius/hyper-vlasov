@@ -91,7 +91,7 @@ def compute_energy_spectrum(sim_parameters):
     
     data = np.loadtxt(stats_filename, dtype=np.float64)
     
-    start_idx = int(t_exc / t_f * steps / substeps) + 1
+    start_idx = int(t_exc / t_f * steps / substeps)
     time = data[start_idx:, 0]
     cm_protons = data[start_idx:, 3]
     cm_neutrons = data[start_idx:, 4]
