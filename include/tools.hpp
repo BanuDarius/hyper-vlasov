@@ -326,17 +326,15 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 
 template <typename T>
 T center_of_mass(const TestParticles<T> &part, int type) {
-	int start, end, part_num = 0;
+	int start, end;
 	if(type == PROTONS) { start = 0; end = part.protons; }
 	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
 	
 	T center = T(0.0);
-	#pragma omp parallel for reduction(+:center, part_num)
-	for(int i = start; i < end; i++) {
+	#pragma omp parallel for reduction(+:center)
+	for(int i = start; i < end; i++)
 		center += part.z[i];
-		part_num++;
-	}
-	return center / (T)part_num;
+	return center / (T)(end - start);
 }
 
 template <typename T>
