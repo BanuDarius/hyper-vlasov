@@ -53,7 +53,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 	distribute_volumetric_particles_cic(&density, part, world);
 	compute_volumetric_densities(&density, &temp_density, param, world);
 	
-	set_coulomb_boundaries(&coulomb, *part, world, param.z);
+	compute_coulomb_boundaries(&coulomb, *part, world, param.z);
 	compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
 	compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
 	merge_volumetric_potentials(&potentials, coulomb, world);
@@ -93,7 +93,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 		distribute_volumetric_particles_cic(&density, part, world);
 		compute_volumetric_densities(&density, &temp_density, param, world);
 		
-		set_coulomb_boundaries(&coulomb, *part, world, param.z);
+		compute_coulomb_boundaries(&coulomb, *part, world, param.z);
 		compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
 		compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
 		merge_volumetric_potentials(&potentials, coulomb, world);

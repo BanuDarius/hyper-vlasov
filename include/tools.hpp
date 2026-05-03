@@ -281,7 +281,7 @@ void generate_checking_particles(TestParticles<T> *part, const WoodsSaxon<T> *ws
 }
 
 template <typename T>
-void set_coulomb_boundaries(ScalarField<T> *coulomb, const TestParticles<T> &part, const World<T> &world, int z) {
+void compute_coulomb_boundaries(ScalarField<T> *coulomb, const TestParticles<T> &part, const World<T> &world, int z) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	T cm_protons = center_of_mass(part, world, PROTONS);
 	#pragma omp parallel for collapse(3)
