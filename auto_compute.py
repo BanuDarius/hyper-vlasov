@@ -31,13 +31,13 @@ import scripts.plotting as plotting
 use_gpu = False
 use_floats = False
 
-num_test_part = 2000
+num_test_part = 3000
 z = 10
 n = 14
 nx = 16
 t_f = 800.0
 t_exc = 100.0
-eta_exc = 0.0
+eta_exc = 0.03
 steps = 800
 substeps = 4
 

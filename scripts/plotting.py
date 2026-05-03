@@ -53,7 +53,7 @@ def plot_energy_spectrum():
     ax.set_xlabel("E (MeV)")
     ax.set_ylabel(r"S(E) ($fm^2/MeV$)")
     ax.set_xlim(np.min(energy), 25.0)
-    ax.set_ylim(np.min(strength_function), 1.1 * np.max(strength_function))
+    ax.set_ylim(0.0, 1.1 * np.max(strength_function))
     
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     
@@ -108,6 +108,7 @@ def plot_center_of_mass():
     ax.set_ylabel(r"$r_{CM}$ (fm)")
     ax.set_xlim(0.0, np.max(time))
     ax.set_ylim(-0.5, +0.5)
+    ax.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.5)
     
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     
@@ -137,6 +138,7 @@ def plot_dipole(sim_parameters):
     ax.set_ylabel("D (fm)")
     ax.set_xlim(0.0, np.max(time))
     ax.set_ylim(1.1 * np.min(dipole), 1.1 * np.max(dipole))
+    ax.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.5)
     
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     
