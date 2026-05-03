@@ -34,14 +34,14 @@ use_floats = False
 num_test_part = 1200
 z = 50
 n = 82
-nx = 16
+nx = 20
 t_f = 800.0
 t_exc = 100.0
-eta_exc = 0.01
+eta_exc = 0.0
 steps = 800
 substeps = 4
 
-d_max_scale = 1.3
+d_max_scale = 1.5
 V0 = -50.0
 a = 0.66
 A = -356.8
