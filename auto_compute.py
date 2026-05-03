@@ -32,16 +32,16 @@ use_gpu = False
 use_floats = False
 
 num_test_part = 1000
-z = 50
-n = 82
-nx = 16
+z = 10
+n = 14
+nx = 24
 t_f = 800.0
 t_exc = 100.0
 eta_exc = 0.01
 steps = 800
 substeps = 4
 
-d_max_scale = 1.8
+d_max_scale = 1.5
 V0 = -50.0
 a = 0.66
 A = -356.8
