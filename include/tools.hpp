@@ -367,6 +367,7 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 		T density_p = part.density_p[i];
 		T density_n = part.density_n[i];
 		T r = magnitude(r_vec);
+		
 		T v_ws = woods_saxon_potential(ws_c, r);
 		T v_skyrme = skyrme_potential(skm, density_p, density_n, type);
 		T diff = v_ws - v_skyrme;
@@ -377,6 +378,18 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 	}
 	chi_squared_n /= part_per_nucleon; chi_squared_p /= part_per_nucleon;
 	std::printf("CHI SQUARED P %0.2lf CHI SQUARED N %0.2lf\n", chi_squared_p, chi_squared_n);
+}
+
+template <typename T>
+void center_momentum(TestParticles<T> *part) {
+	int total = part->protons + part->neutrons;
+	T sum_kz = T(0.0);
+	#pragma omp parallel for reduction(+:sum_kz)
+	for(int i = 0; i < total; i++)
+		sum_kz += part->kz[i];
+	#pragma omp parallel for
+	for(int i = 0; i < total; i++)
+		part->kz[i] -= sum_kz / total;
 }
 
 template <typename T>

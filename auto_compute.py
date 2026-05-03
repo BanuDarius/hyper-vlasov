@@ -37,7 +37,7 @@ n = 14
 nx = 16
 t_f = 800.0
 t_exc = 100.0
-eta_exc = 0.01
+eta_exc = 0.0
 steps = 800
 substeps = 4
 

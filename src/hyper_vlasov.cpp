@@ -102,6 +102,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 		distribute_forces_to_particles_cic(part, forces, world);
 		
 		update_momenta_half(part, dt);
+		center_momentum(part);
 	}
 	fclose(stats);
 	free_vector_field(&forces);
