@@ -107,7 +107,7 @@ def plot_center_of_mass():
     ax.set_xlabel("t (MeV/c)")
     ax.set_ylabel(r"$r_{CM}$ (fm)")
     ax.set_xlim(0.0, np.max(time))
-    ax.set_ylim(1.3 * np.min(y_proton), 1.3 * np.max(y_neutron))
+    ax.set_ylim(-0.5, +0.5)
     
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     

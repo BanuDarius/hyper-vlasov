@@ -37,7 +37,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> *density, TestParticles<
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part->protons + part->neutrons;
 	
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
 		density->v[i] = 0.0;
 	
@@ -302,11 +302,11 @@ void set_initial_coulomb_boundaries(ScalarField<T> *coulomb, const World<T> &wor
 template <typename T>
 T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type) {
 	int start, end, part_num = 0;
-	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2], r_sqr = T(0.0);
-	
+	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	if(type == PROTONS) { start = 0; end = part.protons; }
 	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
 	
+	T r_sqr = T(0.0);
 	#pragma omp parallel for reduction(+:r_sqr, part_num)
 	for(int i = start; i < end; i++) {
 		T r_vec[3];
@@ -327,19 +327,22 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 template <typename T>
 T center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) {
 	int start, end, part_num = 0;
+	T d_max_z = world.d_max[2];
 	if(type == PROTONS) { start = 0; end = part.protons; }
 	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
 	
-	T d_max_z = world.d_max[2], center = T(0.0);
+	T center = T(0.0);
 	#pragma omp parallel for reduction(+:center, part_num)
 	for(int i = start; i < end; i++) {
-		if(part.z[i] < -d_max_z || part.z[i] > +d_max_z)
+		T z = part.z[i];
+		
+		if(z < -d_max_z || z > +d_max_z)
 			continue;
 		
-		center += part.z[i];
+		center += z;
 		part_num++;
 	}
-	return center / part_num;
+	return center / (T)part_num;
 }
 
 template <typename T>

@@ -100,15 +100,17 @@ def compute_energy_spectrum(sim_parameters):
     signal.detrend(dipole)
     
     t0 = time[0]
-    dipole *= np.cos(np.pi * (time - t0) / (2.0 * (t_f - t0))) ** 2.0
-    
     dt = t_f / steps * substeps
+    dipole *= np.cos(np.pi * (time - t0) / (2.0 * (t_f - t0))) ** 2.0
     
     freq = fftfreq(np.size(dipole), d=dt)
     omega = 2.0 * np.pi * freq
     
     strength_raw = np.conjugate(fft(dipole)) * dt
-    strength = np.imag(strength_raw) / (np.pi * sim_parameters.eta_exc * h_bar_c)
+    if(sim_parameters.eta_exc > 1e-5):
+        strength = np.imag(strength_raw) / (np.pi * sim_parameters.eta_exc * h_bar_c)
+    else:
+        strength = np.imag(strength_raw)/ (np.pi * h_bar_c)
     
     pos_mask = omega > 0
     energy = omega[pos_mask] * h_bar_c

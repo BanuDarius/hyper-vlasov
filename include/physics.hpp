@@ -86,7 +86,7 @@ void initialize_particles(TestParticles<T> *part, WoodsSaxon<T> *ws, const Skyrm
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[0].V0, ws[0].R12, ws[0].a);
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws[1].V0, ws[1].R12, ws[1].a);
 		std::printf("FERMI P %0.2lf FERMI N %0.2lf\n", fermi_levels->epsilon_p, fermi_levels->epsilon_n);
-		std::printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it);
+		std::printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it + 1);
 		
 		it++;
 	} while(total_delta_epsilon > delta_epsilon_tolerance<T> && it < MAX_INIT_ITERATIONS);
@@ -120,7 +120,8 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb->v[idx] - phi_old);
-						if(diff > max_diff) max_diff = diff;
+						if(diff > max_diff)
+							max_diff = diff;
 					}
 				}
 			}
@@ -142,7 +143,8 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> *coulomb, const Sc
 						
 						coulomb->v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb->v[idx] - phi_old);
-						if(diff > max_diff) max_diff = diff;
+						if(diff > max_diff)
+							max_diff = diff;
 					}
 				}
 			}
@@ -212,14 +214,14 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *temp_
 		
 		for(int j = 0; j < world_size; j++) {
 			int offset = (i < world_size) ? 0 : world_size;
-			int idx = j + offset;
-			T rho = temp_density->v[idx];
+			T rho = temp_density->v[j + offset];
 			world_pos_to_vector(r_j, world, j);
 			
 			sub_vec(diff, r_i, r_j);
 			dist_squared = dot(diff, diff);
 			if(dist_squared > cutoff_squared)
 				continue;
+			
 			fact = std::exp(-dist_squared * exp_term);
 			rho_f += rho * fact;
 		}
@@ -234,12 +236,13 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *temp_
 template <typename T>
 void nuclear_excitation(TestParticles<T> *part, const Parameters<T> &param) {
 	int protons = part->protons, neutrons = part->neutrons;
+	T z = param.z, n = param.n, eta = param.eta_exc;
 	#pragma omp parallel for
 	for(int i = 0; i < protons; i++)
-		part->kz[i] += param.eta_exc * (T)param.n / (T)(param.z + param.n);
+		part->kz[i] += eta * n / (z + n);
 	#pragma omp parallel for
 	for(int i = protons; i < protons + neutrons; i++)
-		part->kz[i] -= param.eta_exc * (T)param.z / (T)(param.z + param.n);
+		part->kz[i] -= eta * z / (z + n);
 }
 
 template <typename T>
