@@ -95,13 +95,13 @@ def plot_center_of_mass():
     
     data = np.loadtxt(input_file)
     time = data[:, 0]
-    y_proton = data[:, 3]
-    y_neutron = data[:, 4]
+    cm_proton = data[:, 3]
+    cm_neutron = data[:, 4]
     
     fig, ax = plt.subplots(figsize=(10, 8))
     
-    ax.plot(time, y_proton, color='blue', linestyle='-', linewidth=1.5)
-    ax.plot(time, y_neutron, color='red', linestyle='-', linewidth=1.5)
+    ax.plot(time, cm_proton, color='blue', linestyle='-', linewidth=1.5)
+    ax.plot(time, cm_neutron, color='red', linestyle='-', linewidth=1.5)
     
     ax.set_title("Nucleus proton neutron center of mass")
     ax.set_xlabel("t (MeV/c)")
@@ -114,4 +114,33 @@ def plot_center_of_mass():
     plt.close(fig)
     print(f"Created center of mass graph.")
 
+# ---------------------------------------------------------- #
+
+def plot_dipole(sim_parameters):
+    z = sim_parameters.z
+    n = sim_parameters.n
+    input_file = OUTPUT_DIR / "stats.txt"
+    output_image = IMAGE_DIR / "dipole.png"
+    
+    data = np.loadtxt(input_file)
+    time = data[:, 0]
+    cm_proton = data[:, 3]
+    cm_neutron = data[:, 4]
+    dipole = (n * z) / (n + z) * (cm_proton - cm_neutron)
+    
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    ax.plot(time, dipole, color='blue', linestyle='-', linewidth=1.5)
+    
+    ax.set_title("Nucleus dipole moment")
+    ax.set_xlabel("t (MeV/c)")
+    ax.set_ylabel("D (fm)")
+    ax.set_xlim(0.0, np.max(time))
+    ax.set_ylim(1.1 * np.min(dipole), 1.1 * np.max(dipole))
+    
+    plt.savefig(output_image, dpi=200, bbox_inches='tight')
+    
+    plt.close(fig)
+    print(f"Created dipole graph.")
+    
 # ---------------------------------------------------------- #

@@ -31,17 +31,17 @@ import scripts.plotting as plotting
 use_gpu = False
 use_floats = False
 
-num_test_part = 1200
-z = 50
-n = 82
-nx = 20
+num_test_part = 4000
+z = 10
+n = 16
+nx = 16
 t_f = 800.0
 t_exc = 100.0
-eta_exc = 0.0
+eta_exc = 0.01
 steps = 800
 substeps = 4
 
-d_max_scale = 1.5
+d_max_scale = 1.3
 V0 = -50.0
 a = 0.66
 A = -356.8
@@ -66,6 +66,7 @@ if __name__ == "__main__":
     plotting.plot_radius()
     plotting.plot_center_of_mass()
     plotting.plot_energy_spectrum()
+    plotting.plot_dipole(sim_parameters)
     
     print("Hyper-Vlasov finished!\a")
 
