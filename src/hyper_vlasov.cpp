@@ -64,8 +64,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 		if(step % param.substeps == 0) {
 			T x_p = center_of_mass(*part, PROTONS);
 			T x_n = center_of_mass(*part, NEUTRONS);
-			T msr_p = mean_squared_radius(*part, PROTONS);
-			T msr_n = mean_squared_radius(*part, NEUTRONS);
+			T msr_p = mean_squared_radius(*part, world, PROTONS);
+			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
 			std::fprintf(stats, "%e %e %e %e %e\n",
 			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p, x_n);
 			
