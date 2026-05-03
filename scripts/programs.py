@@ -100,9 +100,8 @@ def compute_energy_spectrum(sim_parameters):
     dipole = signal.detrend(dipole)
     
     t0 = time[0]
-    gamma_term = 2.0
     dt = t_f / steps * substeps
-    dipole *= np.exp(-gamma_term * (time - t0) / (2.0 * h_bar_c))
+    dipole *= np.cos(np.pi * (time - t0) / (2.0 * (t_f - t0))) ** 2.0
     
     freq = fftfreq(np.size(dipole), d=dt)
     omega = 2.0 * np.pi * freq
