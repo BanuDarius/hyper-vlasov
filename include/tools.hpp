@@ -300,9 +300,8 @@ void set_initial_coulomb_boundaries(ScalarField<T> *coulomb, const World<T> &wor
 }
 
 template <typename T>
-T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type) {
+T mean_squared_radius(const TestParticles<T> &part, int type) {
 	int start, end, part_num = 0;
-	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	if(type == PROTONS) { start = 0; end = part.protons; }
 	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
 	
@@ -312,11 +311,6 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 		T r_vec[3];
 		copy_particle_pos_to_vector(r_vec, part, i);
 		
-		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
-		|| r_vec[1] < -d_max_y || r_vec[1] > +d_max_y
-		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
-			continue;
-		
 		T r2 = dot(r_vec, r_vec);
 		r_sqr += r2;
 		part_num++;
@@ -325,24 +319,15 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 }
 
 template <typename T>
-T center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) {
+T center_of_mass(const TestParticles<T> &part, int type) {
 	int start, end, part_num = 0;
-	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	if(type == PROTONS) { start = 0; end = part.protons; }
 	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
 	
 	T center = T(0.0);
 	#pragma omp parallel for reduction(+:center, part_num)
 	for(int i = start; i < end; i++) {
-		T r_vec[3];
-		copy_particle_pos_to_vector(r_vec, part, i);
-		
-		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
-		|| r_vec[1] < -d_max_y || r_vec[1] > +d_max_y
-		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
-			continue;
-		
-		center += r_vec[2];
+		center += part.z[i];
 		part_num++;
 	}
 	return center / (T)part_num;
