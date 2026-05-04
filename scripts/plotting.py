@@ -82,6 +82,7 @@ def plot_radius():
     ax.set_xlim(0.0, np.max(time))
     ax.set_ylim(0.0, 1.1 * np.max(r_neutron))
     
+    plt.legend()
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     
     plt.close(fig)
@@ -110,6 +111,7 @@ def plot_center_of_mass():
     ax.set_ylim(-0.5, +0.5)
     ax.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.5)
     
+    plt.legend()
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     
     plt.close(fig)
