@@ -79,6 +79,8 @@ def run_simulation(sim_parameters):
 # ---------------------------------------------------------- #
 
 def compute_energy_spectrum(sim_parameters):
+    if(sim_parameters.eta_exc < 1e-5):
+        return
     z = sim_parameters.z
     n = sim_parameters.n
     t_f = sim_parameters.t_f
@@ -96,19 +98,18 @@ def compute_energy_spectrum(sim_parameters):
     cm_neutrons = data[start_idx:, 4]
     
     dipole = (n * z) / (n + z) * (cm_protons - cm_neutrons)
+    dipole -= dipole[0]
     
     t0 = time[0]
     dt = t_f / steps * substeps
     dipole *= np.cos(np.pi * (time - t0) / (2.0 * (t_f - t0))) ** 2.0
     
-    freq = fftfreq(np.size(dipole), d=dt)
+    pad_num = 8192
+    freq = fftfreq(pad_num, d=dt)
     omega = 2.0 * np.pi * freq
     
-    strength_raw = np.conjugate(fft(dipole)) * dt
-    if(sim_parameters.eta_exc > 1e-5):
-        strength = np.imag(strength_raw) / (np.pi * sim_parameters.eta_exc * h_bar_c)
-    else:
-        strength = np.imag(strength_raw)/ (np.pi * h_bar_c)
+    strength_raw = np.conjugate(fft(dipole, n=pad_num)) * dt
+    strength = np.imag(strength_raw) / (np.pi * sim_parameters.eta_exc * h_bar_c)
     
     pos_mask = omega > 0
     energy = omega[pos_mask] * h_bar_c

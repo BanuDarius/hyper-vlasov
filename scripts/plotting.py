@@ -53,7 +53,7 @@ def plot_energy_spectrum():
     ax.set_xlabel("E (MeV)")
     ax.set_ylabel(r"S(E) ($fm^2/MeV$)")
     ax.set_xlim(np.min(energy), 25.0)
-    ax.set_ylim(0.0, 1.1 * np.max(strength_function))
+    ax.set_ylim(-0.1, 1.1 * np.max(strength_function))
     
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     
@@ -68,19 +68,19 @@ def plot_radius():
     
     data = np.loadtxt(input_file)
     time = data[:, 0]
-    y_proton = data[:, 1]
-    y_neutron = data[:, 2]
+    r_proton = data[:, 1]
+    r_neutron = data[:, 2]
     
     fig, ax = plt.subplots(figsize=(10, 8))
     
-    ax.plot(time, y_proton, color='blue', linestyle='-', linewidth=1.5)
-    ax.plot(time, y_neutron, color='red', linestyle='-', linewidth=1.5)
+    ax.plot(time, r_proton, color='blue', linestyle='-', linewidth=1.5, label="Protons")
+    ax.plot(time, r_neutron, color='red', linestyle='-', linewidth=1.5, label="Neutrons")
     
     ax.set_title("Nucleus proton neutron radii")
     ax.set_xlabel("t (MeV/c)")
     ax.set_ylabel("r (fm)")
     ax.set_xlim(0.0, np.max(time))
-    ax.set_ylim(0.0, 1.1 * np.max(y_neutron))
+    ax.set_ylim(0.0, 1.1 * np.max(r_neutron))
     
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
     
@@ -100,8 +100,8 @@ def plot_center_of_mass():
     
     fig, ax = plt.subplots(figsize=(10, 8))
     
-    ax.plot(time, cm_proton, color='blue', linestyle='-', linewidth=1.5)
-    ax.plot(time, cm_neutron, color='red', linestyle='-', linewidth=1.5)
+    ax.plot(time, cm_proton, color='blue', linestyle='-', linewidth=1.5, label="Protons")
+    ax.plot(time, cm_neutron, color='red', linestyle='-', linewidth=1.5, label="Neutrons")
     
     ax.set_title("Nucleus proton neutron center of mass")
     ax.set_xlabel("t (MeV/c)")

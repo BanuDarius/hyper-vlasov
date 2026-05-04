@@ -31,7 +31,7 @@ import scripts.plotting as plotting
 use_gpu = False
 use_floats = False
 
-num_test_part = 3000
+num_test_part = 2000
 z = 10
 n = 14
 nx = 16
