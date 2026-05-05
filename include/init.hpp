@@ -95,7 +95,7 @@ void create_scalar_field_single(ScalarField<T> *field, const World<T> &world) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++)
+	for(size_t i = 0; i < world_size; i++)
 		field->v[i] = T(0.0);
 }
 
@@ -108,7 +108,7 @@ void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for
-	for(int i = 0; i < 2 * world_size; i++)
+	for(size_t i = 0; i < 2 * world_size; i++)
 		field->v[i] = T(0.0);
 }
 
@@ -123,7 +123,7 @@ void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for
-	for(int i = 0; i < 2 * world_size; i++) {
+	for(size_t i = 0; i < 2 * world_size; i++) {
 		field->x[i] = T(0.0);
 		field->y[i] = T(0.0);
 		field->z[i] = T(0.0);
@@ -194,9 +194,9 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for collapse(3)
-	for(int k = 0; k < nz; k++) {
-		for(int j = 0; j < ny; j++) {
-			for(int i = 0; i < nx; i++) {
+	for(size_t k = 0; k < nz; k++) {
+		for(size_t j = 0; j < ny; j++) {
+			for(size_t i = 0; i < nx; i++) {
 				int idx = IDX(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
@@ -228,9 +228,9 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
 	}
 	#pragma omp parallel for collapse(3)
-	for(int k = 0; k < nz; k++) {
-		for(int j = 0; j < ny; j++) {
-			for(int i = 0; i < nx; i++) {
+	for(size_t k = 0; k < nz; k++) {
+		for(size_t j = 0; j < ny; j++) {
+			for(size_t i = 0; i < nx; i++) {
 				int idx = IDX(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
