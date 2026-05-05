@@ -381,24 +381,6 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 }
 
 template <typename T>
-void center_momentum(TestParticles<T> *part) {
-	int total = part->protons + part->neutrons;
-	T k_sum[3] = {T(0.0)};
-	#pragma omp parallel for reduction(+:k_sum[0 : 3])
-	for(int i = 0; i < total; i++) {
-		k_sum[0] += part->kx[i];
-		k_sum[1] += part->ky[i];
-		k_sum[2] += part->kz[i];
-	}
-	#pragma omp parallel for
-	for(int i = 0; i < total; i++) {
-		part->kx[i] -= k_sum[0] / total;
-		part->ky[i] -= k_sum[1] / total;
-		part->kz[i] -= k_sum[2] / total;
-	}
-}
-
-template <typename T>
 void relax_woods_saxon(WoodsSaxon<T> *ws, WoodsSaxon<T> *ws_old, T coef) {
 	for(int i = 0; i < 2; i++) {
 		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;

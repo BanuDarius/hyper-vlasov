@@ -86,7 +86,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 			nuclear_excitation(part, param);
 		}
 		if(step % RESET_STEPS == 0)
-			center_momentum(part);
+			center_momentum(part, world);
 		
 		update_momenta_half(part, dt);
 		update_positions_full(part, dt);

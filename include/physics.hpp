@@ -234,6 +234,33 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *temp_
 }
 
 template <typename T>
+void center_momentum(TestParticles<T> *part, const World<T> &world) {
+	int total = part->protons + part->neutrons, part_num = 0;
+	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2], k_sum[3] = {T(0.0)};
+	#pragma omp parallel for reduction(+:part_num, k_sum[0 : 3])
+	for(int i = 0; i < total; i++) {
+		T r_vec[3];
+		copy_particle_pos_to_vector(r_vec, *part, i);
+		
+		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
+		|| r_vec[1] < -d_max_y || r_vec[1] > +d_max_y
+		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
+			continue;
+		
+		k_sum[0] += part->kx[i];
+		k_sum[1] += part->ky[i];
+		k_sum[2] += part->kz[i];
+		part_num++;
+	}
+	#pragma omp parallel for
+	for(int i = 0; i < total; i++) {
+		part->kx[i] -= k_sum[0] / (T)part_num;
+		part->ky[i] -= k_sum[1] / (T)part_num;
+		part->kz[i] -= k_sum[2] / (T)part_num;
+	}
+}
+
+template <typename T>
 void nuclear_excitation(TestParticles<T> *part, const Parameters<T> &param) {
 	int protons = part->protons, neutrons = part->neutrons;
 	T z = param.z, n = param.n, eta = param.eta_exc;
