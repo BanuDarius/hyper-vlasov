@@ -141,7 +141,6 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 		return;
 	/*{
 		TestParticles<T> h_part;
-		gpu_create_particles(&h_part, param.part_per_nucleon * param.z, param.part_per_nucleon * param.n);
 	}*/
 	else
 		cpu_simulate(output_filename, &part, skm, param, world);

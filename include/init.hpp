@@ -88,7 +88,7 @@ void set_world(World<T> *world, T d_max, int n) {
 
 template <typename T>
 void create_scalar_field_single(ScalarField<T> *field, const World<T> &world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
+	size_t world_size = world.n[0] * world.n[1] * world.n[2];
 	field->v = (T*)malloc(world_size * sizeof(T));
 	
 	if(field->v == nullptr) {
@@ -101,7 +101,7 @@ void create_scalar_field_single(ScalarField<T> *field, const World<T> &world) {
 
 template <typename T>
 void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
+	size_t world_size = world.n[0] * world.n[1] * world.n[2];
 	field->v = (T*)malloc(2 * world_size * sizeof(T));
 	
 	if(field->v == nullptr) {
@@ -114,7 +114,7 @@ void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
 
 template <typename T>
 void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
+	size_t world_size = world.n[0] * world.n[1] * world.n[2];
 	field->x = (T*)malloc(2 * world_size * sizeof(T));
 	field->y = (T*)malloc(2 * world_size * sizeof(T));
 	field->z = (T*)malloc(2 * world_size * sizeof(T));
@@ -132,7 +132,7 @@ void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
 
 template <typename T>
 void create_particles(TestParticles<T> *part, int protons, int neutrons) {
-	int total = protons + neutrons;
+	size_t total = protons + neutrons;
 	part->protons = protons;
 	part->neutrons = neutrons;
 	part->x = (T*)malloc(total * sizeof(T));
@@ -186,7 +186,7 @@ void output_vtk_header_vector_next(FILE *out, const char *name, int type) {
 
 template <typename T>
 void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name) {
-	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
+	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	uint32_t *vtk_density_p = (uint32_t*)malloc(world_size * sizeof(uint32_t));
 	uint32_t *vtk_density_n = (uint32_t*)malloc(world_size * sizeof(uint32_t));
 	uint32_t *vtk_density_t = (uint32_t*)malloc(world_size * sizeof(uint32_t));
@@ -220,7 +220,7 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 
 template <typename T>
 void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> &world, const char *name) {
-	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
+	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	uint32_t *vtk_force_p = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
 	uint32_t *vtk_force_n = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
 	
