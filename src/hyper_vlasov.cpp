@@ -40,7 +40,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 	if(stats == nullptr) {
 		std::fprintf(stderr, "CANNOT OPEN STATS FILE!\n"); exit(1);
 	}
-	
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
 	
@@ -73,8 +72,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 			set_output_filename(output_filename, output_directory, step / param.substeps);
 			FILE *out = fopen(output_filename, "wb");
 			if(out == nullptr) {
-				std::fprintf(stderr, "CANNOT OPEN OUTPUT FILE!\n");
-				exit(1);
+				std::fprintf(stderr, "CANNOT OPEN OUTPUT FILE!\n"); exit(1);
 			}
 			output_vtk_header_start(out, world);
 			output_vector_field(out, forces, world, "forces");
@@ -87,6 +85,9 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 			excited_nucleus = true;
 			nuclear_excitation(part, param);
 		}
+		if(step % RESET_STEPS == 0)
+			center_momentum(part);
+		
 		update_momenta_half(part, dt);
 		update_positions_full(part, dt);
 		
@@ -102,7 +103,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 		distribute_forces_to_particles_cic(part, forces, world);
 		
 		update_momenta_half(part, dt);
-		center_momentum(part);
 	}
 	fclose(stats);
 	free_vector_field(&forces);

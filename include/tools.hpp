@@ -42,7 +42,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> *density, TestParticles<
 		density->v[i] = 0.0;
 	
 	T *density_ptr = density->v;
-	#pragma omp parallel for reduction(+: density_ptr[0 : 2 * world_size])
+	#pragma omp parallel for reduction(+:density_ptr[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		T r_vec[3];
 		copy_particle_pos_to_vector(r_vec, *part, i);
@@ -383,13 +383,19 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 template <typename T>
 void center_momentum(TestParticles<T> *part) {
 	int total = part->protons + part->neutrons;
-	T sum_kz = T(0.0);
-	#pragma omp parallel for reduction(+:sum_kz)
-	for(int i = 0; i < total; i++)
-		sum_kz += part->kz[i];
+	T k_sum[3] = {T(0.0)};
+	#pragma omp parallel for reduction(+:k_sum[0 : 3])
+	for(int i = 0; i < total; i++) {
+		k_sum[0] += part->kx[i];
+		k_sum[1] += part->ky[i];
+		k_sum[2] += part->kz[i];
+	}
 	#pragma omp parallel for
-	for(int i = 0; i < total; i++)
-		part->kz[i] -= sum_kz / total;
+	for(int i = 0; i < total; i++) {
+		part->kx[i] -= k_sum[0] / total;
+		part->ky[i] -= k_sum[1] / total;
+		part->kz[i] -= k_sum[2] / total;
+	}
 }
 
 template <typename T>

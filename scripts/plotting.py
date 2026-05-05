@@ -37,7 +37,9 @@ IMAGE_DIR = PROJECT_ROOT / "output-image"
 
 # ---------------------------------------------------------- #
 
-def plot_energy_spectrum():
+def plot_energy_spectrum(sim_parameters):
+    if(sim_parameters.eta_exc < 1e-5):
+        return
     input_file = OUTPUT_DIR / "energy_spectrum.txt"
     output_image = IMAGE_DIR / "energy_spectrum.png"
     
@@ -120,6 +122,8 @@ def plot_center_of_mass():
 # ---------------------------------------------------------- #
 
 def plot_dipole(sim_parameters):
+    if(sim_parameters.eta_exc < 1e-5):
+        return
     z = sim_parameters.z
     n = sim_parameters.n
     input_file = OUTPUT_DIR / "stats.txt"
