@@ -43,24 +43,26 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 	VectorField<T> forces;
 	create_vector_field_double(&forces, world);
 	
-	ScalarField<T> potentials, coulomb, temp_density, density;
+	ScalarField<T> potentials, coulomb, density_temp, density_before, density;
 	create_scalar_field_single(&coulomb, world);
 	create_scalar_field_double(&density, world);
 	create_scalar_field_double(&potentials, world);
-	create_scalar_field_double(&temp_density, world);
+	create_scalar_field_double(&density_temp, world);
+	create_scalar_field_double(&density_before, world);
 	
 	distribute_volumetric_particles_cic(&density, part, world);
-	compute_volumetric_densities(&density, &temp_density, param, world);
+	compute_volumetric_densities(&density, &density_temp, param, world);
 	
 	compute_coulomb_boundaries(&coulomb, *part, world, param.z);
 	compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
 	compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
-	merge_volumetric_potentials(&potentials, coulomb, world);
+	add_scalar_field_single(&potentials, potentials, coulomb, world);
 	compute_volumetric_forces_fdm(&forces, potentials, world);
 	
 	distribute_forces_to_particles_cic(part, forces, world);
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
+			std::printf("Processed step: %i/%i.\n", step, param.steps);
 			T x_p = center_of_mass(*part, world, PROTONS);
 			T x_n = center_of_mass(*part, world, NEUTRONS);
 			T msr_p = mean_squared_radius(*part, world, PROTONS);
@@ -78,12 +80,16 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 			output_vector_field(out, forces, world, "forces");
 			output_scalar_field(out, density, world, "density");
 			output_scalar_field(out, potentials, world, "potentials");
-			std::printf("Processed step: %i/%i.\n", step, param.steps);
+			if(excited_nucleus) {
+				sub_scalar_field_double(&density_temp, density, density_before, world);
+				output_scalar_field(out, density_temp, world, "density_difference");
+			}
 			fclose(out);
 		}
 		if(step * dt >= param.t_exc && !excited_nucleus) {
 			excited_nucleus = true;
 			nuclear_excitation(part, param);
+			copy_scalar_field_double(&density_before, density, world);
 		}
 		if(step % RESET_STEPS == 0)
 			center_momentum(part, world);
@@ -92,12 +98,12 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 		update_positions_full(part, dt);
 		
 		distribute_volumetric_particles_cic(&density, part, world);
-		compute_volumetric_densities(&density, &temp_density, param, world);
+		compute_volumetric_densities(&density, &density_temp, param, world);
 		
 		compute_coulomb_boundaries(&coulomb, *part, world, param.z);
 		compute_volumetric_skyrme_potentials(&potentials, density, skm, world);
 		compute_volumetric_coulomb_potentials_sor(&coulomb, density, world);
-		merge_volumetric_potentials(&potentials, coulomb, world);
+		add_scalar_field_single(&potentials, potentials, coulomb, world);
 		compute_volumetric_forces_fdm(&forces, potentials, world);
 		
 		distribute_forces_to_particles_cic(part, forces, world);
@@ -109,7 +115,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 	free_scalar_field(&density);
 	free_scalar_field(&coulomb);
 	free_scalar_field(&potentials);
-	free_scalar_field(&temp_density);
+	free_scalar_field(&density_temp);
+	free_scalar_field(&density_before);
 	/*ParticleCount<T> part_count;
 	create_particle_count(&part_count, world);
 	scatter_particles(&part_count, part, world);

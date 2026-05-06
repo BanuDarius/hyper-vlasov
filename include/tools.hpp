@@ -390,21 +390,29 @@ void relax_woods_saxon(WoodsSaxon<T> *ws, WoodsSaxon<T> *ws_old, T coef) {
 }
 
 template <typename T>
-void merge_volumetric_potentials(ScalarField<T> *potential_a, const ScalarField<T> &potential_b, const World<T> &world) {
+void add_scalar_field_single(ScalarField<T> *field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++) {
-		potential_a->v[i] += potential_b.v[i];
-	}
+	for(int i = 0; i < world_size; i++)
+		field_a->v[i] = field_b.v[i] + field_c.v[i];
 }
 
 template <typename T>
-void copy_scalar_field(ScalarField<T> *density_a, const ScalarField<T> &density_b, const World<T> &world) {
+void sub_scalar_field_double(ScalarField<T> *field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
-		density_a->v[i] = density_b.v[i];
+		field_a->v[i] = field_b.v[i] - field_c.v[i];
 }
+
+template <typename T>
+void copy_scalar_field_double(ScalarField<T> *field_a, const ScalarField<T> &field_b, const World<T> &world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++)
+		field_a->v[i] = field_b.v[i];
+}
+
 
 template <typename T>
 static inline void world_pos_to_vector(T *v, const World<T> &world, int idx) {

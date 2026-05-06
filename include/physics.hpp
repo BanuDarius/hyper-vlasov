@@ -200,12 +200,12 @@ void compute_volumetric_forces_fdm(VectorField<T> *forces, ScalarField<T> potent
 }
 
 template <typename T>
-void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *temp_density, const Parameters<T> &param, const World<T> &world) {
+void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *density_temp, const Parameters<T> &param, const World<T> &world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
 	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
 	
-	copy_scalar_field(temp_density, *density, world);
+	copy_scalar_field_double(density_temp, *density, world);
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		T r_i[3], r_j[3], diff[3];
@@ -214,7 +214,7 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *temp_
 		
 		for(int j = 0; j < world_size; j++) {
 			int offset = (i < world_size) ? 0 : world_size;
-			T rho = temp_density->v[j + offset];
+			T rho = density_temp->v[j + offset];
 			world_pos_to_vector(r_j, world, j);
 			
 			sub_vec(diff, r_i, r_j);
