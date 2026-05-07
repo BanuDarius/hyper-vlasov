@@ -79,7 +79,7 @@ def plot_radius():
     ax.plot(time, r_neutron, color='red', linestyle='-', linewidth=1.5, label="Neutrons")
     
     ax.set_title("Nucleus proton neutron radii")
-    ax.set_xlabel("t (MeV/c)")
+    ax.set_xlabel("t (fm/c)")
     ax.set_ylabel("r (fm)")
     ax.set_xlim(0.0, np.max(time))
     ax.set_ylim(0.0, 1.1 * np.max(r_neutron))
@@ -107,7 +107,7 @@ def plot_center_of_mass():
     ax.plot(time, cm_neutron, color='red', linestyle='-', linewidth=1.5, label="Neutrons")
     
     ax.set_title("Nucleus proton neutron center of mass")
-    ax.set_xlabel("t (MeV/c)")
+    ax.set_xlabel("t (fm/c)")
     ax.set_ylabel(r"$r_{CM}$ (fm)")
     ax.set_xlim(0.0, np.max(time))
     ax.set_ylim(-0.5, +0.5)
@@ -140,7 +140,7 @@ def plot_dipole(sim_parameters):
     ax.plot(time, dipole, color='blue', linestyle='-', linewidth=1.5)
     
     ax.set_title("Nucleus dipole moment")
-    ax.set_xlabel("t (MeV/c)")
+    ax.set_xlabel("t (fm/c)")
     ax.set_ylabel("D (fm)")
     ax.set_xlim(0.0, np.max(time))
     ax.set_ylim(1.1 * np.min(dipole), 1.1 * np.max(dipole))
