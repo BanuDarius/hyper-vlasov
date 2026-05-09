@@ -42,7 +42,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 	}
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	VectorField<T> forces(2 * world_size);
-	
 	ScalarField<T> coulomb(world_size), potentials(2 * world_size), density_temp(2 * world_size), density_before(2 * world_size), density(2 * world_size);
 	
 	distribute_volumetric_particles_cic(&density, part, world);
