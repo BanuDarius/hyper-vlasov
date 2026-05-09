@@ -26,6 +26,7 @@ SOFTWARE. */
 #include <omp.h>
 #include <cmath>
 #include <cstdio>
+#include <vector>
 #include <cstdlib>
 #include <cstdint>
 #include <cstring>
@@ -87,76 +88,6 @@ void set_world(World<T> *world, T d_max, int n) {
 }
 
 template <typename T>
-void create_scalar_field_single(ScalarField<T> *field, const World<T> &world) {
-	size_t world_size = world.n[0] * world.n[1] * world.n[2];
-	field->v = (T*)malloc(world_size * sizeof(T));
-	
-	if(field->v == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
-	}
-	#pragma omp parallel for
-	for(size_t i = 0; i < world_size; i++)
-		field->v[i] = T(0.0);
-}
-
-template <typename T>
-void create_scalar_field_double(ScalarField<T> *field, const World<T> &world) {
-	size_t world_size = world.n[0] * world.n[1] * world.n[2];
-	field->v = (T*)malloc(2 * world_size * sizeof(T));
-	
-	if(field->v == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
-	}
-	#pragma omp parallel for
-	for(size_t i = 0; i < 2 * world_size; i++)
-		field->v[i] = T(0.0);
-}
-
-template <typename T>
-void create_vector_field_double(VectorField<T> *field, const World<T> &world) {
-	size_t world_size = world.n[0] * world.n[1] * world.n[2];
-	field->x = (T*)malloc(2 * world_size * sizeof(T));
-	field->y = (T*)malloc(2 * world_size * sizeof(T));
-	field->z = (T*)malloc(2 * world_size * sizeof(T));
-	
-	if(field->x == nullptr || field->y == nullptr || field->z == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
-	}
-	#pragma omp parallel for
-	for(size_t i = 0; i < 2 * world_size; i++) {
-		field->x[i] = T(0.0);
-		field->y[i] = T(0.0);
-		field->z[i] = T(0.0);
-	}
-}
-
-template <typename T>
-void create_particles(TestParticles<T> *part, int protons, int neutrons) {
-	size_t total = protons + neutrons;
-	part->protons = protons;
-	part->neutrons = neutrons;
-	part->x = (T*)malloc(total * sizeof(T));
-	part->y = (T*)malloc(total * sizeof(T));
-	part->z = (T*)malloc(total * sizeof(T));
-	part->kx = (T*)malloc(total * sizeof(T));
-	part->ky = (T*)malloc(total * sizeof(T));
-	part->kz = (T*)malloc(total * sizeof(T));
-	part->fx = (T*)malloc(total * sizeof(T));
-	part->fy = (T*)malloc(total * sizeof(T));
-	part->fz = (T*)malloc(total * sizeof(T));
-	part->energy = (T*)malloc(total * sizeof(T));
-	part->density_p = (T*)malloc(total * sizeof(T));
-	part->density_n = (T*)malloc(total * sizeof(T));
-	
-	if(part->x == nullptr || part->y == nullptr || part->z == nullptr
-	|| part->kx == nullptr || part->ky == nullptr || part->kz == nullptr
-	|| part->fx == nullptr || part->fy == nullptr || part->fz == nullptr
-	|| part->energy == nullptr || part->density_p == nullptr || part->density_n == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
-	}
-}
-
-template <typename T>
 void output_vtk_header_start(FILE *out, World<T> world) {
 	std::fprintf(out, "# vtk DataFile Version 3.0\n");
 	std::fprintf(out, "Volumetric data\n");
@@ -187,12 +118,9 @@ void output_vtk_header_vector_next(FILE *out, const char *name, int type) {
 template <typename T>
 void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name) {
 	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
-	uint32_t *vtk_density_p = (uint32_t*)malloc(world_size * sizeof(uint32_t));
-	uint32_t *vtk_density_n = (uint32_t*)malloc(world_size * sizeof(uint32_t));
-	uint32_t *vtk_density_t = (uint32_t*)malloc(world_size * sizeof(uint32_t));
-	if(vtk_density_p == nullptr || vtk_density_n == nullptr || vtk_density_t == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
-	}
+	std::vector<uint32_t> vtk_density_p(world_size);
+	std::vector<uint32_t> vtk_density_n(world_size);
+	std::vector<uint32_t> vtk_density_t(world_size);
 	#pragma omp parallel for collapse(3)
 	for(size_t k = 0; k < nz; k++) {
 		for(size_t j = 0; j < ny; j++) {
@@ -207,26 +135,20 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 		}
 	}
 	output_vtk_header_scalar_next(out, name, PROTONS);
-	fwrite(vtk_density_p, sizeof(uint32_t), world_size, out);
+	fwrite(vtk_density_p.data(), sizeof(uint32_t), world_size, out);
 	
 	output_vtk_header_scalar_next(out, name, NEUTRONS);
-	fwrite(vtk_density_n, sizeof(uint32_t), world_size, out);
+	fwrite(vtk_density_n.data(), sizeof(uint32_t), world_size, out);
 	
 	output_vtk_header_scalar_next(out, name, PROTONS_AND_NEUTRONS);
-	fwrite(vtk_density_t, sizeof(uint32_t), world_size, out);
-	
-	free(vtk_density_p); free(vtk_density_n); free(vtk_density_t);
+	fwrite(vtk_density_t.data(), sizeof(uint32_t), world_size, out);
 }
 
 template <typename T>
 void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> &world, const char *name) {
 	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
-	uint32_t *vtk_force_p = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
-	uint32_t *vtk_force_n = (uint32_t*)malloc(3 * world_size * sizeof(uint32_t));
-	
-	if(vtk_force_p == nullptr || vtk_force_n == nullptr) {
-		std::fprintf(stderr, "ERROR ALLOCATING MEMORY!\n"); exit(1);
-	}
+	std::vector<uint32_t> vtk_force_p(3 * world_size);
+	std::vector<uint32_t> vtk_force_n(3 * world_size);
 	#pragma omp parallel for collapse(3)
 	for(size_t k = 0; k < nz; k++) {
 		for(size_t j = 0; j < ny; j++) {
@@ -245,31 +167,10 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 		}
 	}
 	output_vtk_header_vector_next(out, name, PROTONS);
-	fwrite(vtk_force_p, sizeof(uint32_t), 3 * world_size, out);
+	fwrite(vtk_force_p.data(), sizeof(uint32_t), 3 * world_size, out);
 	
 	output_vtk_header_vector_next(out, name, NEUTRONS);
-	fwrite(vtk_force_n, sizeof(uint32_t), 3 * world_size, out);
-	
-	free(vtk_force_p); free(vtk_force_n);
-}
-
-template <typename T>
-void free_particles(TestParticles<T> *part) {
-	free(part->x); free(part->y); free(part->z);
-	free(part->kx); free(part->ky); free(part->kz);
-	free(part->fx); free(part->fy); free(part->fz);
-	free(part->density_p); free(part->density_n);
-	free(part->energy);
-}
-
-template <typename T>
-void free_vector_field(VectorField<T> *field) {
-	free(field->x); free(field->y); free(field->z);
-}
-
-template <typename T>
-void free_scalar_field(ScalarField<T> *field) {
-	free(field->v);
+	fwrite(vtk_force_n.data(), sizeof(uint32_t), 3 * world_size, out);
 }
 
 template <typename T>

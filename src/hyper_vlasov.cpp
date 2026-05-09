@@ -40,15 +40,10 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 	if(stats == nullptr) {
 		std::fprintf(stderr, "CANNOT OPEN STATS FILE!\n"); exit(1);
 	}
-	VectorField<T> forces;
-	create_vector_field_double(&forces, world);
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	VectorField<T> forces(2 * world_size);
 	
-	ScalarField<T> potentials, coulomb, density_temp, density_before, density;
-	create_scalar_field_single(&coulomb, world);
-	create_scalar_field_double(&density, world);
-	create_scalar_field_double(&potentials, world);
-	create_scalar_field_double(&density_temp, world);
-	create_scalar_field_double(&density_before, world);
+	ScalarField<T> coulomb(world_size), potentials(2 * world_size), density_temp(2 * world_size), density_before(2 * world_size), density(2 * world_size);
 	
 	distribute_volumetric_particles_cic(&density, part, world);
 	compute_volumetric_densities(&density, &density_temp, param, world);
@@ -111,12 +106,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 		update_momenta_half(part, dt);
 	}
 	fclose(stats);
-	free_vector_field(&forces);
-	free_scalar_field(&density);
-	free_scalar_field(&coulomb);
-	free_scalar_field(&potentials);
-	free_scalar_field(&density_temp);
-	free_scalar_field(&density_before);
 	/*ParticleCount<T> part_count;
 	create_particle_count(&part_count, world);
 	scatter_particles(&part_count, part, world);
@@ -128,32 +117,27 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 
 template <typename T>
 void run_simulation(const char *input_filename, const char *output_filename) {
+	FILE *in = fopen(input_filename, "r");
+	if(in == nullptr) {
+		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); exit(1);
+	}
 	Skyrme<T> skm;
 	World<T> world;
 	Parameters<T> param;
 	WoodsSaxon<T> ws[2];
 	Fermi<T> fermi_levels;
-	TestParticles<T> part;
-	
-	FILE *in = fopen(input_filename, "r");
-	if(in == nullptr) {
-		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); exit(1);
-	}
 	read_input_file(in, &skm, &world, &fermi_levels, &param, ws);
+	fclose(in);
+	
+	TestParticles<T> part(param.z * param.part_per_nucleon, param.n * param.part_per_nucleon);
 	std::printf("MAX TEST PART %i\n", param.max_test_part);
 	
 	initialize_particles(&part, ws, skm, &fermi_levels, param);
 	chi_squared(part, ws, skm, param.part_per_nucleon);
 	if(param.use_gpu == true)
 		return;
-	/*{
-		TestParticles<T> h_part;
-	}*/
 	else
 		cpu_simulate(output_filename, &part, skm, param, world);
-	
-	free_particles(&part);
-	fclose(in);
 }
 
 int main(int argc, char **argv) {

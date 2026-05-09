@@ -23,6 +23,8 @@ SOFTWARE. */
 #ifndef SIM_STRUCTS_H
 #define SIM_STRUCTS_H
 
+#include <array>
+#include <vector>
 #include <numbers>
 
 #define PROTONS 0
@@ -56,18 +58,33 @@ struct Parameters {
 template <typename T>
 struct TestParticles {
 	int protons, neutrons;
-	T *x, *y, *z, *kx, *ky, *kz;
-	T *energy, *density_p, *density_n, *fx, *fy, *fz;
+	std::vector<T> energy, density_p, density_n;
+	std::vector<T> x, y, z, kx, ky, kz, fx, fy, fz;
+	TestParticles(int p, int n) {
+		protons = p;
+		neutrons = n;
+		int total = protons + neutrons;
+		x.resize(total); y.resize(total); z.resize(total);
+		kx.resize(total); ky.resize(total); kz.resize(total);
+		fx.resize(total); fy.resize(total); fz.resize(total);
+		energy.resize(total); density_p.resize(total); density_n.resize(total);
+	}
 };
 
 template <typename T>
 struct ScalarField {
-	T *v;
+	std::vector<T> v;
+	ScalarField(int field_size) {
+		v.resize(field_size);
+	}
 };
 
 template <typename T>
 struct VectorField {
-	T *x, *y, *z;
+	std::vector<T> x, y, z;
+	VectorField(int field_size) {
+		x.resize(field_size); y.resize(field_size); z.resize(field_size);
+	}
 };
 
 template <typename T>

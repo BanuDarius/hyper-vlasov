@@ -42,7 +42,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> *density, TestParticles<
 	for(int i = 0; i < 2 * world_size; i++)
 		density->v[i] = 0.0;
 	
-	T *density_ptr = density->v;
+	T *density_ptr = density->v.data();
 	#pragma omp parallel for reduction(+:density_ptr[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec;

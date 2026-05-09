@@ -38,9 +38,7 @@ void initialize_particles(TestParticles<T> *part, WoodsSaxon<T> *ws, const Skyrm
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon, it = 0;
 	
-	TestParticles<T> temp_part;
-	create_particles(part, total_p, total_n);
-	create_particles(&temp_part, max_part, max_part);
+	TestParticles<T> temp_part(max_part, max_part);
 	do {
 		generate_random_particles(&temp_part, param.r_max);
 		compute_particle_energies(&temp_part, ws, param);
@@ -94,7 +92,6 @@ void initialize_particles(TestParticles<T> *part, WoodsSaxon<T> *ws, const Skyrm
 	if(it == MAX_INIT_ITERATIONS)
 		fprintf(stderr, "INITIALIZATION DID NOT CONVERGE!\n");
 	compute_particle_energies(part, ws, param);
-	free_particles(&temp_part);
 }
 
 template <typename T>
