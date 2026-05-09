@@ -23,6 +23,7 @@ SOFTWARE. */
 #ifndef FIT_ALGORITHM_H
 #define FIT_ALGORITHM_H
 
+#include <array>
 #include <cmath>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_matrix.h>
@@ -53,7 +54,7 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 	
 	for(int i = 0; i < fit->total; i++) {
 		int idx = fit->start + i;
-		T r_vec[3];
+		std::array<T, 3> r_vec;
 		copy_particle_pos_to_vector(r_vec, *fit->part, idx);
 		
 		T r = magnitude(r_vec);
@@ -74,7 +75,7 @@ int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *J) {
 	
 	for(int i = 0; i < fit->total; i++) {
 		int idx = fit->start + i;
-		T r_vec[3];
+		std::array<T, 3> r_vec;
 		copy_particle_pos_to_vector(r_vec, *fit->part, idx);
 		
 		T r = magnitude(r_vec);

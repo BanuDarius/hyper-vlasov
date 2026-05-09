@@ -72,8 +72,8 @@ struct VectorField {
 
 template <typename T>
 struct World {
-	int n[3];
-	T d_max[3];
+	std::array<int, 3> n;
+	std::array<T, 3> d_max;
 };
 
 template <typename T>

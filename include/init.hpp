@@ -314,7 +314,7 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 		else if(!std::strcmp(current, "steps"))
 			i += std::fscanf(in, "%i", &steps);
 		else if(!std::strcmp(current, "n"))
-			i += std:: fscanf(in, "%i", &n);
+			i += std::fscanf(in, "%i", &n);
 		else if(!std::strcmp(current, "z"))
 			i += std::fscanf(in, "%i", &z);
 		else if(!std::strcmp(current, "substeps"))

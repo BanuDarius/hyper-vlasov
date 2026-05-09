@@ -23,6 +23,7 @@ SOFTWARE. */
 #ifndef MATH_FUNCTIONS_H
 #define MATH_FUNCTIONS_H
 
+#include <array>
 #include <cmath>
 #include <cstdlib>
 
@@ -33,39 +34,36 @@ static inline T rand_val(T min, T max) {
 }
 
 template <typename T>
-static inline void random_vec(T *v, T max) {
+static inline void random_vec(std::array<T, 3> &v, T max) {
 	for(int i = 0; i < 3; i++)
 		v[i] = rand_val(-max, max);
 }
 
 template <typename T>
-static inline T dot(const T *a, const T *b) {
+static inline T dot(const std::array<T, 3> &a, const std::array<T, 3> &b) {
 	T x = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 	return x;
 }
 
 template <typename T>
-static inline T magnitude(const T *a) {
+static inline T magnitude(const std::array<T, 3> &a) {
 	T x = std::sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 	return x;
 }
 
 template <typename T>
-static inline void mult_vec(T *a, const T *b, const T c) {
-	for(int i = 0; i < 3; i++)
-		a[i] = b[i] * c;
+static inline std::array<T, 3> operator+(const std::array<T, 3> &a, const std::array<T, 3> &b) {
+	return { a[0] + b[0], a[1] + b[1], a[2] + b[2] };
 }
 
 template <typename T>
-static inline void add_vec(T *a, const T *b, const T *c) {
-	for(int i = 0; i < 3; i++)
-		a[i] = b[i] + c[i];
+static inline std::array<T, 3> operator-(const std::array<T, 3> &a, const std::array<T, 3> &b) {
+	return { a[0] - b[0], a[1] - b[1], a[2] - b[2] };
 }
 
 template <typename T>
-static inline void sub_vec(T *a, const T *b, const T *c) {
-	for(int i = 0; i < 3; i++)
-		a[i] = b[i] - c[i];
+static inline std::array<T, 3> operator*(const std::array<T, 3> &a, T b) {
+	return { a[0] * b, a[1] * b, a[2] * b };
 }
 
 #endif

@@ -23,6 +23,7 @@ SOFTWARE. */
 #ifndef PHYSICS_H
 #define PHYSICS_H
 
+#include <array>
 #include <cmath>
 #include <cstdio>
 
@@ -208,7 +209,7 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *densi
 	copy_scalar_field_double(density_temp, *density, world);
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
-		T r_i[3], r_j[3], diff[3];
+		std::array<T, 3> r_i, r_j, diff;
 		T fact, dist_squared, rho_f = T(0.0);
 		world_pos_to_vector(r_i, world, i % world_size);
 		
@@ -217,7 +218,7 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *densi
 			T rho = density_temp->v[j + offset];
 			world_pos_to_vector(r_j, world, j);
 			
-			sub_vec(diff, r_i, r_j);
+			diff = r_i - r_j;
 			dist_squared = dot(diff, diff);
 			if(dist_squared > cutoff_squared)
 				continue;
@@ -236,10 +237,11 @@ void compute_volumetric_densities(ScalarField<T> *density, ScalarField<T> *densi
 template <typename T>
 void center_momentum(TestParticles<T> *part, const World<T> &world) {
 	int total = part->protons + part->neutrons, part_num = 0;
-	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2], k_sum[3] = {T(0.0)};
-	#pragma omp parallel for reduction(+:part_num, k_sum[0 : 3])
+	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
+	T kx_sum = T(0.0), ky_sum = T(0.0), kz_sum = T(0.0);
+	#pragma omp parallel for reduction(+:part_num, kx_sum, ky_sum, kz_sum)
 	for(int i = 0; i < total; i++) {
-		T r_vec[3];
+		std::array<T, 3> r_vec;
 		copy_particle_pos_to_vector(r_vec, *part, i);
 		
 		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
@@ -247,16 +249,16 @@ void center_momentum(TestParticles<T> *part, const World<T> &world) {
 		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
 			continue;
 		
-		k_sum[0] += part->kx[i];
-		k_sum[1] += part->ky[i];
-		k_sum[2] += part->kz[i];
+		kx_sum += part->kx[i];
+		ky_sum += part->ky[i];
+		kz_sum += part->kz[i];
 		part_num++;
 	}
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
-		part->kx[i] -= k_sum[0] / (T)part_num;
-		part->ky[i] -= k_sum[1] / (T)part_num;
-		part->kz[i] -= k_sum[2] / (T)part_num;
+		part->kx[i] -= kx_sum / (T)part_num;
+		part->ky[i] -= ky_sum / (T)part_num;
+		part->kz[i] -= kz_sum / (T)part_num;
 	}
 }
 
