@@ -316,8 +316,10 @@ void compute_density_samples_cic(std::vector<float> &density_samples, const Scal
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
 		T cz = (nz / T(2.0)) * (r_vec[2] / d_max_z + T(1.0));
 		
-		if(cx < T(0.0) || cy < T(0.0) || cz < T(0.0) || cx >= nx || cy >= ny || cz >= nz)
+		if(cx < T(0.0) || cy < T(0.0) || cz < T(0.0) || cx >= nx || cy >= ny || cz >= nz) {
+			density_samples[i] = 0.0f;
 			continue;
+		}
 		
 		int x0 = (int)cx, y0 = (int)cy, z0 = (int)cz;
 		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;

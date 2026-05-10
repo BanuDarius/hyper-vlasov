@@ -37,11 +37,11 @@ n = 82
 nx = 16
 t_f = 800.0
 t_exc = 100.0
-eta_exc = 0.15
+eta_exc = 0.40
 steps = 800
 substeps = 4
 d_max_scale = 1.3
-density_samples = 128
+density_samples = 256
 
 V0 = -50.0
 a = 0.66
