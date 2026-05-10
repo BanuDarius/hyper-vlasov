@@ -34,19 +34,19 @@ SOFTWARE. */
 #include "physics_formulas.hpp"
 
 template <typename T>
-void distribute_volumetric_particles_cic(ScalarField<T> *density, const TestParticles<T> *part, const World<T> &world) {
+void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestParticles<T> &part, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part->protons + part->neutrons;
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part.protons + part.neutrons;
 	
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
-		density->v[i] = 0.0;
+		density.v[i] = 0.0;
 	
-	T *density_ptr = density->v.data();
+	T *density_ptr = density.v.data();
 	#pragma omp parallel for reduction(+:density_ptr[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, *part, i);
+		copy_particle_pos_to_vector(r_vec, part, i);
 		
 		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
@@ -60,7 +60,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> *density, const TestPart
 		T d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
 		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
 		
-		int offset = (i < part->protons) ? 0 : world_size;
+		int offset = (i < part.protons) ? 0 : world_size;
 		
 		int idx000 = x0 * (ny * nz) + y0 * nz + z0 + offset;
 		density_ptr[idx000] += t_x * t_y * t_z;
@@ -97,21 +97,21 @@ void distribute_volumetric_particles_cic(ScalarField<T> *density, const TestPart
 }
 
 template <typename T>
-void distribute_forces_to_particles_cic(TestParticles<T> *part, const VectorField<T> &forces, const World<T> &world) {
+void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorField<T> &forces, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part->protons + part->neutrons;
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part.protons + part.neutrons;
 	
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, *part, i);
+		copy_particle_pos_to_vector(r_vec, part, i);
 		
 		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
 		T cz = (nz / T(2.0)) * (r_vec[2] / d_max_z + T(1.0));
 		
 		if(cx < T(0.0) || cy < T(0.0) || cz < T(0.0) || cx >= nx || cy >= ny || cz >= nz) {
-			part->fx[i] = T(0.0); part->fy[i] = T(0.0); part->fz[i] = T(0.0);
+			part.fx[i] = T(0.0); part.fy[i] = T(0.0); part.fz[i] = T(0.0);
 			continue;
 		}
 		
@@ -120,7 +120,7 @@ void distribute_forces_to_particles_cic(TestParticles<T> *part, const VectorFiel
 		T d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
 		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
 		
-		int offset = (i < part->protons) ? 0 : world_size;
+		int offset = (i < part.protons) ? 0 : world_size;
 		int idx = IDX(x0, y0, z0, nx, ny, nz) + offset;
 		
 		T w = t_x * t_y * t_z;
@@ -161,25 +161,25 @@ void distribute_forces_to_particles_cic(TestParticles<T> *part, const VectorFiel
 			w = d_x * d_y * d_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
-		part->fx[i] = fx;
-		part->fy[i] = fy;
-		part->fz[i] = fz;
+		part.fx[i] = fx;
+		part.fy[i] = fy;
+		part.fz[i] = fz;
 	}
 }
 
 template <typename T>
-void compute_particle_densities(TestParticles<T> *part, const Parameters<T> &param) {
-	int part_per_nucleon = param.part_per_nucleon, protons = part->protons, neutrons = part->neutrons, total = protons + neutrons;
+void compute_particle_densities(TestParticles<T> &part, const Parameters<T> &param) {
+	int part_per_nucleon = param.part_per_nucleon, protons = part.protons, neutrons = part.neutrons, total = protons + neutrons;
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
 	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_i, r_j, diff;
 		T fact, dist_squared, density_p = T(0.0), density_n = T(0.0);
-		copy_particle_pos_to_vector(r_i, *part, i);
+		copy_particle_pos_to_vector(r_i, part, i);
 		
 		for(int j = 0; j < total; j++) {
-			copy_particle_pos_to_vector(r_j, *part, j);
+			copy_particle_pos_to_vector(r_j, part, j);
 			
 			diff = r_i - r_j;
 			dist_squared = dot(diff, diff);
@@ -191,47 +191,47 @@ void compute_particle_densities(TestParticles<T> *part, const Parameters<T> &par
 			else
 				density_n += fact;
 		}
-		part->density_p[i] = density_p;
-		part->density_n[i] = density_n;
+		part.density_p[i] = density_p;
+		part.density_n[i] = density_n;
 	}
 	T term = (T(1.0) / part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
 	#pragma omp parallel for simd
 	for(int i = 0; i < total; i++) {
-		part->density_p[i] *= term;
-		part->density_n[i] *= term;
+		part.density_p[i] *= term;
+		part.density_n[i] *= term;
 	}
 }
 
 template <typename T>
-T compute_energy(TestParticles<T> *part, const WoodsSaxon<T> *ws, T sigma_k, int z, int i) {
+T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i) {
 	std::array<T, 3> r_vec, k_vec;
-	copy_particle_pos_to_vector(r_vec, *part, i);
-	copy_particle_vel_to_vector(k_vec, *part, i);
+	copy_particle_pos_to_vector(r_vec, part, i);
+	copy_particle_vel_to_vector(k_vec, part, i);
 	
 	T r = magnitude(r_vec);
 	T k = magnitude(k_vec);
 	
-	WoodsSaxon<T> ws_c = (i < part->protons) ? ws[0] : ws[1];
-	T energy = woods_saxon_potential(ws_c, r);
+	int type = (i < part.protons) ? PROTONS : NEUTRONS;
+	T energy = woods_saxon_potential(ws, r, type);
 	energy += (k * k) * kinetic_energy<T>();
 	energy += fluctuation_energy(sigma_k);
 	
-	if(i < part->protons)
-		energy += coulomb_potential<T>(ws_c, z, r);
+	if(i < part.protons)
+		energy += coulomb_potential<T>(ws, z, r);
 	return energy;
 }
 
 template <typename T>
-void compute_particle_energies(TestParticles<T> *part, const WoodsSaxon<T> *ws, const Parameters<T> &param) {
+void compute_particle_energies(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param) {
 	T sigma_k = param.sigma_k, z = param.z;
 	#pragma omp parallel for
-	for(int i = 0; i < part->protons + part->neutrons; i++)
-		part->energy[i] = compute_energy(part, ws, sigma_k, z, i);
+	for(int i = 0; i < part.protons + part.neutrons; i++)
+		part.energy[i] = compute_energy(part, ws, sigma_k, z, i);
 }
 
 template <typename T>
-void generate_random_particles(TestParticles<T> *part, T r_max) {
-	int total = part->protons + part->neutrons, i = 0;
+void generate_random_particles(TestParticles<T> &part, T r_max) {
+	int total = part.protons + part.neutrons, i = 0;
 	while(i < total) {
 		std::array<T, 3> r_new;
 		random_vec(r_new, r_max);
@@ -252,14 +252,14 @@ void generate_random_particles(TestParticles<T> *part, T r_max) {
 }
 
 template <typename T>
-void generate_checking_particles(TestParticles<T> *part, const WoodsSaxon<T> *ws, const Parameters<T> &param, const Fermi<T> *fermi_levels) {
+void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param, const Fermi<T> &fermi_levels) {
 	T r_max = param.r_max, sigma_k = param.sigma_k, z = param.z, epsilon;
-	int total = part->protons + part->neutrons, i = 0;
+	int total = part.protons + part.neutrons, i = 0;
 	while(i < total) {
-		if(i < part->protons)
-			epsilon = fermi_levels->epsilon_p;
+		if(i < part.protons)
+			epsilon = fermi_levels.epsilon_p;
 		else
-			epsilon = fermi_levels->epsilon_n;
+			epsilon = fermi_levels.epsilon_n;
 		
 		std::array<T, 3> r_new, k_new;
 		random_vec(r_new, r_max);
@@ -280,7 +280,7 @@ void generate_checking_particles(TestParticles<T> *part, const WoodsSaxon<T> *ws
 }
 
 template <typename T>
-void compute_coulomb_boundaries(ScalarField<T> *coulomb, const TestParticles<T> &part, const World<T> &world, int z) {
+void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> &part, const World<T> &world, int z) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	T cm_protons = center_of_mass(part, world, PROTONS);
 	#pragma omp parallel for collapse(3)
@@ -294,7 +294,7 @@ void compute_coulomb_boundaries(ScalarField<T> *coulomb, const TestParticles<T> 
 					
 					r_vec[2] -= cm_protons;
 					T r = magnitude(r_vec);
-					coulomb->v[idx] = T(1.44) * z / r;
+					coulomb.v[idx] = T(1.44) * z / r;
 				}
 			}
 		}
@@ -421,16 +421,12 @@ T center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) 
 }
 
 template <typename T>
-void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T> skm, int part_per_nucleon) {
+void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> &ws, const Skyrme<T> &skm, int part_per_nucleon) {
 	int total = part.protons + part.neutrons;
 	T chi_squared_p = 0.0, chi_squared_n = 0.0;
 	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
 	for(int i = 0; i < total; i++) {
-		int type;
-		WoodsSaxon<T> ws_c;
-		if(i >= part.protons) { type = NEUTRONS; ws_c = ws[1]; }
-		else { type = PROTONS; ws_c = ws[0]; }
-		
+		int type = (i < part.protons) ? PROTONS : NEUTRONS;
 		std::array<T, 3> r_vec;
 		copy_particle_pos_to_vector(r_vec, part, i);
 		T r = magnitude(r_vec);
@@ -438,7 +434,7 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 		T density_p = part.density_p[i];
 		T density_n = part.density_n[i];
 		
-		T v_ws = woods_saxon_potential(ws_c, r);
+		T v_ws = woods_saxon_potential(ws, r, type);
 		T v_skyrme = skyrme_potential(skm, density_p, density_n, type);
 		T diff = v_ws - v_skyrme;
 		if(type == PROTONS)
@@ -451,36 +447,39 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> *ws, Skyrme<T
 }
 
 template <typename T>
-void relax_woods_saxon(WoodsSaxon<T> *ws, WoodsSaxon<T> *ws_old, T coef) {
+void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef) {
 	for(int i = 0; i < 2; i++) {
-		ws[i].V0 = coef * ws[i].V0 + (1.0 - coef) * ws_old[i].V0;
-		ws[i].R12 = coef * ws[i].R12 + (1.0 - coef) * ws_old[i].R12;
-		ws[i].a = coef * ws[i].a + (1.0 - coef) * ws_old[i].a;
+		ws.V0_p = coef * ws.V0_p + (1.0 - coef) * ws_old.V0_p;
+		ws.R12_p = coef * ws.R12_p + (1.0 - coef) * ws_old.R12_p;
+		ws.a_p = coef * ws.a_p + (1.0 - coef) * ws_old.a_p;
+		ws.V0_n = coef * ws.V0_n + (1.0 - coef) * ws_old.V0_n;
+		ws.R12_n = coef * ws.R12_n + (1.0 - coef) * ws_old.R12_n;
+		ws.a_n = coef * ws.a_n + (1.0 - coef) * ws_old.a_n;
 	}
 }
 
 template <typename T>
-void add_scalar_field_single(ScalarField<T> *field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
+void add_scalar_field_single(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	#pragma omp parallel for
 	for(int i = 0; i < world_size; i++)
-		field_a->v[i] = field_b.v[i] + field_c.v[i];
+		field_a.v[i] = field_b.v[i] + field_c.v[i];
 }
 
 template <typename T>
-void sub_scalar_field_double(ScalarField<T> *field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
+void sub_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
-		field_a->v[i] = field_b.v[i] - field_c.v[i];
+		field_a.v[i] = field_b.v[i] - field_c.v[i];
 }
 
 template <typename T>
-void copy_scalar_field_double(ScalarField<T> *field_a, const ScalarField<T> &field_b, const World<T> &world) {
+void copy_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &field_b, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
-		field_a->v[i] = field_b.v[i];
+		field_a.v[i] = field_b.v[i];
 }
 
 
@@ -508,17 +507,17 @@ static inline void copy_particle_vel_to_vector(std::array<T, 3> &v, const TestPa
 }
 
 template <typename T>
-static inline void copy_vector_to_particle_pos(TestParticles<T> *part, const std::array<T, 3> &v, int i) {
-	part->x[i] = v[0];
-	part->y[i] = v[1];
-	part->z[i] = v[2];
+static inline void copy_vector_to_particle_pos(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
+	part.x[i] = v[0];
+	part.y[i] = v[1];
+	part.z[i] = v[2];
 }
 
 template <typename T>
-static inline void copy_vector_to_particle_vel(TestParticles<T> *part, const std::array<T, 3> &v, int i) {
-	part->kx[i] = v[0];
-	part->ky[i] = v[1];
-	part->kz[i] = v[2];
+static inline void copy_vector_to_particle_vel(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
+	part.kx[i] = v[0];
+	part.ky[i] = v[1];
+	part.kz[i] = v[2];
 }
 
 /*void compute_volumetric_density(ScalarField<T> *density, ParticleCount<T> part_count, World<T> world_visual, World<T> world_data, Parameters<T> param, int type) {

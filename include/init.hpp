@@ -42,49 +42,52 @@ static inline uint32_t swap_endian(float v) {
 }
 
 template <typename T>
-void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc) {
-	param->z = z;
-	param->n = n;
-	param->t_f = t_f;
-	param->t_exc = t_exc;
-	param->steps = steps;
-	param->use_gpu = use_gpu;
-	param->sigma_k = sigma_k;
-	param->sigma_r = sigma_r;
-	param->eta_exc = eta_exc;
-	param->substeps = substeps;
-	param->r_max = nuclear_radius<T>(z + n);
-	param->density_samples = density_samples;
-	param->part_per_nucleon = part_per_nucleon;
-	param->max_test_part = max_particles(T(param->r_max), k_max<T>, param->part_per_nucleon);
+void set_parameters(Parameters<T> &param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc) {
+	param.z = z;
+	param.n = n;
+	param.t_f = t_f;
+	param.t_exc = t_exc;
+	param.steps = steps;
+	param.use_gpu = use_gpu;
+	param.sigma_k = sigma_k;
+	param.sigma_r = sigma_r;
+	param.eta_exc = eta_exc;
+	param.substeps = substeps;
+	param.r_max = nuclear_radius<T>(z + n);
+	param.density_samples = density_samples;
+	param.part_per_nucleon = part_per_nucleon;
+	param.max_test_part = max_particles(T(param.r_max), k_max<T>, param.part_per_nucleon);
 }
 
 template <typename T>
-void set_woods_saxon(WoodsSaxon<T> *ws, T V0, T R12, T a) {
-	ws->a = a;
-	ws->V0 = V0;
-	ws->R12 = R12;
+void set_woods_saxon(WoodsSaxon<T> &ws, T V0, T R12, T a) {
+	ws.a_p = a;
+	ws.a_n = a;
+	ws.V0_p = V0;
+	ws.V0_n = V0;
+	ws.R12_p = R12;
+	ws.R12_n = R12;
 }
 
 template <typename T>
-void set_skyrme(Skyrme<T> *skm, T A, T B, T C, T gamma) {
-	skm->A = A;
-	skm->B = B;
-	skm->C = C;
-	skm->gamma = gamma;
+void set_skyrme(Skyrme<T> &skm, T A, T B, T C, T gamma) {
+	skm.A = A;
+	skm.B = B;
+	skm.C = C;
+	skm.gamma = gamma;
 }
 
 template <typename T>
-void set_fermi_levels(Fermi<T> *fermi, T epsilon_p, T epsilon_n) {
-	fermi->epsilon_p = epsilon_p;
-	fermi->epsilon_n = epsilon_n;
+void set_fermi_levels(Fermi<T> &fermi, T epsilon_p, T epsilon_n) {
+	fermi.epsilon_p = epsilon_p;
+	fermi.epsilon_n = epsilon_n;
 }
 
 template <typename T>
-void set_world(World<T> *world, T d_max, int n) {
+void set_world(World<T> &world, T d_max, int n) {
 	for(int i = 0; i < 3; i++) {
-		world->n[i] = n;
-		world->d_max[i] = d_max;
+		world.n[i] = n;
+		world.d_max[i] = d_max;
 	}
 }
 
@@ -192,7 +195,7 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 }
 
 template <typename T>
-void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_levels, Parameters<T> *param, WoodsSaxon<T> *ws) {
+void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_levels, Parameters<T> &param, WoodsSaxon<T> &ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f, t_exc, eta_exc, d_max_scale;
 	int i = 0, num_test_part, use_gpu, density_samples, substeps, steps, nx, z, n;
 	char current[STRING_SIZE];
@@ -253,8 +256,7 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 	set_world(world, T(d_max), nx);
 	set_fermi_levels(fermi_levels, T(epsilon_p), T(epsilon_n));
 	set_parameters(param, z, n, num_test_part, steps, substeps, density_samples, (bool)use_gpu, T(sigma_k), T(sigma_r), T(t_f), T(t_exc), T(eta_exc));
-	set_woods_saxon(&ws[0], T(V0), T(0.8) * T(param->r_max), T(a));
-	set_woods_saxon(&ws[1], T(V0), T(0.8) * T(param->r_max), T(a));
+	set_woods_saxon(ws, T(V0), T(0.8) * T(param.r_max), T(a));
 }
 
 /*template <typename T>

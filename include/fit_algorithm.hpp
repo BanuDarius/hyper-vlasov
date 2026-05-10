@@ -33,23 +33,23 @@ SOFTWARE. */
 
 template <typename T>
 struct FittingData {
-	Skyrme<T> skm;
+	const Skyrme<T> *skm;
 	int type, start, total;
 	const TestParticles<T> *part;
 };
 
 template <typename T>
-void set_fit_function(struct FittingData<T> *fit, const TestParticles<T> *part, const Skyrme<T> &skm, int type, int start, int total) {
-	fit->skm = skm;
+void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const Skyrme<T> &skm, int type, int start, int total) {
+	fit->skm = &skm;
 	fit->type = type;
-	fit->part = part;
+	fit->part = &part;
 	fit->start = start;
 	fit->total = total;
 }
 
 template <typename T>
 int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
-	struct FittingData<T> *fit = (FittingData<T>*)p;
+	FittingData<T> *fit = (FittingData<T>*)p;
 	T V0 = T(gsl_vector_get(x, 0)), R12 = T(gsl_vector_get(x, 1)), a = T(gsl_vector_get(x, 2));
 	
 	for(int i = 0; i < fit->total; i++) {
@@ -60,7 +60,7 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 		T r = magnitude(r_vec);
 		T density_p = fit->part->density_p[idx];
 		T density_n = fit->part->density_n[idx];
-		T v_skyrme = skyrme_potential(fit->skm, density_p, density_n, fit->type);
+		T v_skyrme = skyrme_potential(*fit->skm, density_p, density_n, fit->type);
 		T v_woods_saxon = V0 / (T(1.0) + std::exp((r - R12) / a));
 		
 		gsl_vector_set(f, i, v_skyrme - v_woods_saxon);
@@ -70,7 +70,7 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 
 template <typename T>
 int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *J) {
-	struct FittingData<T> *fit = (struct FittingData<T>*)p;
+	FittingData<T> *fit = (FittingData<T>*)p;
 	T V0 = T(gsl_vector_get(x, 0)), R12 = T(gsl_vector_get(x, 1)), a = T(gsl_vector_get(x, 2));
 	
 	for(int i = 0; i < fit->total; i++) {
@@ -94,15 +94,15 @@ int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *J) {
 }
 
 template <typename T>
-void minim_woods_saxon(TestParticles<T> *part, WoodsSaxon<T> *ws, Skyrme<T> skm) {
+void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm) {
 	const gsl_multifit_nlinear_type *T_MAGIC = gsl_multifit_nlinear_trust;
 	gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
 	
 	for(int type = 0; type <= 1; type++) {
-		struct FittingData<T> fit;
+		FittingData<T> fit;
 		int part_type = (type == 0) ? PROTONS : NEUTRONS;
-		int start = (type == 0) ? 0 : part->protons;
-		int total = (type == 0) ? part->protons : part->neutrons;
+		int start = (type == 0) ? 0 : part.protons;
+		int total = (type == 0) ? part.protons : part.neutrons;
 		
 		set_fit_function(&fit, part, skm, part_type, start, total);
 		gsl_multifit_nlinear_fdf magic_solver;
@@ -116,9 +116,15 @@ void minim_woods_saxon(TestParticles<T> *part, WoodsSaxon<T> *ws, Skyrme<T> skm)
 		gsl_multifit_nlinear_workspace *magic_workspace = gsl_multifit_nlinear_alloc(T_MAGIC, &fdf_params, total, 3);
 		
 		gsl_vector *x = gsl_vector_alloc(3);
-		gsl_vector_set(x, 0, ws[type].V0);
-		gsl_vector_set(x, 1, ws[type].R12);
-		gsl_vector_set(x, 2, ws[type].a);
+		if(part_type == PROTONS) {
+			gsl_vector_set(x, 0, ws.V0_p);
+			gsl_vector_set(x, 1, ws.R12_p);
+			gsl_vector_set(x, 2, ws.a_p);
+		} else {
+			gsl_vector_set(x, 0, ws.V0_n);
+			gsl_vector_set(x, 1, ws.R12_n);
+			gsl_vector_set(x, 2, ws.a_n);
+		}
 		
 		gsl_multifit_nlinear_init(x, &magic_solver, magic_workspace);
 		
@@ -126,12 +132,18 @@ void minim_woods_saxon(TestParticles<T> *part, WoodsSaxon<T> *ws, Skyrme<T> skm)
 		status = gsl_multifit_nlinear_driver(100, 1e-4, 1e-4, 1e-4, NULL, NULL, &info, magic_workspace);
 		
 		if (status != GSL_SUCCESS)
-			std::printf("GSL Error %s\n", gsl_strerror(status));
+			std::fprintf(stderr, "GSL Error %s\n", gsl_strerror(status));
 		
 		gsl_vector *fit_params = gsl_multifit_nlinear_position(magic_workspace);
-		ws[type].V0 = gsl_vector_get(fit_params, 0);
-		ws[type].R12 = gsl_vector_get(fit_params, 1);
-		ws[type].a = gsl_vector_get(fit_params, 2);
+		if(part_type == PROTONS) {
+			ws.V0_p = gsl_vector_get(fit_params, 0);
+			ws.R12_p = gsl_vector_get(fit_params, 1);
+			ws.a_p = gsl_vector_get(fit_params, 2);
+		} else {
+			ws.V0_n = gsl_vector_get(fit_params, 0);
+			ws.R12_n = gsl_vector_get(fit_params, 1);
+			ws.a_n = gsl_vector_get(fit_params, 2);
+		}
 		
 		gsl_multifit_nlinear_free(magic_workspace);
 		gsl_vector_free(x);

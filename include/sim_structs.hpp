@@ -95,7 +95,8 @@ struct World {
 
 template <typename T>
 struct WoodsSaxon {
-	T V0, R12, a;
+	T V0_p, R12_p, a_p;
+	T V0_n, R12_n, a_n;
 };
 
 template <typename T>

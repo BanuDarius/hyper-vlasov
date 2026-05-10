@@ -62,9 +62,11 @@ T calc_sigma(T fwhm) {
 }
 
 template <typename T>
-static inline T woods_saxon_potential(WoodsSaxon<T> ws, T r) {
-	T v = ws.V0 / (T(1.0) + std::exp((r - ws.R12) / ws.a));
-	return v;
+static inline T woods_saxon_potential(const WoodsSaxon<T> &ws, T r, int type) {
+	if(type == PROTONS)
+		return ws.V0_p / (T(1.0) + std::exp((r - ws.R12_p) / ws.a_p));
+	else
+		return ws.V0_n / (T(1.0) + std::exp((r - ws.R12_n) / ws.a_n));
 }
 
 template <typename T>
@@ -72,14 +74,13 @@ static inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int typ
 	T tau = (type == PROTONS) ? T(-1.0) : T(+1.0);
 	T rho = rho_p + rho_n;
 	T t = rho / rho_0<T>;
-	T v = skm.A * t + skm.B * std::pow(t, skm.gamma) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / rho_0<T>);
-	return v;
+	return skm.A * t + skm.B * std::pow(t, skm.gamma) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / rho_0<T>);
 }
 
 template <typename T>
 static inline T coulomb_potential(const WoodsSaxon<T> &ws, T z, T r) {
-	if(r <= ws.R12)
-		return T(1.44) * (z - T(1.0)) / ws.R12 * (T(1.5) - T(0.5) * (r / ws.R12) * (r / ws.R12));
+	if(r <= ws.R12_p)
+		return T(1.44) * (z - T(1.0)) / ws.R12_p * (T(1.5) - T(0.5) * (r / ws.R12_p) * (r / ws.R12_p));
 	else
 		return T(1.44) * (z - T(1.0)) / r;
 }
