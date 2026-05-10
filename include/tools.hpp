@@ -448,14 +448,12 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> &ws, const Sk
 
 template <typename T>
 void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef) {
-	for(int i = 0; i < 2; i++) {
-		ws.V0_p = coef * ws.V0_p + (1.0 - coef) * ws_old.V0_p;
-		ws.R12_p = coef * ws.R12_p + (1.0 - coef) * ws_old.R12_p;
-		ws.a_p = coef * ws.a_p + (1.0 - coef) * ws_old.a_p;
-		ws.V0_n = coef * ws.V0_n + (1.0 - coef) * ws_old.V0_n;
-		ws.R12_n = coef * ws.R12_n + (1.0 - coef) * ws_old.R12_n;
-		ws.a_n = coef * ws.a_n + (1.0 - coef) * ws_old.a_n;
-	}
+	ws.V0_p = coef * ws.V0_p + (1.0 - coef) * ws_old.V0_p;
+	ws.V0_n = coef * ws.V0_n + (1.0 - coef) * ws_old.V0_n;
+	ws.R12_p = coef * ws.R12_p + (1.0 - coef) * ws_old.R12_p;
+	ws.R12_n = coef * ws.R12_n + (1.0 - coef) * ws_old.R12_n;
+	ws.a_p = coef * ws.a_p + (1.0 - coef) * ws_old.a_p;
+	ws.a_n = coef * ws.a_n + (1.0 - coef) * ws_old.a_n;
 }
 
 template <typename T>

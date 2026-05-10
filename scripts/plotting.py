@@ -173,7 +173,7 @@ def plot_density_samples(sim_parameters):
     
     def save_density_plot(grid_data, title, output_path):
         plt.figure(figsize=(10, 8))
-        mesh = plt.pcolormesh(X, Y, grid_data, cmap='inferno', shading='auto')
+        mesh = plt.pcolormesh(X, Y, grid_data, cmap='inferno', shading='auto', rasterized=True)
         
         cbar = plt.colorbar(mesh)
         cbar.set_label(r"$\rho$ (fm$^{-3}$)", rotation=270, labelpad=15)
@@ -221,7 +221,7 @@ def plot_density_samples_differences(sim_parameters):
         else:
             rho_min = min_val
             rho_max = -min_val
-        mesh = plt.pcolormesh(X, Y, grid_data, cmap='RdBu_r', shading='auto', vmin=rho_min, vmax=rho_max)
+        mesh = plt.pcolormesh(X, Y, grid_data, cmap='RdBu_r', shading='auto', vmin=rho_min, vmax=rho_max, rasterized=True)
         
         cbar = plt.colorbar(mesh)
         cbar.set_label(r"$\rho$ (fm$^{-3}$)", rotation=270, labelpad=15)
