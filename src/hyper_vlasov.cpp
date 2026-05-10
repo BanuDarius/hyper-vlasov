@@ -33,13 +33,22 @@ template <typename T>
 void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	bool excited_nucleus = false;
 	T dt = param.t_f / param.steps;
+	std::vector<float> samples(2 * param.density_samples);
 	
-	char stats_filename[STRING_SIZE];
-	set_stats_filename(stats_filename, output_directory);
-	FILE *stats = fopen(stats_filename, "w");
-	if(stats == nullptr) {
-		std::fprintf(stderr, "CANNOT OPEN STATS FILE!\n"); exit(1);
+	char stats_filename[STRING_SIZE], density_samples_filename[STRING_SIZE], density_samples_diff_filename[STRING_SIZE];
+	std::sprintf(stats_filename, "%s/%s", output_directory, "stats.txt");
+	std::sprintf(density_samples_filename, "%s/%s", output_directory, "density_samples.bin");
+	std::sprintf(density_samples_diff_filename, "%s/%s", output_directory, "density_samples_diff.bin");
+	
+	FILE *out_stats = fopen(stats_filename, "w");
+	FILE *out_samples = fopen(density_samples_filename, "wb");
+	FILE *out_samples_diff = fopen(density_samples_diff_filename, "wb");
+	if(out_stats == nullptr || out_samples == nullptr || out_samples_diff == nullptr) {
+		std::fprintf(stderr, "CANNOT OPEN STATS FILES!\n"); exit(1);
 	}
+	output_density_samples_positions(out_samples, param, world);
+	output_density_samples_positions(out_samples_diff, param, world);
+	
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	VectorField<T> forces(2 * world_size);
 	ScalarField<T> coulomb(world_size), potentials(2 * world_size), density_temp(2 * world_size), density_before(2 * world_size), density(2 * world_size);
@@ -61,24 +70,30 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 			T x_n = center_of_mass(*part, world, NEUTRONS);
 			T msr_p = mean_squared_radius(*part, world, PROTONS);
 			T msr_n = mean_squared_radius(*part, world, NEUTRONS);
-			std::fprintf(stats, "%e %e %e %e %e\n",
+			std::fprintf(out_stats, "%e %e %e %e %e\n",
 			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p, x_n);
 			
-			char output_filename[STRING_SIZE];
-			set_output_filename(output_filename, output_directory, step / param.substeps);
-			FILE *out = fopen(output_filename, "wb");
-			if(out == nullptr) {
-				std::fprintf(stderr, "CANNOT OPEN OUTPUT FILE!\n"); exit(1);
+			compute_density_samples_cic(samples, density, param, world);
+			output_density_samples(out_samples, samples, param);
+			
+			char volume_filename[STRING_SIZE];
+			std::sprintf(volume_filename, "%s/out-%04d.vtk", output_directory, step / param.substeps);
+			FILE *out_volume = fopen(volume_filename, "wb");
+			if(out_volume == nullptr) {
+				std::fprintf(stderr, "CANNOT OPEN VOLUME FILE!\n"); exit(1);
 			}
-			output_vtk_header_start(out, world);
-			output_vector_field(out, forces, world, "forces");
-			output_scalar_field(out, density, world, "density");
-			output_scalar_field(out, potentials, world, "potentials");
+			output_vtk_header_start(out_volume, world);
+			output_vector_field(out_volume, forces, world, "forces");
+			output_scalar_field(out_volume, density, world, "density");
+			output_scalar_field(out_volume, potentials, world, "potentials");
 			if(excited_nucleus) {
 				sub_scalar_field_double(&density_temp, density, density_before, world);
-				output_scalar_field(out, density_temp, world, "density_difference");
+				output_scalar_field(out_volume, density_temp, world, "density_difference");
+				
+				compute_density_samples_cic(samples, density_temp, param, world);
+				output_density_samples(out_samples_diff, samples, param);
 			}
-			fclose(out);
+			fclose(out_volume);
 		}
 		if(step * dt >= param.t_exc && !excited_nucleus) {
 			excited_nucleus = true;
@@ -104,7 +119,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> *part, const Sk
 		
 		update_momenta_half(part, dt);
 	}
-	fclose(stats);
+	fclose(out_stats);
+	fclose(out_samples);
 	/*ParticleCount<T> part_count;
 	create_particle_count(&part_count, world);
 	scatter_particles(&part_count, part, world);

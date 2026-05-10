@@ -63,6 +63,7 @@ def output_init_file(sim_parameters):
         file.write(f"epsilon_n {sim_parameters.epsilon_n}\n")
         file.write(f"d_max_scale {sim_parameters.d_max_scale}\n")
         file.write(f"num_test_part {sim_parameters.num_test_part}\n")
+        file.write(f"density_samples {sim_parameters.density_samples}\n")
         
 # ---------------------------------------------------------- #
 

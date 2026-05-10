@@ -36,7 +36,7 @@ SOFTWARE. */
 #define MAX_SOR_ITERATIONS 512
 
 #define STRING_SIZE 128
-#define INPUT_FILE_COUNT 21
+#define INPUT_FILE_COUNT 22
 
 #define IDX(i, j, k, nx, ny, nz) (((i) * (ny) * (nz)) + ((j) * (nz)) + (k))
 
@@ -52,7 +52,7 @@ template <typename T>
 struct Parameters {
 	bool use_gpu;
 	T sigma_k, sigma_r, r_max, t_f, t_exc, eta_exc, d_max_scale;
-	int part_per_nucleon, max_test_part, substeps, steps, z, n;
+	int part_per_nucleon, max_test_part, density_samples, substeps, steps, z, n;
 };
 
 template <typename T>

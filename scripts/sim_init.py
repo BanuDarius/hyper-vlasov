@@ -8,7 +8,7 @@ OUTPUT_DIR = PROJECT_ROOT / "output"
 # ---------------------------------------------------------- #
 
 class SimParameters():
-    def __init__(self, num_test_part, z, n, nx, t_f, t_exc, eta_exc, steps, substeps, d_max_scale, V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, use_floats, use_gpu):
+    def __init__(self, num_test_part, z, n, nx, t_f, t_exc, eta_exc, steps, substeps, d_max_scale, density_samples, V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, use_floats, use_gpu):
         self.a = a
         self.A = A
         self.B = B
@@ -32,6 +32,7 @@ class SimParameters():
         self.d_max_scale = d_max_scale
         self.num_test_part = num_test_part
         self.output_directory = OUTPUT_DIR
+        self.density_samples = density_samples
         self.input_file = INPUT_DIR / "input.txt"
         
 # ---------------------------------------------------------- #

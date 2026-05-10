@@ -42,7 +42,7 @@ static inline uint32_t swap_endian(float v) {
 }
 
 template <typename T>
-void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, int steps, int substeps, bool use_gpu, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc) {
+void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc) {
 	param->z = z;
 	param->n = n;
 	param->t_f = t_f;
@@ -54,6 +54,7 @@ void set_parameters(Parameters<T> *param, int z, int n, int part_per_nucleon, in
 	param->eta_exc = eta_exc;
 	param->substeps = substeps;
 	param->r_max = nuclear_radius<T>(z + n);
+	param->density_samples = density_samples;
 	param->part_per_nucleon = part_per_nucleon;
 	param->max_test_part = max_particles(T(param->r_max), k_max<T>, param->part_per_nucleon);
 }
@@ -113,6 +114,23 @@ void output_vtk_header_vector_next(FILE *out, const char *name, int type) {
 	if(type == PROTONS) tag = 'p';
 	else if(type == NEUTRONS) tag = 'n';
 	std::fprintf(out, "VECTORS %s_%c float\n", name, tag);
+}
+
+template <typename T>
+void output_density_samples_positions(FILE *out, const Parameters<T> &param, const World<T> &world) {
+	T d_max_z = world.d_max[2];
+	int samples = param.density_samples;
+	std::vector<float> positions(samples);
+	#pragma omp parallel for
+	for(int i = 0; i < samples; i++)
+		positions[i] = d_max_z * 2.0 * i / samples - d_max_z;
+	
+	fwrite(positions.data(), sizeof(float), samples, out);
+}
+
+template <typename T>
+void output_density_samples(FILE *out, const std::vector<float> &samples, const Parameters<T> &param) {
+	fwrite(samples.data(), sizeof(float), 2 * param.density_samples, out);
 }
 
 template <typename T>
@@ -176,7 +194,7 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 template <typename T>
 void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_levels, Parameters<T> *param, WoodsSaxon<T> *ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f, t_exc, eta_exc, d_max_scale;
-	int i = 0, num_test_part, use_gpu, substeps, steps, nx, z, n;
+	int i = 0, num_test_part, use_gpu, density_samples, substeps, steps, nx, z, n;
 	char current[STRING_SIZE];
 	
 	while(std::fscanf(in, "%s", current) != EOF) {
@@ -212,6 +230,8 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 			i += std::fscanf(in, "%i", &nx);
 		else if(!std::strcmp(current, "num_test_part"))
 			i += std::fscanf(in, "%i", &num_test_part);
+		else if(!std::strcmp(current, "density_samples"))
+			i += std::fscanf(in, "%i", &density_samples);
 		else if(!std::strcmp(current, "steps"))
 			i += std::fscanf(in, "%i", &steps);
 		else if(!std::strcmp(current, "n"))
@@ -232,17 +252,9 @@ void read_input_file(FILE *in, Skyrme<T> *skm, World<T> *world, Fermi<T> *fermi_
 	set_skyrme(skm, T(A), T(B), T(C), T(gamma));
 	set_world(world, T(d_max), nx);
 	set_fermi_levels(fermi_levels, T(epsilon_p), T(epsilon_n));
-	set_parameters(param, z, n, num_test_part, steps, substeps, (bool)use_gpu, T(sigma_k), T(sigma_r), T(t_f), T(t_exc), T(eta_exc));
+	set_parameters(param, z, n, num_test_part, steps, substeps, density_samples, (bool)use_gpu, T(sigma_k), T(sigma_r), T(t_f), T(t_exc), T(eta_exc));
 	set_woods_saxon(&ws[0], T(V0), T(0.8) * T(param->r_max), T(a));
 	set_woods_saxon(&ws[1], T(V0), T(0.8) * T(param->r_max), T(a));
-}
-
-void set_output_filename(char *output_filename, const char *output_directory, int i) {
-	std::sprintf(output_filename, "%s/out-%04d.vtk", output_directory, i);
-}
-
-void set_stats_filename(char *stats_filename, const char *output_directory) {
-	std::sprintf(stats_filename, "%s/stats.txt", output_directory);
 }
 
 /*template <typename T>

@@ -34,7 +34,7 @@ SOFTWARE. */
 #include "physics_formulas.hpp"
 
 template <typename T>
-void distribute_volumetric_particles_cic(ScalarField<T> *density, TestParticles<T> *part, const World<T> &world) {
+void distribute_volumetric_particles_cic(ScalarField<T> *density, const TestParticles<T> *part, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part->protons + part->neutrons;
 	
@@ -121,11 +121,10 @@ void distribute_forces_to_particles_cic(TestParticles<T> *part, const VectorFiel
 		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
 		
 		int offset = (i < part->protons) ? 0 : world_size;
-		T fx = T(0.0), fy = T(0.0), fz = T(0.0);
-		
 		int idx = IDX(x0, y0, z0, nx, ny, nz) + offset;
+		
 		T w = t_x * t_y * t_z;
-		fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
+		T fx = w * forces.x[idx], fy = w * forces.y[idx], fz = w * forces.z[idx];
 		
 		if(x1 < nx) {
 			idx = IDX(x1, y0, z0, nx, ny, nz) + offset;
@@ -212,15 +211,13 @@ T compute_energy(TestParticles<T> *part, const WoodsSaxon<T> *ws, T sigma_k, int
 	T r = magnitude(r_vec);
 	T k = magnitude(k_vec);
 	
-	T energy = T(0.0);
 	WoodsSaxon<T> ws_c = (i < part->protons) ? ws[0] : ws[1];
-	energy += woods_saxon_potential(ws_c, r);
+	T energy = woods_saxon_potential(ws_c, r);
 	energy += (k * k) * kinetic_energy<T>();
+	energy += fluctuation_energy(sigma_k);
 	
 	if(i < part->protons)
 		energy += coulomb_potential<T>(ws_c, z, r);
-	
-	energy += fluctuation_energy(sigma_k);
 	return energy;
 }
 
@@ -301,6 +298,74 @@ void compute_coulomb_boundaries(ScalarField<T> *coulomb, const TestParticles<T> 
 				}
 			}
 		}
+	}
+}
+
+template <typename T>
+void compute_density_samples_cic(std::vector<float> &density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world) {
+	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
+	
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * param.density_samples; i++) {
+		int i_new = (i < param.density_samples) ? i : i - param.density_samples;
+		T z = d_max_z * 2.0 * i_new / param.density_samples - d_max_z;
+		std::array<T, 3> r_vec = { T(0.0), T(0.0), z };
+		
+		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
+		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
+		T cz = (nz / T(2.0)) * (r_vec[2] / d_max_z + T(1.0));
+		
+		if(cx < T(0.0) || cy < T(0.0) || cz < T(0.0) || cx >= nx || cy >= ny || cz >= nz)
+			continue;
+		
+		int x0 = (int)cx, y0 = (int)cy, z0 = (int)cz;
+		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
+		T d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
+		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
+		
+		int offset = (i < param.density_samples) ? 0 : world_size;
+		
+		int idx = IDX(x0, y0, z0, nx, ny, nz) + offset;
+		T w = t_x * t_y * t_z;
+		T rho = w * density.v[idx];
+		
+		if(x1 < nx) {
+			idx = IDX(x1, y0, z0, nx, ny, nz) + offset;
+			w = d_x * t_y * t_z;
+			rho += w * density.v[idx];
+		}
+		if(y1 < ny) {
+			idx = IDX(x0, y1, z0, nx, ny, nz) + offset;
+			w = t_x * d_y * t_z;
+			rho += w * density.v[idx];
+		}
+		if(x1 < nx && y1 < ny) {
+			idx = IDX(x1, y1, z0, nx, ny, nz) + offset;
+			w = d_x * d_y * t_z;
+			rho += w * density.v[idx];
+		}
+		if(z1 < nz) {
+			idx = IDX(x0, y0, z1, nx, ny, nz) + offset;
+			w = t_x * t_y * d_z;
+			rho += w * density.v[idx];
+		}
+		if(x1 < nx && z1 < nz) {
+			idx = IDX(x1, y0, z1, nx, ny, nz) + offset;
+			w = d_x * t_y * d_z;
+			rho += w * density.v[idx];
+		}
+		if(y1 < ny && z1 < nz) {
+			idx = IDX(x0, y1, z1, nx, ny, nz) + offset;
+			w = t_x * d_y * d_z;
+			rho += w * density.v[idx];
+		}
+		if(x1 < nx && y1 < ny && z1 < nz) {
+			idx = IDX(x1, y1, z1, nx, ny, nz) + offset;
+			w = d_x * d_y * d_z;
+			rho += w * density.v[idx];
+		}
+		density_samples[i] = static_cast<float>(rho);
 	}
 }
 

@@ -147,8 +147,94 @@ def plot_dipole(sim_parameters):
     ax.axhline(0, color='black', linestyle='--', linewidth=1.0, alpha=0.5)
     
     plt.savefig(output_image, dpi=200, bbox_inches='tight')
-    
     plt.close(fig)
     print(f"Created dipole graph.")
     
+# ---------------------------------------------------------- #
+
+def plot_density_samples(sim_parameters):
+    samples = int(sim_parameters.density_samples)
+    t_f = sim_parameters.t_f
+    
+    input_file = OUTPUT_DIR / f"density_samples.bin"
+    output_image_p = IMAGE_DIR / f"density_samples_p.png"
+    output_image_n = IMAGE_DIR / f"density_samples_n.png"
+    
+    data = np.fromfile(input_file, dtype=np.float32)
+    
+    x_coords = data[:samples]
+    density_data = data[samples:].reshape((-1, 2, samples))
+    
+    proton_grid = density_data[:, 0, :]
+    neutron_grid = density_data[:, 1, :]
+    
+    y_coords = np.linspace(0, t_f, density_data.shape[0])
+    X, Y = np.meshgrid(x_coords, y_coords)
+    
+    def save_density_plot(grid_data, title, output_path):
+        plt.figure(figsize=(10, 8))
+        mesh = plt.pcolormesh(X, Y, grid_data, cmap='inferno', shading='auto')
+        
+        cbar = plt.colorbar(mesh)
+        cbar.set_label(r"$\rho$ (fm$^{-3}$)", rotation=270, labelpad=15)
+        
+        plt.xlabel("r (fm)")
+        plt.ylabel("t (fm/c)")
+        plt.title(title)
+        
+        plt.savefig(output_path, dpi=200, bbox_inches='tight')
+        plt.close()
+    
+    save_density_plot(proton_grid, "Proton density", output_image_p)
+    save_density_plot(neutron_grid, "Neutron density", output_image_n)
+    print(f"Created density sample graph.")
+    
+# ---------------------------------------------------------- #
+
+def plot_density_samples_differences(sim_parameters):
+    samples = int(sim_parameters.density_samples)
+    t_f = sim_parameters.t_f
+    t_exc = sim_parameters.t_exc
+    
+    input_file = OUTPUT_DIR / f"density_samples_diff.bin"
+    output_image_p = IMAGE_DIR / f"density_samples_diff_p.png"
+    output_image_n = IMAGE_DIR / f"density_samples_diff_n.png"
+    
+    data = np.fromfile(input_file, dtype=np.float32)
+    
+    x_coords = data[:samples]
+    density_data = data[samples:].reshape((-1, 2, samples))
+    
+    proton_grid = density_data[:, 0, :]
+    neutron_grid = density_data[:, 1, :]
+    
+    y_coords = np.linspace(t_exc, t_f, density_data.shape[0])
+    X, Y = np.meshgrid(x_coords, y_coords)
+    
+    def save_density_plot(grid_data, title, output_path):
+        plt.figure(figsize=(10, 8))
+        min_val = np.min(grid_data)
+        max_val = np.max(grid_data)
+        if(abs(max_val) > abs(min_val)):
+            rho_min = -max_val
+            rho_max = max_val
+        else:
+            rho_min = min_val
+            rho_max = -min_val
+        mesh = plt.pcolormesh(X, Y, grid_data, cmap='RdBu_r', shading='auto', vmin=rho_min, vmax=rho_max)
+        
+        cbar = plt.colorbar(mesh)
+        cbar.set_label(r"$\rho$ (fm$^{-3}$)", rotation=270, labelpad=15)
+        
+        plt.xlabel("r (fm)")
+        plt.ylabel("t (fm/c)")
+        plt.title(title)
+        
+        plt.savefig(output_path, dpi=200, bbox_inches='tight')
+        plt.close()
+    
+    save_density_plot(proton_grid, "Proton density differences", output_image_p)
+    save_density_plot(neutron_grid, "Neutron density differences", output_image_n)
+    print(f"Created density sample difference graph.")
+
 # ---------------------------------------------------------- #
