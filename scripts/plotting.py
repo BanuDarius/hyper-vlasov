@@ -176,7 +176,7 @@ def plot_density_samples(sim_parameters):
         mesh = plt.pcolormesh(X, Y, grid_data, cmap='inferno', shading='auto', rasterized=True)
         
         cbar = plt.colorbar(mesh)
-        cbar.set_label(r"$\rho$ (fm$^{-3}$)", rotation=270, labelpad=15)
+        cbar.set_label(r"$\rho (fm^{-3}$)", rotation=270, labelpad=15)
         
         plt.xlabel("r (fm)")
         plt.ylabel("t (fm/c)")
@@ -224,7 +224,7 @@ def plot_density_samples_differences(sim_parameters):
         mesh = plt.pcolormesh(X, Y, grid_data, cmap='RdBu_r', shading='auto', vmin=rho_min, vmax=rho_max, rasterized=True)
         
         cbar = plt.colorbar(mesh)
-        cbar.set_label(r"$\rho$ (fm$^{-3}$)", rotation=270, labelpad=15)
+        cbar.set_label(r"$\delta\rho (fm^{-3}$)", rotation=270, labelpad=15)
         
         plt.xlabel("r (fm)")
         plt.ylabel("t (fm/c)")
