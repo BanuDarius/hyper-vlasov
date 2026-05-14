@@ -282,7 +282,7 @@ void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws
 template <typename T>
 void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> &part, const World<T> &world, int z) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
-	T cm_protons = center_of_mass(part, world, PROTONS);
+	std::array<T, 3> cm_protons = center_of_mass(part, world, PROTONS);
 	#pragma omp parallel for collapse(3)
 	for(int i = 0; i < nx; i++) {
 		for(int j = 0; j < ny; j++) {
@@ -292,7 +292,7 @@ void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> 
 					std::array<T, 3> r_vec;
 					world_pos_to_vector(r_vec, world, idx);
 					
-					r_vec[2] -= cm_protons;
+					r_vec = r_vec - cm_protons;
 					T r = magnitude(r_vec);
 					coulomb.v[idx] = T(1.44) * z / r;
 				}
@@ -309,8 +309,9 @@ void compute_density_samples_cic(std::vector<float> &density_samples, const Scal
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * param.density_samples; i++) {
 		int i_new = (i < param.density_samples) ? i : i - param.density_samples;
-		T z = d_max_z * 2.0 * i_new / param.density_samples - d_max_z;
-		std::array<T, 3> r_vec = { T(0.0), T(0.0), z };
+		T z = 2.0 * d_max_z * i_new / param.density_samples - d_max_z;
+		T y = d_max_y * param.sample_position;
+		std::array<T, 3> r_vec = { T(0.0), y, z };
 		
 		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
@@ -397,14 +398,14 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 }
 
 template <typename T>
-T center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) {
+std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) {
 	int start, end, part_num = 0;
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	if(type == PROTONS) { start = 0; end = part.protons; }
 	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
 	
-	T center = T(0.0);
-	#pragma omp parallel for reduction(+:center, part_num)
+	T center_x = T(0.0), center_y = T(0.0), center_z = T(0.0);
+	#pragma omp parallel for reduction(+:center_x, center_y, center_z, part_num)
 	for(int i = start; i < end; i++) {
 		std::array<T, 3> r_vec;
 		copy_particle_pos_to_vector(r_vec, part, i);
@@ -414,10 +415,13 @@ T center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) 
 		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
 			continue;
 		
-		center += r_vec[2];
+		center_x += r_vec[0];
+		center_y += r_vec[1];
+		center_z += r_vec[2];
 		part_num++;
 	}
-	return center / (T)part_num;
+	center_x /= (T)part_num; center_y /= (T)part_num, center_z /= (T)part_num;
+	return std::array<T, 3> { center_x, center_y, center_z };
 }
 
 template <typename T>

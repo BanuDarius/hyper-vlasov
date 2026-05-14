@@ -238,3 +238,48 @@ def plot_density_samples_differences(sim_parameters):
     print(f"Created density sample difference graph.")
 
 # ---------------------------------------------------------- #
+
+def plot_density_samples_differences_lines(sim_parameters):
+    samples = int(sim_parameters.density_samples)
+    t_f = sim_parameters.t_f
+    t_exc = sim_parameters.t_exc
+    
+    input_file = OUTPUT_DIR / "density_samples_diff.bin"
+    
+    data = np.fromfile(input_file, dtype=np.float32)
+    x_coords = data[:samples]
+    density_data = data[samples:].reshape((-1, 2, samples))
+    
+    proton_grid = density_data[:, 0, :]
+    neutron_grid = density_data[:, 1, :]
+    
+    time_steps = density_data.shape[0]
+    y_coords = np.linspace(t_exc, t_f, time_steps)
+    
+    max_val_p = np.max(np.abs(proton_grid))
+    max_val_n = np.max(np.abs(neutron_grid))
+    global_max = max(max_val_p, max_val_n)
+    y_limit = global_max * 1.05
+    
+    fig, ax = plt.subplots(figsize=(10, 8))
+    line_p, = ax.plot(x_coords, proton_grid[0, :], color='blue', linewidth=2, label='Proton')
+    line_n, = ax.plot(x_coords, neutron_grid[0, :], color='red', linewidth=2, label='Neutron')
+    
+    ax.set_ylim(-y_limit, y_limit)
+    ax.set_xlim(x_coords[0], x_coords[-1])
+    ax.set_xlabel(r"$r$ (fm)")
+    ax.set_ylabel(r"$\delta\rho$ (fm$^{-3}$)")
+    ax.legend(loc='upper right', framealpha=0.9)
+    
+    for i in range(time_steps):
+        current_t = y_coords[i]
+        line_p.set_ydata(proton_grid[i, :])
+        line_n.set_ydata(neutron_grid[i, :])
+        ax.set_title(f"Density Differences $t = {current_t:.2f}$ fm/c")
+        
+        output_image = IMAGE_DIR / f"density_samples_diff_combined_{i:04d}.png"
+        fig.savefig(output_image, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+    print(f"Created density sample difference line graphs.")
+
+# ---------------------------------------------------------- #

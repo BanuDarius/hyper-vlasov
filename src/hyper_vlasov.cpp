@@ -66,12 +66,12 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
 			std::printf("Processed step: %i/%i.\n", step, param.steps);
-			T x_p = center_of_mass(part, world, PROTONS);
-			T x_n = center_of_mass(part, world, NEUTRONS);
+			std::array<T, 3> x_p = center_of_mass(part, world, PROTONS);
+			std::array<T, 3> x_n = center_of_mass(part, world, NEUTRONS);
 			T msr_p = mean_squared_radius(part, world, PROTONS);
 			T msr_n = mean_squared_radius(part, world, NEUTRONS);
 			std::fprintf(out_stats, "%e %e %e %e %e\n",
-			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p, x_n);
+			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p[2], x_n[2]);
 			
 			compute_density_samples_cic(samples, density, param, world);
 			output_density_samples(out_samples, samples, param);
