@@ -37,11 +37,11 @@ n = 82
 nx = 16
 t_f = 800.0
 t_exc = 200.0
-eta_exc = 0.05
+eta_exc = 0.10
 steps = 800
 substeps = 4
 d_max_scale = 1.3
-density_samples = 256
+density_samples = 128
 sample_position = 0.0
 
 V0 = -50.0
@@ -71,7 +71,7 @@ if __name__ == "__main__":
     plotting.plot_energy_spectrum(sim_parameters)
     plotting.plot_density_samples(sim_parameters)
     plotting.plot_density_samples_differences(sim_parameters)
-    plotting.plot_density_samples_differences_lines(sim_parameters)
+    #plotting.plot_density_samples_differences_lines(sim_parameters)
     
     print("Hyper-Vlasov finished!\a")
 

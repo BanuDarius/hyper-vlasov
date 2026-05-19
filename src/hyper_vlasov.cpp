@@ -27,6 +27,7 @@ SOFTWARE. */
 #include "sim_structs.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
+#include "particle_in_cell.hpp"
 #include "init.hpp"
 #include "tools.hpp"
 #include "physics.hpp"
@@ -52,7 +53,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	output_density_samples_positions(out_samples_diff, param, world);
 	
 	int world_size = world.n[0] * world.n[1] * world.n[2];
-	VectorField<T> forces(2 * world_size);
+	VectorField<T> forces(2 * world_size), current_velocity(2 * world_size);
 	ScalarField<T> coulomb(world_size), potentials(2 * world_size), density_temp(2 * world_size), density_before(2 * world_size), density(2 * world_size);
 	
 	distribute_volumetric_particles_cic(density, part, world);
@@ -66,6 +67,21 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	
 	distribute_forces_to_particles_cic(part, forces, world);
 	for(int step = 0; step < param.steps; step++) {
+		update_momenta_half(part, dt);
+		update_positions_full(part, dt);
+		
+		distribute_volumetric_particles_cic(density, part, world);
+		compute_volumetric_densities(density, density_temp, param, world);
+		
+		compute_coulomb_boundaries(coulomb, part, world, param.z);
+		compute_volumetric_skyrme_potentials(potentials, density, skm, world);
+		compute_volumetric_coulomb_potentials_sor(coulomb, density, world);
+		add_scalar_field_single(potentials, potentials, coulomb, world);
+		compute_volumetric_forces_fdm(forces, potentials, world);
+		
+		distribute_forces_to_particles_cic(part, forces, world);
+		
+		update_momenta_half(part, dt);
 		if(step % param.substeps == 0) {
 			std::printf("Processed step: %i/%i.\n", step, param.steps);
 			std::array<T, 3> x_p = center_of_mass(part, world, is_proton);
@@ -74,6 +90,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			T msr_n = mean_squared_radius(part, world, is_neutron);
 			std::fprintf(out_stats, "%e %e %e %e %e\n",
 			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p[2], x_n[2]);
+			
+			//distribute_volumetric_momenta_cic(current_velocity, part, world);
 			
 			compute_density_samples_cic(samples, density, param, world);
 			output_density_samples(out_samples, samples, param);
@@ -104,22 +122,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 		}
 		if(step % reset_steps == 0)
 			center_momentum(part, world);
-		
-		update_momenta_half(part, dt);
-		update_positions_full(part, dt);
-		
-		distribute_volumetric_particles_cic(density, part, world);
-		compute_volumetric_densities(density, density_temp, param, world);
-		
-		compute_coulomb_boundaries(coulomb, part, world, param.z);
-		compute_volumetric_skyrme_potentials(potentials, density, skm, world);
-		compute_volumetric_coulomb_potentials_sor(coulomb, density, world);
-		add_scalar_field_single(potentials, potentials, coulomb, world);
-		compute_volumetric_forces_fdm(forces, potentials, world);
-		
-		distribute_forces_to_particles_cic(part, forces, world);
-		
-		update_momenta_half(part, dt);
 	}
 	fclose(out_stats);
 	fclose(out_samples);
