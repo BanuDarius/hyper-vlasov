@@ -25,7 +25,6 @@ SOFTWARE. */
 
 #include <array>
 #include <vector>
-#include <numbers>
 
 constexpr int is_proton = 0;
 constexpr int is_neutron = 1;
@@ -48,7 +47,7 @@ template <typename T> constexpr T k_max = T(1.5);
 template <typename T> constexpr T rho_0 = T(0.16);
 template <typename T> constexpr T h_bar_c = T(197.33);
 template <typename T> constexpr T sor_tolerance = T(1e-4);
-template <typename T> constexpr T pi = std::numbers::pi_v<T>;
+template <typename T> constexpr T pi = T(3.14159265358979323846);
 template <typename T> constexpr T delta_epsilon_tolerance = T(0.1);
 
 template <typename T>

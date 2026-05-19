@@ -1,6 +1,6 @@
 CC = g++
 OPT_FLAG = -O3
-CFLAGS = -std=c++20 -Iinclude -fopenmp -flto $(OPT_FLAG) -march=native -MMD -MP -g -Wall -Wextra -Wshadow
+CFLAGS = -Iinclude -fopenmp -flto $(OPT_FLAG) -march=native -MMD -MP -g -Wall -Wextra -Wshadow
 LDLIBS = -lm -lgsl -lgslcblas
 
 SRC_DIR = src
