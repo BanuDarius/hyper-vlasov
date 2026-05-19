@@ -106,8 +106,8 @@ void output_vtk_header_start(FILE *out, World<T> world) {
 
 void output_vtk_header_scalar_next(FILE *out, const char *name, int type) {
 	char tag;
-	if(type == PROTONS) tag = 'p';
-	else if(type == NEUTRONS) tag = 'n';
+	if(type == is_proton) tag = 'p';
+	else if(type == is_neutron) tag = 'n';
 	else tag = 't';
 	std::fprintf(out, "SCALARS %s_%c float 1\n", name, tag);
 	std::fprintf(out, "LOOKUP_TABLE default\n");
@@ -115,8 +115,8 @@ void output_vtk_header_scalar_next(FILE *out, const char *name, int type) {
 
 void output_vtk_header_vector_next(FILE *out, const char *name, int type) {
 	char tag;
-	if(type == PROTONS) tag = 'p';
-	else if(type == NEUTRONS) tag = 'n';
+	if(type == is_proton) tag = 'p';
+	else if(type == is_neutron) tag = 'n';
 	std::fprintf(out, "VECTORS %s_%c float\n", name, tag);
 }
 
@@ -147,7 +147,7 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 	for(size_t k = 0; k < nz; k++) {
 		for(size_t j = 0; j < ny; j++) {
 			for(size_t i = 0; i < nx; i++) {
-				int idx = IDX(i, j, k, nx, ny, nz);
+				int idx = grid_idx(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
 				vtk_density_p[write_idx] = swap_endian(static_cast<float>(field.v[idx]));
@@ -156,13 +156,13 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 			}
 		}
 	}
-	output_vtk_header_scalar_next(out, name, PROTONS);
+	output_vtk_header_scalar_next(out, name, is_proton);
 	fwrite(vtk_density_p.data(), sizeof(uint32_t), world_size, out);
 	
-	output_vtk_header_scalar_next(out, name, NEUTRONS);
+	output_vtk_header_scalar_next(out, name, is_neutron);
 	fwrite(vtk_density_n.data(), sizeof(uint32_t), world_size, out);
 	
-	output_vtk_header_scalar_next(out, name, PROTONS_AND_NEUTRONS);
+	output_vtk_header_scalar_next(out, name, is_proton_or_neutron);
 	fwrite(vtk_density_t.data(), sizeof(uint32_t), world_size, out);
 }
 
@@ -175,7 +175,7 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 	for(size_t k = 0; k < nz; k++) {
 		for(size_t j = 0; j < ny; j++) {
 			for(size_t i = 0; i < nx; i++) {
-				int idx = IDX(i, j, k, nx, ny, nz);
+				int idx = grid_idx(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
 				vtk_force_p[3 * write_idx] = swap_endian(static_cast<float>(field.x[idx]));
@@ -188,10 +188,10 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 			}
 		}
 	}
-	output_vtk_header_vector_next(out, name, PROTONS);
+	output_vtk_header_vector_next(out, name, is_proton);
 	fwrite(vtk_force_p.data(), sizeof(uint32_t), 3 * world_size, out);
 	
-	output_vtk_header_vector_next(out, name, NEUTRONS);
+	output_vtk_header_vector_next(out, name, is_neutron);
 	fwrite(vtk_force_n.data(), sizeof(uint32_t), 3 * world_size, out);
 }
 
@@ -199,7 +199,7 @@ template <typename T>
 void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_levels, Parameters<T> &param, WoodsSaxon<T> &ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f, t_exc, eta_exc, d_max_scale, sample_position;
 	int i = 0, num_test_part, use_gpu, density_samples, substeps, steps, nx, z, n;
-	char current[STRING_SIZE];
+	char current[string_size];
 	
 	while(std::fscanf(in, "%s", current) != EOF) {
 		if(!std::strcmp(current, "V0"))
@@ -249,7 +249,7 @@ void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_
 		else if(!std::strcmp(current, "use_gpu"))
 			i += std::fscanf(in, "%i", &use_gpu);
 	}
-	if(i != INPUT_FILE_COUNT) {
+	if(i != input_file_count) {
 		std::fprintf(stderr, "Error: Invalid input file.\n"); exit(1);
 	}
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
@@ -306,8 +306,8 @@ void create_particle_count(ParticleCount<T> *part_count, World<T> world) {
 
 void output_centroids(FILE *out, TestParticles<T> part, int type) {
 	int start, end;
-	if(type == PROTONS) { start = 0; end = part.protons; }
-	else if(type == NEUTRONS) { start = 0; end = part.protons + part.neutrons; }
+	if(type == is_proton) { start = 0; end = part.protons; }
+	else if(type == is_neutron) { start = 0; end = part.protons + part.neutrons; }
 	else { start = 0; end = part.protons + part.neutrons; }
 	
 	for(int i = start; i < end; i++) {

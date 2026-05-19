@@ -121,43 +121,43 @@ void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorFiel
 		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
 		
 		int offset = (i < part.protons) ? 0 : world_size;
-		int idx = IDX(x0, y0, z0, nx, ny, nz) + offset;
+		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
 		
 		T w = t_x * t_y * t_z;
 		T fx = w * forces.x[idx], fy = w * forces.y[idx], fz = w * forces.z[idx];
 		
 		if(x1 < nx) {
-			idx = IDX(x1, y0, z0, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y0, z0, nx, ny, nz) + offset;
 			w = d_x * t_y * t_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
 		if(y1 < ny) {
-			idx = IDX(x0, y1, z0, nx, ny, nz) + offset;
+			idx = grid_idx(x0, y1, z0, nx, ny, nz) + offset;
 			w = t_x * d_y * t_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
 		if(x1 < nx && y1 < ny) {
-			idx = IDX(x1, y1, z0, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y1, z0, nx, ny, nz) + offset;
 			w = d_x * d_y * t_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
 		if(z1 < nz) {
-			idx = IDX(x0, y0, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x0, y0, z1, nx, ny, nz) + offset;
 			w = t_x * t_y * d_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
 		if(x1 < nx && z1 < nz) {
-			idx = IDX(x1, y0, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y0, z1, nx, ny, nz) + offset;
 			w = d_x * t_y * d_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
 		if(y1 < ny && z1 < nz) {
-			idx = IDX(x0, y1, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x0, y1, z1, nx, ny, nz) + offset;
 			w = t_x * d_y * d_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
 		if(x1 < nx && y1 < ny && z1 < nz) {
-			idx = IDX(x1, y1, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y1, z1, nx, ny, nz) + offset;
 			w = d_x * d_y * d_z;
 			fx += w * forces.x[idx]; fy += w * forces.y[idx]; fz += w * forces.z[idx];
 		}
@@ -211,7 +211,7 @@ T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int
 	T r = magnitude(r_vec);
 	T k = magnitude(k_vec);
 	
-	int type = (i < part.protons) ? PROTONS : NEUTRONS;
+	int type = (i < part.protons) ? is_proton : is_neutron;
 	T energy = woods_saxon_potential(ws, r, type);
 	energy += (k * k) * kinetic_energy<T>();
 	energy += fluctuation_energy(sigma_k);
@@ -282,13 +282,13 @@ void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws
 template <typename T>
 void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> &part, const World<T> &world, int z) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
-	std::array<T, 3> cm_protons = center_of_mass(part, world, PROTONS);
+	std::array<T, 3> cm_protons = center_of_mass(part, world, is_proton);
 	#pragma omp parallel for collapse(3)
 	for(int i = 0; i < nx; i++) {
 		for(int j = 0; j < ny; j++) {
 			for(int k = 0; k < nz; k++) {
 				if(i == 0 || j == 0 || k == 0 || i == nx - 1 || j == ny - 1 || k == nz - 1) {
-					int idx = IDX(i, j, k, nx, ny, nz);
+					int idx = grid_idx(i, j, k, nx, ny, nz);
 					std::array<T, 3> r_vec;
 					world_pos_to_vector(r_vec, world, idx);
 					
@@ -329,42 +329,42 @@ void compute_density_samples_cic(std::vector<float> &density_samples, const Scal
 		
 		int offset = (i < param.density_samples) ? 0 : world_size;
 		
-		int idx = IDX(x0, y0, z0, nx, ny, nz) + offset;
+		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
 		T w = t_x * t_y * t_z;
 		T rho = w * density.v[idx];
 		
 		if(x1 < nx) {
-			idx = IDX(x1, y0, z0, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y0, z0, nx, ny, nz) + offset;
 			w = d_x * t_y * t_z;
 			rho += w * density.v[idx];
 		}
 		if(y1 < ny) {
-			idx = IDX(x0, y1, z0, nx, ny, nz) + offset;
+			idx = grid_idx(x0, y1, z0, nx, ny, nz) + offset;
 			w = t_x * d_y * t_z;
 			rho += w * density.v[idx];
 		}
 		if(x1 < nx && y1 < ny) {
-			idx = IDX(x1, y1, z0, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y1, z0, nx, ny, nz) + offset;
 			w = d_x * d_y * t_z;
 			rho += w * density.v[idx];
 		}
 		if(z1 < nz) {
-			idx = IDX(x0, y0, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x0, y0, z1, nx, ny, nz) + offset;
 			w = t_x * t_y * d_z;
 			rho += w * density.v[idx];
 		}
 		if(x1 < nx && z1 < nz) {
-			idx = IDX(x1, y0, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y0, z1, nx, ny, nz) + offset;
 			w = d_x * t_y * d_z;
 			rho += w * density.v[idx];
 		}
 		if(y1 < ny && z1 < nz) {
-			idx = IDX(x0, y1, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x0, y1, z1, nx, ny, nz) + offset;
 			w = t_x * d_y * d_z;
 			rho += w * density.v[idx];
 		}
 		if(x1 < nx && y1 < ny && z1 < nz) {
-			idx = IDX(x1, y1, z1, nx, ny, nz) + offset;
+			idx = grid_idx(x1, y1, z1, nx, ny, nz) + offset;
 			w = d_x * d_y * d_z;
 			rho += w * density.v[idx];
 		}
@@ -376,8 +376,8 @@ template <typename T>
 T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type) {
 	int start, end, part_num = 0;
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	if(type == PROTONS) { start = 0; end = part.protons; }
-	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
+	if(type == is_proton) { start = 0; end = part.protons; }
+	else if(type == is_neutron) { start = part.protons; end = part.protons + part.neutrons; }
 	
 	T r_sqr = T(0.0);
 	#pragma omp parallel for reduction(+:r_sqr, part_num)
@@ -401,8 +401,8 @@ template <typename T>
 std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) {
 	int start, end, part_num = 0;
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	if(type == PROTONS) { start = 0; end = part.protons; }
-	else if(type == NEUTRONS) { start = part.protons; end = part.protons + part.neutrons; }
+	if(type == is_proton) { start = 0; end = part.protons; }
+	else if(type == is_neutron) { start = part.protons; end = part.protons + part.neutrons; }
 	
 	T center_x = T(0.0), center_y = T(0.0), center_z = T(0.0);
 	#pragma omp parallel for reduction(+:center_x, center_y, center_z, part_num)
@@ -430,7 +430,7 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> &ws, const Sk
 	T chi_squared_p = 0.0, chi_squared_n = 0.0;
 	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
 	for(int i = 0; i < total; i++) {
-		int type = (i < part.protons) ? PROTONS : NEUTRONS;
+		int type = (i < part.protons) ? is_proton : is_neutron;
 		std::array<T, 3> r_vec;
 		copy_particle_pos_to_vector(r_vec, part, i);
 		T r = magnitude(r_vec);
@@ -441,7 +441,7 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> &ws, const Sk
 		T v_ws = woods_saxon_potential(ws, r, type);
 		T v_skyrme = skyrme_potential(skm, density_p, density_n, type);
 		T diff = v_ws - v_skyrme;
-		if(type == PROTONS)
+		if(type == is_proton)
 			chi_squared_p += diff * diff;
 		else
 			chi_squared_n += diff * diff;
@@ -526,8 +526,8 @@ static inline void copy_vector_to_particle_vel(TestParticles<T> &part, const std
 	int world_size_visual = world_visual.n[0] * world_visual.n[1] * world_visual.n[2], start, end;
 	int world_size_data = world_data.n[0] * world_data.n[1] * world_data.n[2];
 	
-	if(type == PROTONS) { start = 0; end = world_size_data; }
-	else if(type == NEUTRONS) { start = world_size_data; end = 2 * world_size_data; }
+	if(type == is_proton) { start = 0; end = world_size_data; }
+	else if(type == is_neutron) { start = world_size_data; end = 2 * world_size_data; }
 	else { start = 0; end = 2 * world_size_data; }
 	
 	double sigma_r = param.sigma_r, exp_term = 1.0 / (2.0 * sigma_r * sigma_r);

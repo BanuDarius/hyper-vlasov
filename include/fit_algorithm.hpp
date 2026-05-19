@@ -100,7 +100,7 @@ void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T
 	
 	for(int type = 0; type <= 1; type++) {
 		FittingData<T> fit;
-		int part_type = (type == 0) ? PROTONS : NEUTRONS;
+		int part_type = (type == 0) ? is_proton : is_neutron;
 		int start = (type == 0) ? 0 : part.protons;
 		int total = (type == 0) ? part.protons : part.neutrons;
 		
@@ -116,7 +116,7 @@ void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T
 		gsl_multifit_nlinear_workspace *magic_workspace = gsl_multifit_nlinear_alloc(T_MAGIC, &fdf_params, total, 3);
 		
 		gsl_vector *x = gsl_vector_alloc(3);
-		if(part_type == PROTONS) {
+		if(part_type == is_proton) {
 			gsl_vector_set(x, 0, ws.V0_p);
 			gsl_vector_set(x, 1, ws.R12_p);
 			gsl_vector_set(x, 2, ws.a_p);
@@ -135,7 +135,7 @@ void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T
 			std::fprintf(stderr, "GSL Error %s\n", gsl_strerror(status));
 		
 		gsl_vector *fit_params = gsl_multifit_nlinear_position(magic_workspace);
-		if(part_type == PROTONS) {
+		if(part_type == is_proton) {
 			ws.V0_p = gsl_vector_get(fit_params, 0);
 			ws.R12_p = gsl_vector_get(fit_params, 1);
 			ws.a_p = gsl_vector_get(fit_params, 2);

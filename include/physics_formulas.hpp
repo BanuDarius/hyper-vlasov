@@ -63,7 +63,7 @@ T calc_sigma(T fwhm) {
 
 template <typename T>
 static inline T woods_saxon_potential(const WoodsSaxon<T> &ws, T r, int type) {
-	if(type == PROTONS)
+	if(type == is_proton)
 		return ws.V0_p / (T(1.0) + std::exp((r - ws.R12_p) / ws.a_p));
 	else
 		return ws.V0_n / (T(1.0) + std::exp((r - ws.R12_n) / ws.a_n));
@@ -71,7 +71,7 @@ static inline T woods_saxon_potential(const WoodsSaxon<T> &ws, T r, int type) {
 
 template <typename T>
 static inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int type) {
-	T tau = (type == PROTONS) ? T(-1.0) : T(+1.0);
+	T tau = (type == is_proton) ? T(-1.0) : T(+1.0);
 	T rho = rho_p + rho_n;
 	T t = rho / rho_0<T>;
 	return skm.A * t + skm.B * std::pow(t, skm.gamma) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / rho_0<T>);

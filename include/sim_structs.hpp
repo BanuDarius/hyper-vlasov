@@ -27,18 +27,21 @@ SOFTWARE. */
 #include <vector>
 #include <numbers>
 
-#define PROTONS 0
-#define NEUTRONS 1
-#define PROTONS_AND_NEUTRONS 2
+constexpr int is_proton = 0;
+constexpr int is_neutron = 1;
+constexpr int is_proton_or_neutron = 2;
 
-#define RESET_STEPS 10
-#define MAX_INIT_ITERATIONS 32
-#define MAX_SOR_ITERATIONS 512
+constexpr int reset_steps = 10;
+constexpr int max_init_iterations = 32;
+constexpr int max_sor_iterations = 512;
 
-#define STRING_SIZE 128
-#define INPUT_FILE_COUNT 23
+constexpr int string_size = 128;
+constexpr int input_file_count = 23;
 
-#define IDX(i, j, k, nx, ny, nz) (((i) * (ny) * (nz)) + ((j) * (nz)) + (k))
+constexpr size_t grid_idx(int i, int j, int k, int nx, int ny, int nz) {
+	(void)nx;
+	return (i * ny * nz) + (j * nz) + k;
+}
 
 template <typename T> constexpr T mc2 = T(935.0);
 template <typename T> constexpr T k_max = T(1.5);

@@ -87,8 +87,8 @@ void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrm
 		std::printf("DELTA EPSILON %0.2lf\nITERATION %i\n", total_delta_epsilon, it + 1);
 		
 		it++;
-	} while(total_delta_epsilon > delta_epsilon_tolerance<T> && it < MAX_INIT_ITERATIONS);
-	if(it == MAX_INIT_ITERATIONS)
+	} while(total_delta_epsilon > delta_epsilon_tolerance<T> && it < max_init_iterations);
+	if(it == max_init_iterations)
 		fprintf(stderr, "INITIALIZATION DID NOT CONVERGE!\n");
 	compute_particle_energies(part, ws, param);
 }
@@ -98,19 +98,19 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
 	T inv_dx2 = T(1.0) / (T(2.0) / (dx * dx) + T(2.0) / (dy * dy) + T(2.0) / (dz * dz)), omega = T(1.50), max_diff;
-	for(int it = 0; it < MAX_SOR_ITERATIONS; it++) {
+	for(int it = 0; it < max_sor_iterations; it++) {
 		max_diff = T(0.0);
 		#pragma omp parallel for collapse(3) reduction(max:max_diff)
 		for(int i = 1; i < nx - 1; i++) {
 			for(int j = 1; j < ny - 1; j++) {
 				for(int k = 1; k < nz - 1; k++) {
 					if((i + j + k) % 2 == 0) {
-						int idx = IDX(i, j, k, nx, ny, nz);
+						int idx = grid_idx(i, j, k, nx, ny, nz);
 						T rho = density.v[idx];
 						
-						T phi_x = (coulomb.v[IDX(i + 1, j, k, nx, ny, nz)] + coulomb.v[IDX(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
-						T phi_y = (coulomb.v[IDX(i, j + 1, k, nx, ny, nz)] + coulomb.v[IDX(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
-						T phi_z = (coulomb.v[IDX(i, j, k + 1, nx, ny, nz)] + coulomb.v[IDX(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
+						T phi_x = (coulomb.v[grid_idx(i + 1, j, k, nx, ny, nz)] + coulomb.v[grid_idx(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
+						T phi_y = (coulomb.v[grid_idx(i, j + 1, k, nx, ny, nz)] + coulomb.v[grid_idx(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
+						T phi_z = (coulomb.v[grid_idx(i, j, k + 1, nx, ny, nz)] + coulomb.v[grid_idx(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
 						
 						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * rho) * inv_dx2;
 						T phi_old = coulomb.v[idx];
@@ -128,12 +128,12 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 			for(int j = 1; j < ny - 1; j++) {
 				for(int k = 1; k < nz - 1; k++) {
 					if((i + j + k) % 2 != 0) {
-						int idx = IDX(i, j, k, nx, ny, nz);
+						int idx = grid_idx(i, j, k, nx, ny, nz);
 						T rho = density.v[idx];
 						
-						T phi_x = (coulomb.v[IDX(i + 1, j, k, nx, ny, nz)] + coulomb.v[IDX(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
-						T phi_y = (coulomb.v[IDX(i, j + 1, k, nx, ny, nz)] + coulomb.v[IDX(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
-						T phi_z = (coulomb.v[IDX(i, j, k + 1, nx, ny, nz)] + coulomb.v[IDX(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
+						T phi_x = (coulomb.v[grid_idx(i + 1, j, k, nx, ny, nz)] + coulomb.v[grid_idx(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
+						T phi_y = (coulomb.v[grid_idx(i, j + 1, k, nx, ny, nz)] + coulomb.v[grid_idx(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
+						T phi_z = (coulomb.v[grid_idx(i, j, k + 1, nx, ny, nz)] + coulomb.v[grid_idx(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
 						
 						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * rho) * inv_dx2;
 						T phi_old = coulomb.v[idx];
@@ -163,29 +163,29 @@ void compute_volumetric_forces_fdm(VectorField<T> &forces, const ScalarField<T> 
 		for(int i = 0; i < nx; i++) {
 			for(int j = 0; j < ny; j++) {
 				for(int k = 0; k < nz; k++) {
-					int idx = IDX(i, j, k, nx, ny, nz);
+					int idx = grid_idx(i, j, k, nx, ny, nz);
 					T gradient_x, gradient_y, gradient_z;
 					
 					if(i == 0)
-						gradient_x = (potentials.v[IDX(1, j, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dx;
+						gradient_x = (potentials.v[grid_idx(1, j, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dx;
 					else if(i == nx - 1)
-						gradient_x = (potentials.v[idx + offset] - potentials.v[IDX(nx - 2, j, k, nx, ny, nz) + offset]) / dx;
+						gradient_x = (potentials.v[idx + offset] - potentials.v[grid_idx(nx - 2, j, k, nx, ny, nz) + offset]) / dx;
 					else
-						gradient_x = (potentials.v[IDX(i + 1, j, k, nx, ny, nz) + offset] - potentials.v[IDX(i - 1, j, k, nx, ny, nz) + offset]) / (T(2.0) * dx);
+						gradient_x = (potentials.v[grid_idx(i + 1, j, k, nx, ny, nz) + offset] - potentials.v[grid_idx(i - 1, j, k, nx, ny, nz) + offset]) / (T(2.0) * dx);
 					
 					if(j == 0)
-						gradient_y = (potentials.v[IDX(i, 1, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dy;
+						gradient_y = (potentials.v[grid_idx(i, 1, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dy;
 					else if(j == ny - 1)
-						gradient_y = (potentials.v[idx + offset] - potentials.v[IDX(i, ny - 2, k, nx, ny, nz) + offset]) / dy;
+						gradient_y = (potentials.v[idx + offset] - potentials.v[grid_idx(i, ny - 2, k, nx, ny, nz) + offset]) / dy;
 					else
-						gradient_y = (potentials.v[IDX(i, j + 1, k, nx, ny, nz) + offset] - potentials.v[IDX(i, j - 1, k, nx, ny, nz) + offset]) / (T(2.0) * dy);
+						gradient_y = (potentials.v[grid_idx(i, j + 1, k, nx, ny, nz) + offset] - potentials.v[grid_idx(i, j - 1, k, nx, ny, nz) + offset]) / (T(2.0) * dy);
 					
 					if(k == 0)
-						gradient_z = (potentials.v[IDX(i, j, 1, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dz;
+						gradient_z = (potentials.v[grid_idx(i, j, 1, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dz;
 					else if(k == nz - 1)
-						gradient_z = (potentials.v[idx + offset] - potentials.v[IDX(i, j, nz - 2, nx, ny, nz) + offset]) / dz;
+						gradient_z = (potentials.v[idx + offset] - potentials.v[grid_idx(i, j, nz - 2, nx, ny, nz) + offset]) / dz;
 					else
-						gradient_z = (potentials.v[IDX(i, j, k + 1, nx, ny, nz) + offset] - potentials.v[IDX(i, j, k - 1, nx, ny, nz) + offset]) / (T(2.0) * dz);
+						gradient_z = (potentials.v[grid_idx(i, j, k + 1, nx, ny, nz) + offset] - potentials.v[grid_idx(i, j, k - 1, nx, ny, nz) + offset]) / (T(2.0) * dz);
 					
 					forces.x[idx + offset] = -gradient_x;
 					forces.y[idx + offset] = -gradient_y;
@@ -299,10 +299,10 @@ void compute_volumetric_skyrme_potentials(ScalarField<T> &potentials, const Scal
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;
 	#pragma omp parallel for
 	for(int i = 0; i < world_size; i++)
-		potentials.v[i] = skyrme_potential(skm, density.v[i], density.v[i + world_size], PROTONS);
+		potentials.v[i] = skyrme_potential(skm, density.v[i], density.v[i + world_size], is_proton);
 	#pragma omp parallel for
 	for(int i = world_size; i < 2 * world_size; i++)
-		potentials.v[i] = skyrme_potential(skm, density.v[i - world_size], density.v[i], NEUTRONS);
+		potentials.v[i] = skyrme_potential(skm, density.v[i - world_size], density.v[i], is_neutron);
 }
 
 #endif

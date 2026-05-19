@@ -35,7 +35,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	T dt = param.t_f / param.steps;
 	std::vector<float> samples(2 * param.density_samples);
 	
-	char stats_filename[STRING_SIZE], density_samples_filename[STRING_SIZE], density_samples_diff_filename[STRING_SIZE];
+	char stats_filename[string_size], density_samples_filename[string_size], density_samples_diff_filename[string_size];
 	std::sprintf(stats_filename, "%s/%s", output_directory, "stats.txt");
 	std::sprintf(density_samples_filename, "%s/%s", output_directory, "density_samples.bin");
 	std::sprintf(density_samples_diff_filename, "%s/%s", output_directory, "density_samples_diff.bin");
@@ -66,17 +66,17 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	for(int step = 0; step < param.steps; step++) {
 		if(step % param.substeps == 0) {
 			std::printf("Processed step: %i/%i.\n", step, param.steps);
-			std::array<T, 3> x_p = center_of_mass(part, world, PROTONS);
-			std::array<T, 3> x_n = center_of_mass(part, world, NEUTRONS);
-			T msr_p = mean_squared_radius(part, world, PROTONS);
-			T msr_n = mean_squared_radius(part, world, NEUTRONS);
+			std::array<T, 3> x_p = center_of_mass(part, world, is_proton);
+			std::array<T, 3> x_n = center_of_mass(part, world, is_neutron);
+			T msr_p = mean_squared_radius(part, world, is_proton);
+			T msr_n = mean_squared_radius(part, world, is_neutron);
 			std::fprintf(out_stats, "%e %e %e %e %e\n",
 			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p[2], x_n[2]);
 			
 			compute_density_samples_cic(samples, density, param, world);
 			output_density_samples(out_samples, samples, param);
 			
-			char volume_filename[STRING_SIZE];
+			char volume_filename[string_size];
 			std::sprintf(volume_filename, "%s/out-%04d.vtk", output_directory, step / param.substeps);
 			FILE *out_volume = fopen(volume_filename, "wb");
 			if(out_volume == nullptr) {
@@ -100,7 +100,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			nuclear_excitation(part, param);
 			copy_scalar_field_double(density_before, density, world);
 		}
-		if(step % RESET_STEPS == 0)
+		if(step % reset_steps == 0)
 			center_momentum(part, world);
 		
 		update_momenta_half(part, dt);
@@ -124,8 +124,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	/*ParticleCount<T> part_count;
 	create_particle_count(&part_count, world);
 	scatter_particles(&part_count, part, world);
-	compute_volumetric_density(&density, part_count, world_visual, world, param, PROTONS_AND_NEUTRONS);
-	output_centroids(out, part, PROTONS);
+	compute_volumetric_density(&density, part_count, world_visual, world, param, is_proton_AND_is_neutron);
+	output_centroids(out, part, is_proton);
 	output_particle_count(out, part_count, world);
 	free_particle_count(&part_count);*/
 }
