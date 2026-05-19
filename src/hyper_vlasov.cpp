@@ -127,6 +127,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	}
 	fclose(out_stats);
 	fclose(out_samples);
+	fclose(out_samples_diff);
 }
 
 template <typename T>
