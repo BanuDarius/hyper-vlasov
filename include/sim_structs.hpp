@@ -111,8 +111,4 @@ struct Fermi {
 	T epsilon_p, epsilon_n;
 };
 
-/*struct ParticleCount {
-	int *count;
-};*/
-
 #endif
