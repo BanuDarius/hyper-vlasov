@@ -1,7 +1,7 @@
 CC = g++
 OPT_FLAG = -O3
-CFLAGS = -Iinclude -fopenmp -flto $(OPT_FLAG) -march=native -MMD -MP -g -Wall -Wextra -Wshadow
-LDLIBS = -lm -lgsl -lgslcblas
+CFLAGS = $(OPT_FLAG) -march=native -Iinclude -fopenmp -flto -MMD -MP -g -Wall -Wextra -Wshadow
+LDLIBS = -lm -lgsl
 
 SRC_DIR = src
 BUILD_DIR = build
@@ -15,25 +15,30 @@ TARGET = $(BIN_DIR)/hyper_vlasov
 SRCS = $(SRC_DIR)/hyper_vlasov.cpp
 OBJS = $(BUILD_DIR)/hyper_vlasov.o
 
-all: output_dirs $(TARGET)
+all: output-dirs $(TARGET)
 
 fast: OPT_FLAG = -Ofast
 fast: all
 
 $(TARGET): $(OBJS) | $(BIN_DIR)
-	$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	@$(CC) $(CFLAGS) -o $@ $^ $(LDLIBS)
+	$(info Linked $@.)
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	@$(CC) $(CFLAGS) -c $< -o $@
+	$(info Compiled $@.)
 
 $(BIN_DIR) $(BUILD_DIR):
-	mkdir -p $@
+	@mkdir -p $@
+	$(info Created $@ directory.)
 
-output_dirs:
-	mkdir -p $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
+output-dirs:
+	@mkdir -p $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR) $(BUILD_DIR $(BIN_DIR)):
+	$(info Created output directories.)
 
 clean:
-	rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
+	@rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
+	$(info Removed output files.)
 
 -include $(OBJS:.o=.d)
 

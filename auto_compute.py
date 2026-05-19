@@ -33,7 +33,7 @@ use_floats = False
 
 num_test_part = 1000
 z = 50
-n = 50
+n = 82
 nx = 16
 t_f = 800.0
 t_exc = 200.0
