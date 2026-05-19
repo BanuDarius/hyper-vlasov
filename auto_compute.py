@@ -33,11 +33,11 @@ use_floats = False
 
 num_test_part = 1000
 z = 50
-n = 82
+n = 50
 nx = 16
 t_f = 800.0
 t_exc = 200.0
-eta_exc = 0.15
+eta_exc = 0.05
 steps = 800
 substeps = 4
 d_max_scale = 1.3

@@ -252,9 +252,9 @@ void center_momentum(TestParticles<T> &part, const World<T> &world) {
 	}
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
-		part.kx[i] -= kx_sum / (T)part_num;
-		part.ky[i] -= ky_sum / (T)part_num;
-		part.kz[i] -= kz_sum / (T)part_num;
+		part.kx[i] -= kx_sum / static_cast<T>(part_num);
+		part.ky[i] -= ky_sum / static_cast<T>(part_num);
+		part.kz[i] -= kz_sum / static_cast<T>(part_num);
 	}
 }
 

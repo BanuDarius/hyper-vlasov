@@ -40,7 +40,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestPart
 	
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
-		density.v[i] = 0.0;
+		density.v[i] = T(0.0);
 	
 	T *density_ptr = density.v.data();
 	#pragma omp parallel for reduction(+:density_ptr[0 : 2 * world_size])
@@ -394,7 +394,7 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 		r_sqr += r2;
 		part_num++;
 	}
-	return r_sqr / (T)part_num;
+	return r_sqr / static_cast<T>(part_num);
 }
 
 template <typename T>
@@ -420,7 +420,7 @@ std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &wo
 		center_z += r_vec[2];
 		part_num++;
 	}
-	center_x /= (T)part_num; center_y /= (T)part_num, center_z /= (T)part_num;
+	center_x /= static_cast<T>(part_num); center_y /= static_cast<T>(part_num), center_z /= static_cast<T>(part_num);
 	return std::array<T, 3> { center_x, center_y, center_z };
 }
 
