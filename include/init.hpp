@@ -31,10 +31,6 @@ SOFTWARE. */
 #include <cstdint>
 #include <cstring>
 
-#include "math_functions.hpp"
-#include "sim_structs.hpp"
-#include "physics_formulas.hpp"
-
 static inline uint32_t swap_endian(float v) {
 	uint32_t data;
 	std::memcpy(&data, &v, 4);

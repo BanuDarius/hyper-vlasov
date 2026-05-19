@@ -27,9 +27,6 @@ SOFTWARE. */
 #include <cmath>
 #include <cstdio>
 
-#include "physics_formulas.hpp"
-#include "math_functions.hpp"
-#include "sim_structs.hpp"
 #include "fit_algorithm.hpp"
 
 template <typename T>

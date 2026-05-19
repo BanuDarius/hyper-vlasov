@@ -29,10 +29,6 @@ SOFTWARE. */
 #include <cstdio>
 #include <cstdlib>
 
-#include "math_functions.hpp"
-#include "sim_structs.hpp"
-#include "physics_formulas.hpp"
-
 template <typename T>
 void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestParticles<T> &part, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];

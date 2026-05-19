@@ -24,10 +24,12 @@ SOFTWARE. */
 #include <cmath>
 #include <cstdio>
 
+#include "sim_structs.hpp"
+#include "math_functions.hpp"
+#include "physics_formulas.hpp"
 #include "init.hpp"
 #include "tools.hpp"
 #include "physics.hpp"
-#include "sim_structs.hpp"
 
 template <typename T>
 void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {

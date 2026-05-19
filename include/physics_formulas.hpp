@@ -37,7 +37,7 @@ template <typename T>
 int max_particles(T r_max, T k_max, int part_per_nucleon) {
 	T t = r_max * k_max, ct = T(2.0) * pi<T>;
 	T phase_space_volume = T(16.0) / T(9.0) * pi<T> * pi<T> * (t * t * t);
-	int max = part_per_nucleon * (int)std::floor(phase_space_volume / (ct * ct * ct) + T(0.5));
+	int max = part_per_nucleon * static_cast<int>(std::floor(phase_space_volume / (ct * ct * ct) + T(0.5)));
 	return max;
 }
 
