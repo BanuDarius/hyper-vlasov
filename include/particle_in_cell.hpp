@@ -191,51 +191,59 @@ void distribute_volumetric_momenta_cic(ScalarField<T> &current_density, const Te
 		int offset = (i < part.protons) ? 0 : world_size;
 		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
 		
-		current_density_ptr_x[idx] += t_x * t_y * t_z * part.kx[i];
-		current_density_ptr_y[idx] += t_x * t_y * t_z * part.ky[i];
-		current_density_ptr_z[idx] += t_x * t_y * t_z * part.kz[i];
+		T w = t_x * t_y * t_z;
+		current_density_ptr_x[idx] += w * part.kx[i];
+		current_density_ptr_y[idx] += w * part.ky[i];
+		current_density_ptr_z[idx] += w * part.kz[i];
 		
 		if (x1 < nx) {
+			w = d_x * t_y * t_z;
 			idx = grid_idx(x1, y0, z0, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += d_x * t_y * t_z * part.kx[i];
-			current_density_ptr_y[idx] += d_x * t_y * t_z * part.ky[i];
-			current_density_ptr_z[idx] += d_x * t_y * t_z * part.kz[i];
+			current_density_ptr_x[idx] += w * part.kx[i];
+			current_density_ptr_y[idx] += w * part.ky[i];
+			current_density_ptr_z[idx] += w * part.kz[i];
 		}
 		if (y1 < ny) {
+			w = t_x * d_y * t_z;
 			idx = grid_idx(x0, y1, z0, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += t_x * d_y * t_z * part.kx[i];
-			current_density_ptr_y[idx] += t_x * d_y * t_z * part.ky[i];
-			current_density_ptr_z[idx] += t_x * d_y * t_z * part.kz[i];
+			current_density_ptr_x[idx] += w * part.kx[i];
+			current_density_ptr_y[idx] += w * part.ky[i];
+			current_density_ptr_z[idx] += w * part.kz[i];
 		}
 		if (x1 < nx && y1 < ny) {
+			w = d_x * d_y * t_z;
 			idx = grid_idx(x1, y1, z0, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += d_x * d_y * t_z * part.kx[i];
-			current_density_ptr_y[idx] += d_x * d_y * t_z * part.ky[i];
-			current_density_ptr_z[idx] += d_x * d_y * t_z * part.kz[i];
+			current_density_ptr_x[idx] += w * part.kx[i];
+			current_density_ptr_y[idx] += w * part.ky[i];
+			current_density_ptr_z[idx] += w * part.kz[i];
 		}
 		if (z1 < nz) {
+			w = t_x * t_y * d_z;
 			idx = grid_idx(x0, y0, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += t_x * t_y * d_z * part.kx[i];
-			current_density_ptr_y[idx] += t_x * t_y * d_z * part.ky[i];
-			current_density_ptr_z[idx] += t_x * t_y * d_z * part.kz[i];
+			current_density_ptr_x[idx] += w * part.kx[i];
+			current_density_ptr_y[idx] += w * part.ky[i];
+			current_density_ptr_z[idx] += w * part.kz[i];
 		}
 		if (x1 < nx && z1 < nz) {
+			w = d_x * t_y * d_z;
 			idx = grid_idx(x1, y0, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += d_x * t_y * d_z * part.kx[i];
-			current_density_ptr_y[idx] += d_x * t_y * d_z * part.ky[i];
-			current_density_ptr_z[idx] += d_x * t_y * d_z * part.kz[i];
+			current_density_ptr_x[idx] += w * part.kx[i];
+			current_density_ptr_y[idx] += w * part.ky[i];
+			current_density_ptr_z[idx] += w * part.kz[i];
 		}
 		if (y1 < ny && z1 < nz) {
+			w = t_x * d_y * d_z;
 			idx = grid_idx(x0, y1, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += t_x * d_y * d_z * part.kx[i];
-			current_density_ptr_y[idx] += t_x * d_y * d_z * part.ky[i];
-			current_density_ptr_z[idx] += t_x * d_y * d_z * part.kz[i];
+			current_density_ptr_x[idx] += w * part.kx[i];
+			current_density_ptr_y[idx] += w * part.ky[i];
+			current_density_ptr_z[idx] += w * part.kz[i];
 		}
 		if (x1 < nx && y1 < ny && z1 < nz) {
+			w = d_x * d_y * d_z;
 			idx = grid_idx(x1, y1, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += d_x * d_y * d_z * part.kx[i];
-			current_density_ptr_y[idx] += d_x * d_y * d_z * part.ky[i];
-			current_density_ptr_z[idx] += d_x * d_y * d_z * part.kz[i];
+			current_density_ptr_x[idx] += w * part.kx[i];
+			current_density_ptr_y[idx] += w * part.ky[i];
+			current_density_ptr_z[idx] += w * part.kz[i];
 		}
 	}
 }
@@ -267,7 +275,6 @@ void compute_density_samples_cic(std::vector<float> &density_samples, const Scal
 		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
 		
 		int offset = (i < param.density_samples) ? 0 : world_size;
-		
 		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
 		T rho = t_x * t_y * t_z * density.v[idx];
 		

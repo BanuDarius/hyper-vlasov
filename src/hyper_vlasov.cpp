@@ -91,7 +91,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			std::fprintf(out_stats, "%e %e %e %e %e\n",
 			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p[2], x_n[2]);
 			
-			//distribute_volumetric_momenta_cic(current_velocity, part, world);
+			distribute_volumetric_momenta_cic(current_velocity, part, world);
+			compute_current_velocity(current_velocity, density, part, world);
 			
 			compute_density_samples_cic(samples, density, param, world);
 			output_density_samples(out_samples, samples, param);
