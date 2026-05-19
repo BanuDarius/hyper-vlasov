@@ -37,11 +37,11 @@ void compute_particle_densities(TestParticles<T> &part, const Parameters<T> &par
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_i, r_j, diff;
-		T fact, dist_squared, density_p = T(0.0), density_n = T(0.0);
-		copy_particle_pos_to_vector(r_i, part, i);
+		T dist_squared, fact, density_p = T(0.0), density_n = T(0.0);
+		particle_pos_to_vector(r_i, part, i);
 		
 		for(int j = 0; j < total; j++) {
-			copy_particle_pos_to_vector(r_j, part, j);
+			particle_pos_to_vector(r_j, part, j);
 			
 			diff = r_i - r_j;
 			dist_squared = dot(diff, diff);
@@ -57,7 +57,7 @@ void compute_particle_densities(TestParticles<T> &part, const Parameters<T> &par
 		part.density_n[i] = density_n;
 	}
 	T term = (T(1.0) / part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
-	#pragma omp parallel for simd
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		part.density_p[i] *= term;
 		part.density_n[i] *= term;
@@ -67,8 +67,8 @@ void compute_particle_densities(TestParticles<T> &part, const Parameters<T> &par
 template <typename T>
 T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i) {
 	std::array<T, 3> r_vec, k_vec;
-	copy_particle_pos_to_vector(r_vec, part, i);
-	copy_particle_vel_to_vector(k_vec, part, i);
+	particle_pos_to_vector(r_vec, part, i);
+	particle_vel_to_vector(k_vec, part, i);
 	
 	T r = magnitude(r_vec);
 	T k = magnitude(k_vec);
@@ -98,8 +98,7 @@ void generate_random_particles(TestParticles<T> &part, T r_max) {
 		std::array<T, 3> r_new;
 		random_vec(r_new, r_max);
 		if(dot(r_new, r_new) < r_max * r_max) {
-			copy_vector_to_particle_pos(part, r_new, i);
-			i++;
+			vector_to_particle_pos(part, r_new, i); i++;
 		}
 	}
 	i = 0;
@@ -107,8 +106,7 @@ void generate_random_particles(TestParticles<T> &part, T r_max) {
 		std::array<T, 3> k_new;
 		random_vec(k_new, k_max<T>);
 		if(dot(k_new, k_new) < k_max<T> * k_max<T>) {
-			copy_vector_to_particle_vel(part, k_new, i);
-			i++;
+			vector_to_particle_vel(part, k_new, i); i++;
 		}
 	}
 }
@@ -127,15 +125,15 @@ void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws
 		random_vec(r_new, r_max);
 		random_vec(k_new, k_max<T>);
 		
-		copy_vector_to_particle_pos(part, r_new, i);
-		copy_vector_to_particle_vel(part, k_new, i);
+		vector_to_particle_pos(part, r_new, i);
+		vector_to_particle_vel(part, k_new, i);
 		T energy = compute_energy(part, ws, sigma_k, z, i);
 		if(energy < epsilon) {
 			r_new = r_new * T(-1.0);
 			k_new = k_new * T(-1.0);
 			
-			copy_vector_to_particle_pos(part, r_new, i + 1);
-			copy_vector_to_particle_vel(part, k_new, i + 1);
+			vector_to_particle_pos(part, r_new, i + 1);
+			vector_to_particle_vel(part, k_new, i + 1);
 			i+=2;
 		}
 	}
@@ -171,10 +169,10 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 	else if(type == is_neutron) { start = part.protons; end = part.protons + part.neutrons; }
 	
 	T r_sqr = T(0.0);
-	#pragma omp parallel for reduction(+:r_sqr, part_num)
+	#pragma omp parallel for reduction(+:part_num, r_sqr)
 	for(int i = start; i < end; i++) {
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
 		
 		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
 		|| r_vec[1] < -d_max_y || r_vec[1] > +d_max_y
@@ -195,24 +193,25 @@ std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &wo
 	if(type == is_proton) { start = 0; end = part.protons; }
 	else if(type == is_neutron) { start = part.protons; end = part.protons + part.neutrons; }
 	
-	T center_x = T(0.0), center_y = T(0.0), center_z = T(0.0);
-	#pragma omp parallel for reduction(+:center_x, center_y, center_z, part_num)
+	std::array<T, 3> center = { T(0.0) };
+	T *center_ptr = center.data();
+	#pragma omp parallel for reduction(+:part_num, center_ptr[0 : 3])
 	for(int i = start; i < end; i++) {
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
 		
 		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
 		|| r_vec[1] < -d_max_y || r_vec[1] > +d_max_y
 		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
 			continue;
 		
-		center_x += r_vec[0];
-		center_y += r_vec[1];
-		center_z += r_vec[2];
+		center_ptr[0] += r_vec[0];
+		center_ptr[1] += r_vec[1];
+		center_ptr[2] += r_vec[2];
 		part_num++;
 	}
-	center_x /= static_cast<T>(part_num); center_y /= static_cast<T>(part_num), center_z /= static_cast<T>(part_num);
-	return std::array<T, 3> { center_x, center_y, center_z };
+	center = center * (T(1.0) / static_cast<T>(part_num));
+	return center;
 }
 
 template <typename T>
@@ -223,7 +222,7 @@ void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> &ws, const Sk
 	for(int i = 0; i < total; i++) {
 		int type = (i < part.protons) ? is_proton : is_neutron;
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
 		T r = magnitude(r_vec);
 		
 		T density_p = part.density_p[i];
@@ -275,6 +274,16 @@ void copy_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &fie
 		field_a.v[i] = field_b.v[i];
 }
 
+template <typename T>
+void copy_vector_field_double(VectorField<T> &field_a, const VectorField<T> &field_b, const World<T> &world) {
+	int world_size = world.n[0] * world.n[1] * world.n[2];
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++) {
+		field_a.x[i] = field_b.x[i];
+		field_a.y[i] = field_b.y[i];
+		field_a.z[i] = field_b.z[i];
+	}
+}
 
 template <typename T>
 static inline void world_pos_to_vector(std::array<T, 3> &v, const World<T> &world, int idx) {
@@ -286,28 +295,28 @@ static inline void world_pos_to_vector(std::array<T, 3> &v, const World<T> &worl
 }
 
 template <typename T>
-static inline void copy_particle_pos_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
+static inline void particle_pos_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
 	v[0] = part.x[i];
 	v[1] = part.y[i];
 	v[2] = part.z[i];
 }
 
 template <typename T>
-static inline void copy_particle_vel_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
+static inline void particle_vel_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
 	v[0] = part.kx[i];
 	v[1] = part.ky[i];
 	v[2] = part.kz[i];
 }
 
 template <typename T>
-static inline void copy_vector_to_particle_pos(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
+static inline void vector_to_particle_pos(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
 	part.x[i] = v[0];
 	part.y[i] = v[1];
 	part.z[i] = v[2];
 }
 
 template <typename T>
-static inline void copy_vector_to_particle_vel(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
+static inline void vector_to_particle_vel(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
 	part.kx[i] = v[0];
 	part.ky[i] = v[1];
 	part.kz[i] = v[2];

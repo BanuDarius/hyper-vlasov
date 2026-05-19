@@ -152,41 +152,41 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 
 template <typename T>
 void compute_volumetric_forces_fdm(VectorField<T> &forces, const ScalarField<T> &potentials, const World<T> &world) {
-	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
 	for(int x = 0; x < 2; x++) {
-		int offset = (x == 0) ? 0 : nx * ny * nz;
+		int offset = (x == 0) ? 0 : world_size;
 		#pragma omp parallel for collapse(3)
 		for(int i = 0; i < nx; i++) {
 			for(int j = 0; j < ny; j++) {
 				for(int k = 0; k < nz; k++) {
 					int idx = grid_idx(i, j, k, nx, ny, nz);
-					T gradient_x, gradient_y, gradient_z;
+					std::array<T, 3> gradient = { T(0.0) };
 					
 					if(i == 0)
-						gradient_x = (potentials.v[grid_idx(1, j, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dx;
+						gradient[0] = (potentials.v[grid_idx(1, j, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dx;
 					else if(i == nx - 1)
-						gradient_x = (potentials.v[idx + offset] - potentials.v[grid_idx(nx - 2, j, k, nx, ny, nz) + offset]) / dx;
+						gradient[0] = (potentials.v[idx + offset] - potentials.v[grid_idx(nx - 2, j, k, nx, ny, nz) + offset]) / dx;
 					else
-						gradient_x = (potentials.v[grid_idx(i + 1, j, k, nx, ny, nz) + offset] - potentials.v[grid_idx(i - 1, j, k, nx, ny, nz) + offset]) / (T(2.0) * dx);
+						gradient[0] = (potentials.v[grid_idx(i + 1, j, k, nx, ny, nz) + offset] - potentials.v[grid_idx(i - 1, j, k, nx, ny, nz) + offset]) / (T(2.0) * dx);
 					
 					if(j == 0)
-						gradient_y = (potentials.v[grid_idx(i, 1, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dy;
+						gradient[1] = (potentials.v[grid_idx(i, 1, k, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dy;
 					else if(j == ny - 1)
-						gradient_y = (potentials.v[idx + offset] - potentials.v[grid_idx(i, ny - 2, k, nx, ny, nz) + offset]) / dy;
+						gradient[1] = (potentials.v[idx + offset] - potentials.v[grid_idx(i, ny - 2, k, nx, ny, nz) + offset]) / dy;
 					else
-						gradient_y = (potentials.v[grid_idx(i, j + 1, k, nx, ny, nz) + offset] - potentials.v[grid_idx(i, j - 1, k, nx, ny, nz) + offset]) / (T(2.0) * dy);
+						gradient[1] = (potentials.v[grid_idx(i, j + 1, k, nx, ny, nz) + offset] - potentials.v[grid_idx(i, j - 1, k, nx, ny, nz) + offset]) / (T(2.0) * dy);
 					
 					if(k == 0)
-						gradient_z = (potentials.v[grid_idx(i, j, 1, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dz;
+						gradient[2] = (potentials.v[grid_idx(i, j, 1, nx, ny, nz) + offset] - potentials.v[idx + offset]) / dz;
 					else if(k == nz - 1)
-						gradient_z = (potentials.v[idx + offset] - potentials.v[grid_idx(i, j, nz - 2, nx, ny, nz) + offset]) / dz;
+						gradient[2] = (potentials.v[idx + offset] - potentials.v[grid_idx(i, j, nz - 2, nx, ny, nz) + offset]) / dz;
 					else
-						gradient_z = (potentials.v[grid_idx(i, j, k + 1, nx, ny, nz) + offset] - potentials.v[grid_idx(i, j, k - 1, nx, ny, nz) + offset]) / (T(2.0) * dz);
+						gradient[2] = (potentials.v[grid_idx(i, j, k + 1, nx, ny, nz) + offset] - potentials.v[grid_idx(i, j, k - 1, nx, ny, nz) + offset]) / (T(2.0) * dz);
 					
-					forces.x[idx + offset] = -gradient_x;
-					forces.y[idx + offset] = -gradient_y;
-					forces.z[idx + offset] = -gradient_z;
+					forces.x[idx + offset] = -gradient[0];
+					forces.y[idx + offset] = -gradient[1];
+					forces.z[idx + offset] = -gradient[2];
 				}
 			}
 		}
@@ -203,7 +203,7 @@ void compute_volumetric_densities(ScalarField<T> &density, ScalarField<T> &densi
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		std::array<T, 3> r_i, r_j, diff;
-		T fact, dist_squared, rho_f = T(0.0);
+		T dist_squared, fact, rho_f = T(0.0);
 		world_pos_to_vector(r_i, world, i % world_size);
 		
 		for(int j = 0; j < world_size; j++) {
@@ -231,27 +231,28 @@ template <typename T>
 void center_momentum(TestParticles<T> &part, const World<T> &world) {
 	int total = part.protons + part.neutrons, part_num = 0;
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	T kx_sum = T(0.0), ky_sum = T(0.0), kz_sum = T(0.0);
-	#pragma omp parallel for reduction(+:part_num, kx_sum, ky_sum, kz_sum)
+	std::array<T, 3> k_sum = { T(0.0) };
+	T *k_sum_ptr = k_sum.data();
+	#pragma omp parallel for reduction(+:part_num, k_sum_ptr[0 : 3])
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
 		
 		if(r_vec[0] < -d_max_x || r_vec[0] > +d_max_x
 		|| r_vec[1] < -d_max_y || r_vec[1] > +d_max_y
 		|| r_vec[2] < -d_max_z || r_vec[2] > +d_max_z)
 			continue;
 		
-		kx_sum += part.kx[i];
-		ky_sum += part.ky[i];
-		kz_sum += part.kz[i];
+		k_sum_ptr[0] += part.kx[i];
+		k_sum_ptr[1] += part.ky[i];
+		k_sum_ptr[2] += part.kz[i];
 		part_num++;
 	}
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
-		part.kx[i] -= kx_sum / static_cast<T>(part_num);
-		part.ky[i] -= ky_sum / static_cast<T>(part_num);
-		part.kz[i] -= kz_sum / static_cast<T>(part_num);
+		part.kx[i] -= k_sum[0] / static_cast<T>(part_num);
+		part.ky[i] -= k_sum[1] / static_cast<T>(part_num);
+		part.kz[i] -= k_sum[2] / static_cast<T>(part_num);
 	}
 }
 

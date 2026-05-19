@@ -39,7 +39,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestPart
 	#pragma omp parallel for reduction(+:density_ptr[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
 		
 		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
@@ -96,7 +96,7 @@ void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorFiel
 	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
 		
 		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
@@ -173,8 +173,8 @@ void distribute_volumetric_momenta_cic(ScalarField<T> &current_density, const Te
 	#pragma omp parallel for reduction(+:current_density_ptr_x[0 : 2 * world_size], current_density_ptr_y[0 : 2 * world_size], current_density_ptr_z[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec, k_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
-		copy_particle_vel_to_vector(k_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
+		particle_vel_to_vector(k_vec, part, i);
 		
 		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
@@ -324,8 +324,8 @@ void distribute_volumetric_momenta_ngp(ScalarField<T> &current_density, const Te
 	#pragma omp parallel for reduction(+:current_density_ptr_x[0 : 2 * world_size], current_density_ptr_y[0 : 2 * world_size], current_density_ptr_z[0 : 2 * world_size])
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec, k_vec;
-		copy_particle_pos_to_vector(r_vec, part, i);
-		copy_particle_vel_to_vector(k_vec, part, i);
+		particle_pos_to_vector(r_vec, part, i);
+		particle_vel_to_vector(k_vec, part, i);
 		
 		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
 		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));

@@ -55,7 +55,7 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 	for(int i = 0; i < fit->total; i++) {
 		int idx = fit->start + i;
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, *fit->part, idx);
+		particle_pos_to_vector(r_vec, *fit->part, idx);
 		
 		T r = magnitude(r_vec);
 		T density_p = fit->part->density_p[idx];
@@ -76,7 +76,7 @@ int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *J) {
 	for(int i = 0; i < fit->total; i++) {
 		int idx = fit->start + i;
 		std::array<T, 3> r_vec;
-		copy_particle_pos_to_vector(r_vec, *fit->part, idx);
+		particle_pos_to_vector(r_vec, *fit->part, idx);
 		
 		T r = magnitude(r_vec);
 		T exp_v = std::exp((r - R12) / a);
