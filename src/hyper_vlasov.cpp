@@ -91,8 +91,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			std::fprintf(out_stats, "%e %e %e %e %e\n",
 			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p[2], x_n[2]);
 			
-			//distribute_volumetric_momenta_cic(current_velocity, part, world);
-			//compute_current_velocity(current_velocity, temp_vector_field, density, part, world);
+			distribute_volumetric_momenta_cic(current_velocity, part, world);
+			compute_current_velocity(current_velocity, temp_vector_field, density, param, world);
 			
 			compute_density_samples_cic(samples, density, param, world);
 			output_density_samples(out_samples, samples, param);
@@ -107,6 +107,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			output_vector_field(out_volume, forces, world, "forces");
 			output_scalar_field(out_volume, density, world, "density");
 			output_scalar_field(out_volume, potentials, world, "potentials");
+			output_vector_field(out_volume, current_velocity, world, "current");
 			if(excited_nucleus) {
 				sub_scalar_field_double(temp_scalar_field, density, density_before, world);
 				output_scalar_field(out_volume, temp_scalar_field, world, "density_difference");
@@ -126,13 +127,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	}
 	fclose(out_stats);
 	fclose(out_samples);
-	/*ParticleCount<T> part_count;
-	create_particle_count(&part_count, world);
-	scatter_particles(&part_count, part, world);
-	compute_volumetric_density(&density, part_count, world_visual, world, param, is_proton_AND_is_neutron);
-	output_centroids(out, part, is_proton);
-	output_particle_count(out, part_count, world);
-	free_particle_count(&part_count);*/
 }
 
 template <typename T>

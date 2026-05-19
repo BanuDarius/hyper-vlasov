@@ -202,12 +202,12 @@ void compute_volumetric_densities(ScalarField<T> &density, ScalarField<T> &densi
 	copy_scalar_field_double(density_temp, density, world);
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
+		int offset = (i < world_size) ? 0 : world_size;
 		std::array<T, 3> r_i, r_j, diff;
 		T dist_squared, fact, rho_f = T(0.0);
 		world_pos_to_vector(r_i, world, i % world_size);
 		
 		for(int j = 0; j < world_size; j++) {
-			int offset = (i < world_size) ? 0 : world_size;
 			T rho = density_temp.v[j + offset];
 			world_pos_to_vector(r_j, world, j);
 			
@@ -225,6 +225,55 @@ void compute_volumetric_densities(ScalarField<T> &density, ScalarField<T> &densi
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++)
 		density.v[i] *= term;
+}
+
+template <typename T>
+void compute_current_velocity(VectorField<T> &current_velocity, VectorField<T> &current_velocity_temp, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world) {
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
+	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
+	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
+	
+	copy_vector_field_double(current_velocity_temp, current_velocity, world);
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++) {
+		int offset = (i < world_size) ? 0 : world_size;
+		std::array<T, 3> r_i, r_j, diff, velocity_f = { T(0.0) };
+		T dist_squared, fact;
+		world_pos_to_vector(r_i, world, i % world_size);
+		
+		for(int j = 0; j < world_size; j++) {
+			world_pos_to_vector(r_j, world, j);
+			
+			diff = r_i - r_j;
+			dist_squared = dot(diff, diff);
+			if(dist_squared > cutoff_squared)
+				continue;
+			
+			fact = std::exp(-dist_squared * exp_term);
+			velocity_f[0] += fact * current_velocity_temp.x[j + offset];
+			velocity_f[1] += fact * current_velocity_temp.y[j + offset];
+			velocity_f[2] += fact * current_velocity_temp.z[j + offset];
+		}
+		current_velocity.x[i] = velocity_f[0];
+		current_velocity.y[i] = velocity_f[1];
+		current_velocity.z[i] = velocity_f[2];
+	}
+	T term = (T(1.0) / param.part_per_nucleon) * (T(1.0) / std::pow(T(2.0) * pi<T> * sigma_r * sigma_r, T(1.5)));
+	#pragma omp parallel for
+	for(int i = 0; i < 2 * world_size; i++) {
+		T rho = density.v[i];
+		if(rho > 1e-6) {
+			T final_term = h_bar_c<T> * term / (mc2<T> * rho);
+			current_velocity.x[i] *= final_term;
+			current_velocity.y[i] *= final_term;
+			current_velocity.z[i] *= final_term;
+		}
+		else {
+			current_velocity.x[i] = T(0.0);
+			current_velocity.y[i] = T(0.0);
+			current_velocity.z[i] = T(0.0);
+		}
+	}
 }
 
 template <typename T>
