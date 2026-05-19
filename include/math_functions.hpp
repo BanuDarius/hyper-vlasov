@@ -25,11 +25,12 @@ SOFTWARE. */
 
 #include <array>
 #include <cmath>
-#include <cstdlib>
+#include <random>
 
 template <typename T>
 static inline T rand_val(T min, T max) {
-	T s = std::rand() / T(RAND_MAX);
+	static std::mt19937 mt(128);
+	T s = static_cast<T>(mt()) / static_cast<T>(mt.max());
 	return min + s * (max - min);
 }
 

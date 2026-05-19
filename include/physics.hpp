@@ -262,7 +262,7 @@ void compute_current_velocity(VectorField<T> &current_velocity, VectorField<T> &
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		T rho = density.v[i];
-		if(rho > 1e-6) {
+		if(rho > density_tolerance<T>) {
 			T final_term = h_bar_c<T> * term / (mc2<T> * rho);
 			current_velocity.x[i] *= final_term;
 			current_velocity.y[i] *= final_term;

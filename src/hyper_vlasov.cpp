@@ -155,7 +155,6 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 }
 
 int main(int argc, char **argv) {
-	srand(128);
 	if(argc < 3) {
 		std::fprintf(stderr, "BAD ARGUMENTS!\n");
 		return 1;
@@ -169,6 +168,6 @@ int main(int argc, char **argv) {
 		run_simulation<double>(argv[1], argv[2]);
 	
 	std::printf("Simulation ended.\n");
-	std::printf("Time taken: %0.3lfs\n", omp_get_wtime() - start_time);
+	std::printf("Time taken: %0.3lfs.\n", omp_get_wtime() - start_time);
 	return 0;
 }
