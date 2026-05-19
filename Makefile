@@ -33,7 +33,7 @@ $(BIN_DIR) $(BUILD_DIR):
 	$(info Created $@ directory.)
 
 output-dirs:
-	@mkdir -p $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR) $(BUILD_DIR $(BIN_DIR)):
+	@mkdir -p $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
 	$(info Created output directories.)
 
 clean:
