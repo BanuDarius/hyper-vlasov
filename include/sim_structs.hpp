@@ -37,7 +37,7 @@ constexpr int max_sor_iterations = 512;
 constexpr int string_size = 128;
 constexpr int input_file_count = 23;
 
-constexpr size_t grid_idx(int i, int j, int k, int nx, int ny, int nz) {
+constexpr int grid_idx(int i, int j, int k, int nx, int ny, int nz) noexcept {
 	(void)nx;
 	return (i * ny * nz) + (j * nz) + k;
 }

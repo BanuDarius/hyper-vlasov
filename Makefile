@@ -1,7 +1,8 @@
 CC = g++
 OPT_FLAG = -O3
-CFLAGS = $(OPT_FLAG) -march=native -Iinclude -fopenmp -flto -MMD -MP -g -Wall -Wextra -Wshadow
-LDLIBS = -lm -lgsl
+WARNINGS = -Wall -Wextra -Wshadow
+CFLAGS = $(OPT_FLAG) -march=native -Iinclude -fopenmp -flto -MMD -MP -g $(WARNINGS)
+LDLIBS = -lm -lgsl -lgslcblas
 
 SRC_DIR = src
 BUILD_DIR = build
@@ -12,8 +13,9 @@ OUTPUT_IMAGE = output-image
 
 TARGET = $(BIN_DIR)/hyper_vlasov
 
-SRCS = $(SRC_DIR)/hyper_vlasov.cpp
-OBJS = $(BUILD_DIR)/hyper_vlasov.o
+SRCS = $(wildcard $(SRC_DIR)/*.cpp)
+
+OBJS = $(patsubst $(SRC_DIR)/%.cpp, $(BUILD_DIR)/%.o, $(SRCS))
 
 all: output-dirs $(TARGET)
 
@@ -38,7 +40,7 @@ output-dirs:
 
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
-	$(info Removed output files.)
+	$(info Removed build artifacts and simulation output directories.)
 
 -include $(OBJS:.o=.d)
 

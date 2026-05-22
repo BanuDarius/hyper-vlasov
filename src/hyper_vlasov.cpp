@@ -23,14 +23,13 @@ SOFTWARE. */
 #include <omp.h>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 
-#include "sim_structs.hpp"
-#include "math_functions.hpp"
-#include "physics_formulas.hpp"
-#include "particle_in_cell.hpp"
 #include "init.hpp"
 #include "tools.hpp"
 #include "physics.hpp"
+#include "sim_structs.hpp"
+#include "particle_in_cell.hpp"
 
 template <typename T>
 void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
@@ -149,7 +148,7 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 	
 	initialize_particles(part, ws, skm, fermi_levels, param);
 	chi_squared(part, ws, skm, param.part_per_nucleon);
-	if(param.use_gpu == true)
+	if(param.use_gpu)
 		return;
 	else
 		cpu_simulate(output_filename, part, skm, param, world);
