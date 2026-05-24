@@ -187,12 +187,18 @@ std::array<T, 2> chi_squared(const ScalarField<T> &density, const WoodsSaxon<T> 
 	T chi_squared_p = 0.0, chi_squared_n = 0.0;
 	#pragma omp parallel for reduction(+:chi_squared_p, chi_squared_n)
 	for(int i = 0; i < 2 * world_size; i++) {
-		int type = (i < world_size) ? is_proton : is_neutron;
 		std::array<T, 3> r_vec;
 		world_pos_to_vector(r_vec, world, i % world_size);
+		T density_p, density_n;
 		
-		T density_p = scatter_scalar_field_cic(density, r_vec, world, is_proton);
-		T density_n = scatter_scalar_field_cic(density, r_vec, world, is_neutron);
+		int type = (i < world_size) ? is_proton : is_neutron;
+		if(type == is_proton) {
+			density_p = density.v[i];
+			density_n = density.v[i + world_size];
+		} else {
+			density_p = density.v[i - world_size];
+			density_n = density.v[i];
+		}
 		
 		T r = magnitude(r_vec);
 		T v_ws = woods_saxon_potential(ws, r, type);

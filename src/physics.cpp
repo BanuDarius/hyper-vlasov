@@ -353,11 +353,12 @@ template <typename T>
 void compute_volumetric_skyrme_potentials(ScalarField<T> &potentials, const ScalarField<T> &density, const Skyrme<T> &skm, const World<T> &world) {
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;
 	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++)
-		potentials.v[i] = skyrme_potential(skm, density.v[i], density.v[i + world_size], is_proton);
-	#pragma omp parallel for
-	for(int i = world_size; i < 2 * world_size; i++)
-		potentials.v[i] = skyrme_potential(skm, density.v[i - world_size], density.v[i], is_neutron);
+	for(int i = 0; i < 2 * world_size; i++) {
+		if(i < world_size)
+			potentials.v[i] = skyrme_potential(skm, density.v[i], density.v[i + world_size], is_proton);
+		else
+			potentials.v[i] = skyrme_potential(skm, density.v[i - world_size], density.v[i], is_neutron);
+	}
 }
 
 template void initialize_particles<double>(TestParticles<double> &part, WoodsSaxon<double> &ws, const Skyrme<double> &skm, Fermi<double> &fermi_levels, const Parameters<double> &param, const World<double> &world);
