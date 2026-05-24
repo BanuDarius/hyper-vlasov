@@ -38,9 +38,9 @@ struct FittingData {
 	const TestParticles<T> *part;
 };
 
-template <typename T> void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const Skyrme<T> &skm, int type, int start, int total);
+template <typename T> void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const ScalarField<T> &density, const World<T> &world, const Skyrme<T> &skm, int type, int start, int total);
 template <typename T> int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f);
 template <typename T> int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *j);
-template <typename T> void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm);
+template <typename T> void minim_woods_saxon(WoodsSaxon<T> &ws, TestParticles<T> &part, const ScalarField<T> &density, const Skyrme<T> &skm, const World<T> &world);
 
 #endif

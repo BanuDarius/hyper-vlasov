@@ -61,8 +61,7 @@ struct Parameters {
 template <typename T>
 struct TestParticles {
 	int protons, neutrons;
-	std::vector<T> energy, density_p, density_n;
-	std::vector<T> x, y, z, kx, ky, kz, fx, fy, fz;
+	std::vector<T> energy, x, y, z, kx, ky, kz, fx, fy, fz;
 	TestParticles(int p, int n) {
 		protons = p;
 		neutrons = n;
@@ -70,7 +69,7 @@ struct TestParticles {
 		x.resize(total); y.resize(total); z.resize(total);
 		kx.resize(total); ky.resize(total); kz.resize(total);
 		fx.resize(total); fy.resize(total); fz.resize(total);
-		energy.resize(total); density_p.resize(total); density_n.resize(total);
+		energy.resize(total);
 	}
 };
 

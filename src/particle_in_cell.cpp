@@ -250,8 +250,7 @@ void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const Te
 
 template <typename T>
 void compute_density_samples_cic(std::vector<float> &density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world) {
-	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
-	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
+	T d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * param.density_samples; i++) {
@@ -260,53 +259,8 @@ void compute_density_samples_cic(std::vector<float> &density_samples, const Scal
 		T y = d_max_y * param.sample_position;
 		std::array<T, 3> r_vec = { T(0.0), y, z };
 		
-		T cx = (nx / T(2.0)) * (r_vec[0] / d_max_x + T(1.0));
-		T cy = (ny / T(2.0)) * (r_vec[1] / d_max_y + T(1.0));
-		T cz = (nz / T(2.0)) * (r_vec[2] / d_max_z + T(1.0));
-		
-		if(cx < T(0.0) || cy < T(0.0) || cz < T(0.0) || cx >= nx || cy >= ny || cz >= nz) {
-			density_samples[i] = 0.0f;
-			continue;
-		}
-		
-		int x0 = static_cast<int>(cx), y0 = static_cast<int>(cy), z0 = static_cast<int>(cz);
-		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
-		T d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
-		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
-		
-		int offset = (i < param.density_samples) ? 0 : world_size;
-		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
-		T rho = t_x * t_y * t_z * density.v[idx];
-		
-		if(x1 < nx) {
-			idx = grid_idx(x1, y0, z0, nx, ny, nz) + offset;
-			rho += d_x * t_y * t_z * density.v[idx];
-		}
-		if(y1 < ny) {
-			idx = grid_idx(x0, y1, z0, nx, ny, nz) + offset;
-			rho += t_x * d_y * t_z * density.v[idx];
-		}
-		if(x1 < nx && y1 < ny) {
-			idx = grid_idx(x1, y1, z0, nx, ny, nz) + offset;
-			rho += d_x * d_y * t_z * density.v[idx];
-		}
-		if(z1 < nz) {
-			idx = grid_idx(x0, y0, z1, nx, ny, nz) + offset;
-			rho += t_x * t_y * d_z * density.v[idx];
-		}
-		if(x1 < nx && z1 < nz) {
-			idx = grid_idx(x1, y0, z1, nx, ny, nz) + offset;
-			rho += d_x * t_y * d_z * density.v[idx];
-		}
-		if(y1 < ny && z1 < nz) {
-			idx = grid_idx(x0, y1, z1, nx, ny, nz) + offset;
-			rho += t_x * d_y * d_z * density.v[idx];
-		}
-		if(x1 < nx && y1 < ny && z1 < nz) {
-			idx = grid_idx(x1, y1, z1, nx, ny, nz) + offset;
-			rho += d_x * d_y * d_z * density.v[idx];
-		}
-		density_samples[i] = static_cast<float>(rho);
+		int type = (i < param.density_samples) ? is_proton : is_neutron;
+		density_samples[i] = scatter_scalar_field_cic(density, r_vec, world, type);
 	}
 }
 

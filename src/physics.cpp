@@ -30,14 +30,17 @@ SOFTWARE. */
 #include "fit_algorithm.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
+#include "particle_in_cell.hpp"
 
 template <typename T>
-void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm, Fermi<T> &fermi_levels, const Parameters<T> &param) {
-	T total_delta_epsilon, relax_coef = T(0.6);
+void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm, Fermi<T> &fermi_levels, const Parameters<T> &param, const World<T> &world) {
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon;
-	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon, it = 0;
+	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
+	int world_size = world.n[0] * world.n[1] * world.n[2], it = 0;
+	T total_delta_epsilon, relax_coef = T(0.6);
 	
 	TestParticles<T> temp_part(max_part, max_part);
+	ScalarField<T> density(2 * world_size), temp_scalar_field(2 * world_size);;
 	do {
 		generate_random_particles(temp_part, param.r_max);
 		compute_particle_energies(temp_part, ws, param);
@@ -70,15 +73,18 @@ void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrm
 		fermi_levels.epsilon_n += delta_epsilon_n;
 		
 		generate_checking_particles(part, ws, param, fermi_levels);
-		compute_particle_densities(part, param);
+		distribute_volumetric_particles_cic(density, part, world);
+		compute_volumetric_densities(density, temp_scalar_field, param, world);
 		
 		WoodsSaxon<T> ws_old = ws;
 		
-		minim_woods_saxon(part, ws, skm);
+		minim_woods_saxon(ws, part, density, skm, world);
 		relax_woods_saxon(ws, ws_old, relax_coef);
 		
 		total_delta_epsilon = std::abs(delta_epsilon_n) + std::abs(delta_epsilon_p);
+		std::array<T, 2> chi_sqr = chi_squared(density, ws, skm, param, world);
 		std::printf("------------------------------------\n");
+		std::printf("CHI SQUARED P %0.2lf CHI SQUARED N %0.2lf\n", chi_sqr[0], chi_sqr[1]);
 		std::printf("EQUAL P %i EQUAL N %i\n", equal_p, equal_n);
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws.V0_p, ws.R12_p, ws.a_p);
 		std::printf("V0 %0.2lf R12 %0.2lf a %0.2lf\n", ws.V0_n, ws.R12_n, ws.a_n);
@@ -354,7 +360,7 @@ void compute_volumetric_skyrme_potentials(ScalarField<T> &potentials, const Scal
 		potentials.v[i] = skyrme_potential(skm, density.v[i - world_size], density.v[i], is_neutron);
 }
 
-template void initialize_particles<double>(TestParticles<double> &part, WoodsSaxon<double> &ws, const Skyrme<double> &skm, Fermi<double> &fermi_levels, const Parameters<double> &param);
+template void initialize_particles<double>(TestParticles<double> &part, WoodsSaxon<double> &ws, const Skyrme<double> &skm, Fermi<double> &fermi_levels, const Parameters<double> &param, const World<double> &world);
 template void compute_volumetric_coulomb_potentials_sor<double>(ScalarField<double> &coulomb, const ScalarField<double> &density, const World<double> &world);
 template void compute_volumetric_forces_fdm<double>(VectorField<double> &forces, const ScalarField<double> &potentials, const World<double> &world);
 template void compute_volumetric_densities<double>(ScalarField<double> &density, ScalarField<double> &density_temp, const Parameters<double> &param, const World<double> &world);
@@ -365,7 +371,7 @@ template void update_momenta_half<double>(TestParticles<double> &part, double dt
 template void update_positions_full<double>(TestParticles<double> &part, double dt);
 template void compute_volumetric_skyrme_potentials<double>(ScalarField<double> &potentials, const ScalarField<double> &density, const Skyrme<double> &skm, const World<double> &world);
 
-template void initialize_particles<float>(TestParticles<float> &part, WoodsSaxon<float> &ws, const Skyrme<float> &skm, Fermi<float> &fermi_levels, const Parameters<float> &param);
+template void initialize_particles<float>(TestParticles<float> &part, WoodsSaxon<float> &ws, const Skyrme<float> &skm, Fermi<float> &fermi_levels, const Parameters<float> &param, const World<float> &world);
 template void compute_volumetric_coulomb_potentials_sor<float>(ScalarField<float> &coulomb, const ScalarField<float> &density, const World<float> &world);
 template void compute_volumetric_forces_fdm<float>(VectorField<float> &forces, const ScalarField<float> &potentials, const World<float> &world);
 template void compute_volumetric_densities<float>(ScalarField<float> &density, ScalarField<float> &density_temp, const Parameters<float> &param, const World<float> &world);

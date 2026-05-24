@@ -32,26 +32,33 @@ SOFTWARE. */
 #include "sim_structs.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
+#include "particle_in_cell.hpp"
 
 template <typename T>
 struct FittingData {
 	const Skyrme<T> *skm;
+	const World<T> *world;
 	int type, start, total;
 	const TestParticles<T> *part;
+	const ScalarField<T> *density;
 };
 
 template <typename T>
-void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const Skyrme<T> &skm, int type, int start, int total) {
+void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const ScalarField<T> &density, const World<T> &world, const Skyrme<T> &skm, int type, int start, int total) {
 	fit->skm = &skm;
 	fit->type = type;
 	fit->part = &part;
 	fit->start = start;
 	fit->total = total;
+	fit->world = &world;
+	fit->density = &density;
 }
 
 template <typename T>
 int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 	FittingData<T> *fit = (FittingData<T>*)p;
+	ScalarField<T> density = *fit->density;
+	World<T> world = *fit->world;
 	T V0 = T(gsl_vector_get(x, 0)), R12 = T(gsl_vector_get(x, 1)), a = T(gsl_vector_get(x, 2));
 	
 	for(int i = 0; i < fit->total; i++) {
@@ -60,8 +67,8 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 		particle_pos_to_vector(r_vec, *fit->part, idx);
 		
 		T r = magnitude(r_vec);
-		T density_p = fit->part->density_p[idx];
-		T density_n = fit->part->density_n[idx];
+		T density_p = scatter_scalar_field_cic(density, r_vec, world, is_proton);;
+		T density_n = scatter_scalar_field_cic(density, r_vec, world, is_neutron);
 		T v_skyrme = skyrme_potential(*fit->skm, density_p, density_n, fit->type);
 		T v_woods_saxon = V0 / (T(1.0) + std::exp((r - R12) / a));
 		
@@ -96,7 +103,7 @@ int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *j) {
 }
 
 template <typename T>
-void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm) {
+void minim_woods_saxon(WoodsSaxon<T> &ws, TestParticles<T> &part, const ScalarField<T> &density, const Skyrme<T> &skm, const World<T> &world) {
 	const gsl_multifit_nlinear_type *T_MAGIC = gsl_multifit_nlinear_trust;
 	gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();
 	
@@ -106,7 +113,7 @@ void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T
 		int start = (type == 0) ? 0 : part.protons;
 		int total = (type == 0) ? part.protons : part.neutrons;
 		
-		set_fit_function(&fit, part, skm, part_type, start, total);
+		set_fit_function(&fit, part, density, world, skm, part_type, start, total);
 		gsl_multifit_nlinear_fdf magic_solver;
 		magic_solver.p = 3;
 		magic_solver.n = total;
@@ -152,12 +159,12 @@ void minim_woods_saxon(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T
 	}
 }
 
-template void set_fit_function<double>(FittingData<double> *fit, const TestParticles<double> &part, const Skyrme<double> &skm, int type, int start, int total);
+template void set_fit_function<double>(FittingData<double> *fit, const TestParticles<double> &part, const ScalarField<double> &density, const World<double> &world, const Skyrme<double> &skm, int type, int start, int total);
 template int woods_saxon_f<double>(const gsl_vector *x, void *p, gsl_vector *f);
 template int woods_saxon_df<double>(const gsl_vector *x, void *p, gsl_matrix *j);
-template void minim_woods_saxon<double>(TestParticles<double> &part, WoodsSaxon<double> &ws, const Skyrme<double> &skm);
+template void minim_woods_saxon<double>(WoodsSaxon<double> &ws, TestParticles<double> &part, const ScalarField<double> &density, const Skyrme<double> &skm, const World<double> &world);
 
-template void set_fit_function<float>(FittingData<float> *fit, const TestParticles<float> &part, const Skyrme<float> &skm, int type, int start, int total);
+template void set_fit_function<float>(FittingData<float> *fit, const TestParticles<float> &part, const ScalarField<float> &density, const World<float> &world, const Skyrme<float> &skm, int type, int start, int total);
 template int woods_saxon_f<float>(const gsl_vector *x, void *p, gsl_vector *f);
 template int woods_saxon_df<float>(const gsl_vector *x, void *p, gsl_matrix *j);
-template void minim_woods_saxon<float>(TestParticles<float> &part, WoodsSaxon<float> &ws, const Skyrme<float> &skm);
+template void minim_woods_saxon<float>(WoodsSaxon<float> &ws, TestParticles<float> &part, const ScalarField<float> &density, const Skyrme<float> &skm, const World<float> &world);

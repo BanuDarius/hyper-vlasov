@@ -27,7 +27,6 @@ SOFTWARE. */
 
 #include "sim_structs.hpp"
 
-template <typename T> void compute_particle_densities(TestParticles<T> &part, const Parameters<T> &param);
 template <typename T> T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i);
 template <typename T> void compute_particle_energies(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param);
 template <typename T> void generate_random_particles(TestParticles<T> &part, T r_max);
@@ -35,7 +34,7 @@ template <typename T> void generate_checking_particles(TestParticles<T> &part, c
 template <typename T> void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> &part, const World<T> &world, int z);
 template <typename T> T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type);
 template <typename T> std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &world, int type);
-template <typename T> void chi_squared(const TestParticles<T> &part, const WoodsSaxon<T> &ws, const Skyrme<T> &skm, int part_per_nucleon);
+template <typename T> std::array<T, 2> chi_squared(const ScalarField<T> &density, const WoodsSaxon<T> &ws, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world);
 template <typename T> void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef);
 template <typename T> void add_scalar_field_single(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world);
 template <typename T> void sub_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world);

@@ -137,8 +137,8 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 	}
 	Skyrme<T> skm;
 	World<T> world;
-	Parameters<T> param;
 	WoodsSaxon<T> ws;
+	Parameters<T> param;
 	Fermi<T> fermi_levels;
 	read_input_file(in, skm, world, fermi_levels, param, ws);
 	fclose(in);
@@ -146,8 +146,7 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 	TestParticles<T> part(param.z * param.part_per_nucleon, param.n * param.part_per_nucleon);
 	std::printf("MAX TEST PART %i\n", param.max_test_part);
 	
-	initialize_particles(part, ws, skm, fermi_levels, param);
-	chi_squared(part, ws, skm, param.part_per_nucleon);
+	initialize_particles(part, ws, skm, fermi_levels, param, world);
 	if(param.use_gpu)
 		return;
 	else

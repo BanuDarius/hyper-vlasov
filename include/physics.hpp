@@ -25,7 +25,7 @@ SOFTWARE. */
 
 #include "sim_structs.hpp"
 
-template <typename T> void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm, Fermi<T> &fermi_levels, const Parameters<T> &param);
+template <typename T> void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm, Fermi<T> &fermi_levels, const Parameters<T> &param, const World<T> &world);
 template <typename T> void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const ScalarField<T> &density, const World<T> &world);
 template <typename T> void compute_volumetric_forces_fdm(VectorField<T> &forces, const ScalarField<T> &potentials, const World<T> &world);
 template <typename T> void compute_volumetric_densities(ScalarField<T> &density, ScalarField<T> &density_temp, const Parameters<T> &param, const World<T> &world);
