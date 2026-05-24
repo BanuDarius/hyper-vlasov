@@ -46,7 +46,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	FILE *out_samples = fopen(density_samples_filename, "wb");
 	FILE *out_samples_diff = fopen(density_samples_diff_filename, "wb");
 	if(out_stats == nullptr || out_samples == nullptr || out_samples_diff == nullptr) {
-		std::fprintf(stderr, "CANNOT OPEN STATS FILES!\n"); exit(1);
+		std::fprintf(stderr, "CANNOT OPEN STATS FILES!\n"); std::exit(1);
 	}
 	output_density_samples_positions(out_samples, param, world);
 	output_density_samples_positions(out_samples_diff, param, world);
@@ -100,7 +100,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			std::sprintf(volume_filename, "%s/out-%04d.vtk", output_directory, step / param.substeps);
 			FILE *out_volume = fopen(volume_filename, "wb");
 			if(out_volume == nullptr) {
-				std::fprintf(stderr, "CANNOT OPEN VOLUME FILE!\n"); exit(1);
+				std::fprintf(stderr, "CANNOT OPEN VOLUME FILE!\n"); std::exit(1);
 			}
 			output_vtk_header_start(out_volume, world);
 			output_vector_field(out_volume, forces, world, "forces");
@@ -133,7 +133,7 @@ template <typename T>
 void run_simulation(const char *input_filename, const char *output_filename) {
 	FILE *in = fopen(input_filename, "r");
 	if(in == nullptr) {
-		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); exit(1);
+		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); std::exit(1);
 	}
 	Skyrme<T> skm;
 	World<T> world;

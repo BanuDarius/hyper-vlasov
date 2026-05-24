@@ -40,7 +40,7 @@ output-dirs:
 
 clean:
 	@rm -rf $(BUILD_DIR) $(BIN_DIR) $(OUTPUT_DIR) $(OUTPUT_IMAGE) $(INPUT_DIR)
-	$(info Removed build artifacts and simulation output directories.)
+	$(info Removed output directories.)
 
 -include $(OBJS:.o=.d)
 

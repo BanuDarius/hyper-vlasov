@@ -236,7 +236,7 @@ void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_
 			i += std::fscanf(in, "%i", &use_gpu);
 	}
 	if(i != input_file_count) {
-		std::fprintf(stderr, "Error: Invalid input file.\n"); exit(1);
+		std::fprintf(stderr, "Error: Invalid input file.\n"); std::exit(1);
 	}
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
 	T d_max = T(d_max_scale) * nuclear_radius<T>(z + n);
