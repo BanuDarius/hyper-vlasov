@@ -129,15 +129,15 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 
 template <typename T>
 void run_simulation(const char *input_filename, const char *output_filename) {
-	FILE *in = fopen(input_filename, "r");
-	if(in == nullptr) {
-		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); std::exit(1);
-	}
 	Skyrme<T> skm;
 	World<T> world;
 	WoodsSaxon<T> ws;
 	Parameters<T> param;
 	Fermi<T> fermi_levels;
+	FILE *in = fopen(input_filename, "r");
+	if(in == nullptr) {
+		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); std::exit(1);
+	}
 	read_input_file(in, skm, world, fermi_levels, param, ws);
 	fclose(in);
 	
