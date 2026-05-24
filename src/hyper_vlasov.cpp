@@ -22,13 +22,11 @@ SOFTWARE. */
 
 #include <omp.h>
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
 
 #include "init.hpp"
 #include "tools.hpp"
 #include "physics.hpp"
-#include "sim_structs.hpp"
 #include "particle_in_cell.hpp"
 
 template <typename T>

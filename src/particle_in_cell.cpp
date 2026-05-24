@@ -24,7 +24,6 @@ SOFTWARE. */
 
 #include "particle_in_cell.hpp"
 #include "tools.hpp"
-#include "sim_structs.hpp"
 
 template <typename T>
 void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestParticles<T> &part, const World<T> &world) {

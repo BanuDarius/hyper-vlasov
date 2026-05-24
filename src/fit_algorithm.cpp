@@ -28,20 +28,11 @@ SOFTWARE. */
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_multifit_nlinear.h>
 
+#include "fit_algorithm.hpp"
 #include "tools.hpp"
-#include "sim_structs.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
 #include "particle_in_cell.hpp"
-
-template <typename T>
-struct FittingData {
-	const Skyrme<T> *skm;
-	const World<T> *world;
-	int type, start, total;
-	const TestParticles<T> *part;
-	const ScalarField<T> *density;
-};
 
 template <typename T>
 void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const ScalarField<T> &density, const World<T> &world, const Skyrme<T> &skm, int type, int start, int total) {

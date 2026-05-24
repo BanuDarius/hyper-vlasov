@@ -20,13 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
-#include <omp.h>
-#include <array>
-#include <cstdio>
-#include <cstdlib>
-
 #include "tools.hpp"
-#include "sim_structs.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
 #include "particle_in_cell.hpp"

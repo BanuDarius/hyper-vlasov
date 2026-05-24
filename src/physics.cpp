@@ -26,7 +26,6 @@ SOFTWARE. */
 
 #include "physics.hpp"
 #include "tools.hpp"
-#include "sim_structs.hpp"
 #include "fit_algorithm.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
