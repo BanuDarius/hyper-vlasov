@@ -34,8 +34,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestPart
 	for(int i = 0; i < 2 * world_size; i++)
 		density.v[i] = T(0.0);
 	
-	T *density_ptr = density.v.data();
-	#pragma omp parallel for reduction(+:density_ptr[0 : 2 * world_size])
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec;
 		particle_pos_to_vector(r_vec, part, i);
@@ -54,35 +53,43 @@ void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestPart
 		
 		int offset = (i < part.protons) ? 0 : world_size;
 		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
-		density_ptr[idx] += t_x * t_y * t_z;
+		#pragma omp atomic
+		density.v[idx] += t_x * t_y * t_z;
 		
 		if (x1 < nx) {
 			idx = grid_idx(x1, y0, z0, nx, ny, nz) + offset;
-			density_ptr[idx] += d_x * t_y * t_z;
+			#pragma omp atomic
+			density.v[idx] += d_x * t_y * t_z;
 		}
 		if (y1 < ny) {
 			idx = grid_idx(x0, y1, z0, nx, ny, nz) + offset;
-			density_ptr[idx] += t_x * d_y * t_z;
+			#pragma omp atomic
+			density.v[idx] += t_x * d_y * t_z;
 		}
 		if (x1 < nx && y1 < ny) {
 			idx = grid_idx(x1, y1, z0, nx, ny, nz) + offset;
-			density_ptr[idx] += d_x * d_y * t_z;
+			#pragma omp atomic
+			density.v[idx] += d_x * d_y * t_z;
 		}
 		if (z1 < nz) {
 			idx = grid_idx(x0, y0, z1, nx, ny, nz) + offset;
-			density_ptr[idx] += t_x * t_y * d_z;
+			#pragma omp atomic
+			density.v[idx] += t_x * t_y * d_z;
 		}
 		if (x1 < nx && z1 < nz) {
 			idx = grid_idx(x1, y0, z1, nx, ny, nz) + offset;
-			density_ptr[idx] += d_x * t_y * d_z;
+			#pragma omp atomic
+			density.v[idx] += d_x * t_y * d_z;
 		}
 		if (y1 < ny && z1 < nz) {
 			idx = grid_idx(x0, y1, z1, nx, ny, nz) + offset;
-			density_ptr[idx] += t_x * d_y * d_z;
+			#pragma omp atomic
+			density.v[idx] += t_x * d_y * d_z;
 		}
 		if (x1 < nx && y1 < ny && z1 < nz) {
 			idx = grid_idx(x1, y1, z1, nx, ny, nz) + offset;
-			density_ptr[idx] += d_x * d_y * d_z;
+			#pragma omp atomic
+			density.v[idx] += d_x * d_y * d_z;
 		}
 	}
 }
@@ -110,11 +117,11 @@ void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorFiel
 		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
 		T d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
 		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
+		T w = t_x * t_y * t_z;
 		
 		int offset = (i < part.protons) ? 0 : world_size;
 		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
 		
-		T w = t_x * t_y * t_z;
 		T fx = w * forces.x[idx], fy = w * forces.y[idx], fz = w * forces.z[idx];
 		
 		if(x1 < nx) {
@@ -168,8 +175,7 @@ void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const Te
 		current_density.x[i] = T(0.0); current_density.y[i] = T(0.0); current_density.z[i] = T(0.0);
 	}
 	
-	T *current_density_ptr_x = current_density.x.data(), *current_density_ptr_y = current_density.y.data(), *current_density_ptr_z = current_density.z.data();
-	#pragma omp parallel for reduction(+:current_density_ptr_x[0 : 2 * world_size], current_density_ptr_y[0 : 2 * world_size], current_density_ptr_z[0 : 2 * world_size])
+	#pragma omp parallel for
 	for(int i = 0; i < total; i++) {
 		std::array<T, 3> r_vec, k_vec;
 		particle_pos_to_vector(r_vec, part, i);
@@ -186,63 +192,87 @@ void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const Te
 		int x1 = x0 + 1, y1 = y0 + 1, z1 = z0 + 1;
 		T d_x = cx - x0, d_y = cy - y0, d_z = cz - z0;
 		T t_x = T(1.0) - d_x, t_y = T(1.0) - d_y, t_z = T(1.0) - d_z;
+		T w = t_x * t_y * t_z;
 		
 		int offset = (i < part.protons) ? 0 : world_size;
 		int idx = grid_idx(x0, y0, z0, nx, ny, nz) + offset;
 		
-		T w = t_x * t_y * t_z;
-		current_density_ptr_x[idx] += w * part.kx[i];
-		current_density_ptr_y[idx] += w * part.ky[i];
-		current_density_ptr_z[idx] += w * part.kz[i];
+		#pragma omp atomic
+		current_density.x[idx] += w * k_vec[0];
+		#pragma omp atomic
+		current_density.y[idx] += w * k_vec[1];
+		#pragma omp atomic
+		current_density.z[idx] += w * k_vec[2];
 		
 		if (x1 < nx) {
 			w = d_x * t_y * t_z;
 			idx = grid_idx(x1, y0, z0, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += w * part.kx[i];
-			current_density_ptr_y[idx] += w * part.ky[i];
-			current_density_ptr_z[idx] += w * part.kz[i];
+			#pragma omp atomic
+			current_density.x[idx] += w * k_vec[0];
+			#pragma omp atomic
+			current_density.y[idx] += w * k_vec[1];
+			#pragma omp atomic
+			current_density.z[idx] += w * k_vec[2];
 		}
 		if (y1 < ny) {
 			w = t_x * d_y * t_z;
 			idx = grid_idx(x0, y1, z0, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += w * part.kx[i];
-			current_density_ptr_y[idx] += w * part.ky[i];
-			current_density_ptr_z[idx] += w * part.kz[i];
+			#pragma omp atomic
+			current_density.x[idx] += w * k_vec[0];
+			#pragma omp atomic
+			current_density.y[idx] += w * k_vec[1];
+			#pragma omp atomic
+			current_density.z[idx] += w * k_vec[2];
 		}
 		if (x1 < nx && y1 < ny) {
 			w = d_x * d_y * t_z;
 			idx = grid_idx(x1, y1, z0, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += w * part.kx[i];
-			current_density_ptr_y[idx] += w * part.ky[i];
-			current_density_ptr_z[idx] += w * part.kz[i];
+			#pragma omp atomic
+			current_density.x[idx] += w * k_vec[0];
+			#pragma omp atomic
+			current_density.y[idx] += w * k_vec[1];
+			#pragma omp atomic
+			current_density.z[idx] += w * k_vec[2];
 		}
 		if (z1 < nz) {
 			w = t_x * t_y * d_z;
 			idx = grid_idx(x0, y0, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += w * part.kx[i];
-			current_density_ptr_y[idx] += w * part.ky[i];
-			current_density_ptr_z[idx] += w * part.kz[i];
+			#pragma omp atomic
+			current_density.x[idx] += w * k_vec[0];
+			#pragma omp atomic
+			current_density.y[idx] += w * k_vec[1];
+			#pragma omp atomic
+			current_density.z[idx] += w * k_vec[2];
 		}
 		if (x1 < nx && z1 < nz) {
 			w = d_x * t_y * d_z;
 			idx = grid_idx(x1, y0, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += w * part.kx[i];
-			current_density_ptr_y[idx] += w * part.ky[i];
-			current_density_ptr_z[idx] += w * part.kz[i];
+			#pragma omp atomic
+			current_density.x[idx] += w * k_vec[0];
+			#pragma omp atomic
+			current_density.y[idx] += w * k_vec[1];
+			#pragma omp atomic
+			current_density.z[idx] += w * k_vec[2];
 		}
 		if (y1 < ny && z1 < nz) {
 			w = t_x * d_y * d_z;
 			idx = grid_idx(x0, y1, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += w * part.kx[i];
-			current_density_ptr_y[idx] += w * part.ky[i];
-			current_density_ptr_z[idx] += w * part.kz[i];
+			#pragma omp atomic
+			current_density.x[idx] += w * k_vec[0];
+			#pragma omp atomic
+			current_density.y[idx] += w * k_vec[1];
+			#pragma omp atomic
+			current_density.z[idx] += w * k_vec[2];
 		}
 		if (x1 < nx && y1 < ny && z1 < nz) {
 			w = d_x * d_y * d_z;
 			idx = grid_idx(x1, y1, z1, nx, ny, nz) + offset;
-			current_density_ptr_x[idx] += w * part.kx[i];
-			current_density_ptr_y[idx] += w * part.ky[i];
-			current_density_ptr_z[idx] += w * part.kz[i];
+			#pragma omp atomic
+			current_density.x[idx] += w * k_vec[0];
+			#pragma omp atomic
+			current_density.y[idx] += w * k_vec[1];
+			#pragma omp atomic
+			current_density.z[idx] += w * k_vec[2];
 		}
 	}
 }
