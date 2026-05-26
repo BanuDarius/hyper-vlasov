@@ -63,8 +63,7 @@ struct TestParticles {
 	int protons, neutrons;
 	std::vector<T> energy, x, y, z, kx, ky, kz, fx, fy, fz;
 	TestParticles(int p, int n) {
-		protons = p;
-		neutrons = n;
+		protons = p; neutrons = n;
 		int total = protons + neutrons;
 		x.resize(total); y.resize(total); z.resize(total);
 		kx.resize(total); ky.resize(total); kz.resize(total);

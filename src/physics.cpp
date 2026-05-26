@@ -274,8 +274,7 @@ void compute_current_velocity(VectorField<T> &current_velocity, VectorField<T> &
 			current_velocity.x[i] *= final_term;
 			current_velocity.y[i] *= final_term;
 			current_velocity.z[i] *= final_term;
-		}
-		else {
+		} else {
 			current_velocity.x[i] = T(0.0);
 			current_velocity.y[i] = T(0.0);
 			current_velocity.z[i] = T(0.0);
