@@ -42,39 +42,7 @@ void set_parameters(Parameters<T> &param, int z, int n, int part_per_nucleon, in
 	param.density_samples = density_samples;
 	param.sample_position = sample_position;
 	param.part_per_nucleon = part_per_nucleon;
-	param.max_test_part = max_particles(T(param.r_max), k_max<T>, param.part_per_nucleon);
-}
-
-template <typename T>
-void set_woods_saxon(WoodsSaxon<T> &ws, T V0, T R12, T a) {
-	ws.a_p = a;
-	ws.a_n = a;
-	ws.V0_p = V0;
-	ws.V0_n = V0;
-	ws.R12_p = R12;
-	ws.R12_n = R12;
-}
-
-template <typename T>
-void set_skyrme(Skyrme<T> &skm, T A, T B, T C, T gamma) {
-	skm.A = A;
-	skm.B = B;
-	skm.C = C;
-	skm.gamma = gamma;
-}
-
-template <typename T>
-void set_fermi_levels(Fermi<T> &fermi, T epsilon_p, T epsilon_n) {
-	fermi.epsilon_p = epsilon_p;
-	fermi.epsilon_n = epsilon_n;
-}
-
-template <typename T>
-void set_world(World<T> &world, T d_max, int n) {
-	for(int i = 0; i < 3; i++) {
-		world.n[i] = n;
-		world.d_max[i] = d_max;
-	}
+	param.max_test_part = max_particles(param.r_max, k_max<T>, param.part_per_nucleon);
 }
 
 template <typename T>
@@ -240,18 +208,14 @@ void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
 	T d_max = T(d_max_scale) * nuclear_radius<T>(z + n);
 	
-	set_skyrme(skm, T(A), T(B), T(C), T(gamma));
-	set_world(world, T(d_max), nx);
-	set_fermi_levels(fermi_levels, T(epsilon_p), T(epsilon_n));
 	set_parameters(param, z, n, num_test_part, steps, substeps, density_samples, (bool)use_gpu, T(sample_position), T(sigma_k), T(sigma_r), T(t_f), T(t_exc), T(eta_exc));
-	set_woods_saxon(ws, T(V0), T(0.8) * T(param.r_max), T(a));
+	world = World(nx, T(d_max));
+	skm = Skyrme(T(A), T(B), T(C), T(gamma));
+	fermi_levels = Fermi(T(epsilon_p), T(epsilon_n));
+	ws = WoodsSaxon(T(V0), T(0.8) * param.r_max, T(a));
 }
 
 template void set_parameters<double>(Parameters<double> &param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, double sample_position, double sigma_k, double sigma_r, double t_f, double t_exc, double eta_exc);
-template void set_woods_saxon<double>(WoodsSaxon<double> &ws, double V0, double R12, double a);
-template void set_skyrme<double>(Skyrme<double> &skm, double A, double B, double C, double gamma);
-template void set_fermi_levels<double>(Fermi<double> &fermi, double epsilon_p, double epsilon_n);
-template void set_world<double>(World<double> &world, double d_max, int n);
 template void output_vtk_header_start<double>(FILE *out, World<double> world);
 template void output_density_samples_positions<double>(FILE *out, const Parameters<double> &param, const World<double> &world);
 template void output_density_samples<double>(FILE *out, const float *samples, const Parameters<double> &param);
@@ -260,10 +224,6 @@ template void output_vector_field<double>(FILE *out, const VectorField<double> &
 template void read_input_file<double>(FILE *in, Skyrme<double> &skm, World<double> &world, Fermi<double> &fermi_levels, Parameters<double> &param, WoodsSaxon<double> &ws);
 
 template void set_parameters<float>(Parameters<float> &param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, float sample_position, float sigma_k, float sigma_r, float t_f, float t_exc, float eta_exc);
-template void set_woods_saxon<float>(WoodsSaxon<float> &ws, float V0, float R12, float a);
-template void set_skyrme<float>(Skyrme<float> &skm, float A, float B, float C, float gamma);
-template void set_fermi_levels<float>(Fermi<float> &fermi, float epsilon_p, float epsilon_n);
-template void set_world<float>(World<float> &world, float d_max, int n);
 template void output_vtk_header_start<float>(FILE *out, World<float> world);
 template void output_density_samples_positions<float>(FILE *out, const Parameters<float> &param, const World<float> &world);
 template void output_density_samples<float>(FILE *out, const float *samples, const Parameters<float> &param);

@@ -63,8 +63,8 @@ template <typename T>
 struct TestParticles {
 	int protons, neutrons;
 	std::unique_ptr<T[]> x, y, z, kx, ky, kz, fx, fy, fz, energy;
-	TestParticles(int p, int n) {
-		protons = p; neutrons = n;
+	TestParticles(int protons_new, int neutrons_new) {
+		protons = protons_new; neutrons = neutrons_new;
 		int total = protons + neutrons;
 		x = std::unique_ptr<T[]>(new T[total]); y = std::unique_ptr<T[]>(new T[total]); z = std::unique_ptr<T[]>(new T[total]);
 		kx = std::unique_ptr<T[]>(new T[total]); ky = std::unique_ptr<T[]>(new T[total]); kz = std::unique_ptr<T[]>(new T[total]);
@@ -165,22 +165,43 @@ template <typename T>
 struct World {
 	std::array<int, 3> n;
 	std::array<T, 3> d_max;
+	World() = default;
+	World(int n_new, T d_max_new) {
+		for(int i = 0; i < 3; i++) {
+			n[i] = n_new;
+			d_max[i] = d_max_new;
+		}
+	}
 };
 
 template <typename T>
 struct WoodsSaxon {
 	T V0_p, R12_p, a_p;
 	T V0_n, R12_n, a_n;
+	WoodsSaxon() = default;
+	WoodsSaxon(T V0, T R12, T a) {
+		V0_p = V0; V0_n = V0;
+		R12_p = R12, R12_n = R12;
+		a_p = a; a_n = a;
+	}
 };
 
 template <typename T>
 struct Skyrme {
 	T A, B, C, gamma;
+	Skyrme() = default;
+	Skyrme(T A_new, T B_new, T C_new, T gamma_new) {
+		A = A_new; B = B_new; C = C_new; gamma = gamma_new;
+	}
 };
 
 template <typename T>
 struct Fermi {
 	T epsilon_p, epsilon_n;
+	Fermi() = default;
+	Fermi(T epsilon_p_new, T epsilon_n_new) {
+		epsilon_p = epsilon_p_new; epsilon_n = epsilon_n_new;
+	}
 };
 
 #endif

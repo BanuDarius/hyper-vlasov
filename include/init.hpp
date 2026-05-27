@@ -36,10 +36,6 @@ static inline uint32_t swap_endian(float v) {
 }
 
 template <typename T> void set_parameters(Parameters<T> &param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, T sample_position, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc);
-template <typename T> void set_woods_saxon(WoodsSaxon<T> &ws, T V0, T R12, T a);
-template <typename T> void set_skyrme(Skyrme<T> &skm, T A, T B, T C, T gamma);
-template <typename T> void set_fermi_levels(Fermi<T> &fermi, T epsilon_p, T epsilon_n);
-template <typename T> void set_world(World<T> &world, T d_max, int n);
 template <typename T> void output_vtk_header_start(FILE *out, World<T> world);
 void output_vtk_header_scalar_next(FILE *out, const char *name, int type);
 void output_vtk_header_vector_next(FILE *out, const char *name, int type);
