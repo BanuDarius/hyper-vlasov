@@ -34,7 +34,10 @@ template <typename T>
 void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	bool excited_nucleus = false;
 	T dt = param.t_f / param.steps;
-	std::vector<float> samples(2 * param.density_samples);
+	std::unique_ptr<float[]> samples(new float[2 * param.density_samples]);
+	#pragma omp parallel for simd schedule(static)
+	for(int i = 0; i < 2 * param.density_samples; i++)
+		samples[i] = 0.0f;
 	
 	char stats_filename[string_size], density_samples_filename[string_size], density_samples_diff_filename[string_size];
 	std::sprintf(stats_filename, "%s/%s", output_directory, "stats.txt");
@@ -92,8 +95,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			distribute_volumetric_momenta_cic(current_velocity, part, world);
 			compute_current_velocity(current_velocity, temp_vector_field, density, param, world);
 			
-			compute_density_samples_cic(samples, density, param, world);
-			output_density_samples(out_samples, samples, param);
+			compute_density_samples_cic(samples.get(), density, param, world);
+			output_density_samples(out_samples, samples.get(), param);
 			
 			char volume_filename[string_size];
 			std::sprintf(volume_filename, "%s/out-%04d.vtk", output_directory, step / param.substeps);
@@ -111,8 +114,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 				temp_scalar_field -= density_before;
 				output_scalar_field(out_volume, temp_scalar_field, world, "density_difference");
 				
-				compute_density_samples_cic(samples, temp_scalar_field, param, world);
-				output_density_samples(out_samples_diff, samples, param);
+				compute_density_samples_cic(samples.get(), temp_scalar_field, param, world);
+				output_density_samples(out_samples_diff, samples.get(), param);
 			}
 			fclose(out_volume);
 		}

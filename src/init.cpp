@@ -118,8 +118,8 @@ void output_density_samples_positions(FILE *out, const Parameters<T> &param, con
 }
 
 template <typename T>
-void output_density_samples(FILE *out, const std::vector<float> &samples, const Parameters<T> &param) {
-	fwrite(samples.data(), sizeof(float), 2 * param.density_samples, out);
+void output_density_samples(FILE *out, const float *samples_ptr, const Parameters<T> &param) {
+	fwrite(samples_ptr, sizeof(float), 2 * param.density_samples, out);
 }
 
 template <typename T>
@@ -254,7 +254,7 @@ template void set_fermi_levels<double>(Fermi<double> &fermi, double epsilon_p, d
 template void set_world<double>(World<double> &world, double d_max, int n);
 template void output_vtk_header_start<double>(FILE *out, World<double> world);
 template void output_density_samples_positions<double>(FILE *out, const Parameters<double> &param, const World<double> &world);
-template void output_density_samples<double>(FILE *out, const std::vector<float> &samples, const Parameters<double> &param);
+template void output_density_samples<double>(FILE *out, const float *samples, const Parameters<double> &param);
 template void output_scalar_field<double>(FILE *out, const ScalarField<double> &field, const World<double> &world, const char *name);
 template void output_vector_field<double>(FILE *out, const VectorField<double> &field, const World<double> &world, const char *name);
 template void read_input_file<double>(FILE *in, Skyrme<double> &skm, World<double> &world, Fermi<double> &fermi_levels, Parameters<double> &param, WoodsSaxon<double> &ws);
@@ -266,7 +266,7 @@ template void set_fermi_levels<float>(Fermi<float> &fermi, float epsilon_p, floa
 template void set_world<float>(World<float> &world, float d_max, int n);
 template void output_vtk_header_start<float>(FILE *out, World<float> world);
 template void output_density_samples_positions<float>(FILE *out, const Parameters<float> &param, const World<float> &world);
-template void output_density_samples<float>(FILE *out, const std::vector<float> &samples, const Parameters<float> &param);
+template void output_density_samples<float>(FILE *out, const float *samples, const Parameters<float> &param);
 template void output_scalar_field<float>(FILE *out, const ScalarField<float> &field, const World<float> &world, const char *name);
 template void output_vector_field<float>(FILE *out, const VectorField<float> &field, const World<float> &world, const char *name);
 template void read_input_file<float>(FILE *in, Skyrme<float> &skm, World<float> &world, Fermi<float> &fermi_levels, Parameters<float> &param, WoodsSaxon<float> &ws);

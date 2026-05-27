@@ -30,7 +30,7 @@ SOFTWARE. */
 template <typename T> void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestParticles<T> &part, const World<T> &world);
 template <typename T> void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorField<T> &forces, const World<T> &world);
 template <typename T> void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const TestParticles<T> &part, const World<T> &world);
-template <typename T> void compute_density_samples_cic(std::vector<float> &density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world);
+template <typename T> void compute_density_samples_cic(float *density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world);
 
 template <typename T>
 static inline T scatter_scalar_field_cic(const ScalarField<T> &field, std::array<T, 3> r_vec, const World<T> &world, int type) {

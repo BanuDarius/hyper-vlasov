@@ -278,7 +278,7 @@ void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const Te
 }
 
 template <typename T>
-void compute_density_samples_cic(std::vector<float> &density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world) {
+void compute_density_samples_cic(float *density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world) {
 	T d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	
 	#pragma omp parallel for
@@ -296,9 +296,9 @@ void compute_density_samples_cic(std::vector<float> &density_samples, const Scal
 template void distribute_volumetric_particles_cic<double>(ScalarField<double> &density, const TestParticles<double> &part, const World<double> &world);
 template void distribute_forces_to_particles_cic<double>(TestParticles<double> &part, const VectorField<double> &forces, const World<double> &world);
 template void distribute_volumetric_momenta_cic<double>(VectorField<double> &current_density, const TestParticles<double> &part, const World<double> &world);
-template void compute_density_samples_cic<double>(std::vector<float> &density_samples, const ScalarField<double> &density, const Parameters<double> &param, const World<double> &world);
+template void compute_density_samples_cic<double>(float *density_samples, const ScalarField<double> &density, const Parameters<double> &param, const World<double> &world);
 
 template void distribute_volumetric_particles_cic<float>(ScalarField<float> &density, const TestParticles<float> &part, const World<float> &world);
 template void distribute_forces_to_particles_cic<float>(TestParticles<float> &part, const VectorField<float> &forces, const World<float> &world);
 template void distribute_volumetric_momenta_cic<float>(VectorField<float> &current_density, const TestParticles<float> &part, const World<float> &world);
-template void compute_density_samples_cic<float>(std::vector<float> &density_samples, const ScalarField<float> &density, const Parameters<float> &param, const World<float> &world);
+template void compute_density_samples_cic<float>(float *density_samples, const ScalarField<float> &density, const Parameters<float> &param, const World<float> &world);

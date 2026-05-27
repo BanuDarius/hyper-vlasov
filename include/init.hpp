@@ -38,7 +38,7 @@ template <typename T> void output_vtk_header_start(FILE *out, World<T> world);
 void output_vtk_header_scalar_next(FILE *out, const char *name, int type);
 void output_vtk_header_vector_next(FILE *out, const char *name, int type);
 template <typename T> void output_density_samples_positions(FILE *out, const Parameters<T> &param, const World<T> &world);
-template <typename T> void output_density_samples(FILE *out, const std::vector<float> &samples, const Parameters<T> &param);
+template <typename T> void output_density_samples(FILE *out, const float *samples, const Parameters<T> &param);
 template <typename T> void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name);
 template <typename T> void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> &world, const char *name);
 template <typename T> void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_levels, Parameters<T> &param, WoodsSaxon<T> &ws);
