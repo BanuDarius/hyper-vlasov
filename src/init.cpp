@@ -125,9 +125,9 @@ void output_density_samples(FILE *out, const float *samples_ptr, const Parameter
 template <typename T>
 void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name) {
 	std::size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
-	std::vector<uint32_t> vtk_density_p(world_size);
-	std::vector<uint32_t> vtk_density_n(world_size);
-	std::vector<uint32_t> vtk_density_t(world_size);
+	std::unique_ptr<uint32_t[]> vtk_scalar_p(new uint32_t[world_size]);
+	std::unique_ptr<uint32_t[]> vtk_scalar_n(new uint32_t[world_size]);
+	std::unique_ptr<uint32_t[]> vtk_scalar_t(new uint32_t[world_size]);
 	#pragma omp parallel for collapse(3)
 	for(std::size_t k = 0; k < nz; k++) {
 		for(std::size_t j = 0; j < ny; j++) {
@@ -135,27 +135,27 @@ void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> 
 				int idx = grid_idx(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
-				vtk_density_p[write_idx] = swap_endian(static_cast<float>(field.v[idx]));
-				vtk_density_n[write_idx] = swap_endian(static_cast<float>(field.v[idx + world_size]));
-				vtk_density_t[write_idx] = swap_endian(static_cast<float>(field.v[idx] + field.v[idx + world_size]));
+				vtk_scalar_p[write_idx] = swap_endian(static_cast<float>(field.v[idx]));
+				vtk_scalar_n[write_idx] = swap_endian(static_cast<float>(field.v[idx + world_size]));
+				vtk_scalar_t[write_idx] = swap_endian(static_cast<float>(field.v[idx] + field.v[idx + world_size]));
 			}
 		}
 	}
 	output_vtk_header_scalar_next(out, name, is_proton);
-	fwrite(vtk_density_p.data(), sizeof(uint32_t), world_size, out);
+	fwrite(vtk_scalar_p.get(), sizeof(uint32_t), world_size, out);
 	
 	output_vtk_header_scalar_next(out, name, is_neutron);
-	fwrite(vtk_density_n.data(), sizeof(uint32_t), world_size, out);
+	fwrite(vtk_scalar_n.get(), sizeof(uint32_t), world_size, out);
 	
 	output_vtk_header_scalar_next(out, name, is_proton_or_neutron);
-	fwrite(vtk_density_t.data(), sizeof(uint32_t), world_size, out);
+	fwrite(vtk_scalar_t.get(), sizeof(uint32_t), world_size, out);
 }
 
 template <typename T>
 void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> &world, const char *name) {
 	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
-	std::vector<uint32_t> vtk_force_p(3 * world_size);
-	std::vector<uint32_t> vtk_force_n(3 * world_size);
+	std::unique_ptr<uint32_t[]> vtk_vector_p(new uint32_t[3 * world_size]);
+	std::unique_ptr<uint32_t[]> vtk_vector_n(new uint32_t[3 * world_size]);
 	#pragma omp parallel for collapse(3)
 	for(size_t k = 0; k < nz; k++) {
 		for(size_t j = 0; j < ny; j++) {
@@ -163,21 +163,21 @@ void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> 
 				int idx = grid_idx(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				
-				vtk_force_p[3 * write_idx] = swap_endian(static_cast<float>(field.x[idx]));
-				vtk_force_p[3 * write_idx + 1] = swap_endian(static_cast<float>(field.y[idx]));
-				vtk_force_p[3 * write_idx + 2] = swap_endian(static_cast<float>(field.z[idx]));
+				vtk_vector_p[3 * write_idx] = swap_endian(static_cast<float>(field.x[idx]));
+				vtk_vector_p[3 * write_idx + 1] = swap_endian(static_cast<float>(field.y[idx]));
+				vtk_vector_p[3 * write_idx + 2] = swap_endian(static_cast<float>(field.z[idx]));
 				
-				vtk_force_n[3 * write_idx] = swap_endian(static_cast<float>(field.x[idx + world_size]));
-				vtk_force_n[3 * write_idx + 1] = swap_endian(static_cast<float>(field.y[idx + world_size]));
-				vtk_force_n[3 * write_idx + 2] = swap_endian(static_cast<float>(field.z[idx + world_size]));
+				vtk_vector_n[3 * write_idx] = swap_endian(static_cast<float>(field.x[idx + world_size]));
+				vtk_vector_n[3 * write_idx + 1] = swap_endian(static_cast<float>(field.y[idx + world_size]));
+				vtk_vector_n[3 * write_idx + 2] = swap_endian(static_cast<float>(field.z[idx + world_size]));
 			}
 		}
 	}
 	output_vtk_header_vector_next(out, name, is_proton);
-	fwrite(vtk_force_p.data(), sizeof(uint32_t), 3 * world_size, out);
+	fwrite(vtk_vector_p.get(), sizeof(uint32_t), 3 * world_size, out);
 	
 	output_vtk_header_vector_next(out, name, is_neutron);
-	fwrite(vtk_force_n.data(), sizeof(uint32_t), 3 * world_size, out);
+	fwrite(vtk_vector_n.get(), sizeof(uint32_t), 3 * world_size, out);
 }
 
 template <typename T>

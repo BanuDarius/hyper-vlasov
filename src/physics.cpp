@@ -104,7 +104,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 	T inv_dx2 = T(1.0) / (T(2.0) / (dx * dx) + T(2.0) / (dy * dy) + T(2.0) / (dz * dz)), omega = T(1.50), max_diff;
 	for(int it = 0; it < max_sor_iterations; it++) {
 		max_diff = T(0.0);
-		#pragma omp parallel for collapse(3) reduction(max:max_diff)
+		#pragma omp parallel for collapse(3) schedule(static) reduction(max:max_diff)
 		for(int i = 1; i < nx - 1; i++) {
 			for(int j = 1; j < ny - 1; j++) {
 				for(int k = 1; k < nz - 1; k++) {
@@ -127,7 +127,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 				}
 			}
 		}
-		#pragma omp parallel for collapse(3) reduction(max:max_diff)
+		#pragma omp parallel for collapse(3) schedule(static) reduction(max:max_diff)
 		for(int i = 1; i < nx - 1; i++) {
 			for(int j = 1; j < ny - 1; j++) {
 				for(int k = 1; k < nz - 1; k++) {
@@ -163,7 +163,7 @@ void compute_volumetric_forces_fdm(VectorField<T> &forces, const ScalarField<T> 
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
 	for(int x = 0; x < 2; x++) {
 		int offset = (x == 0) ? 0 : world_size;
-		#pragma omp parallel for collapse(3)
+		#pragma omp parallel for collapse(3) schedule(static)
 		for(int i = 0; i < nx; i++) {
 			for(int j = 0; j < ny; j++) {
 				for(int k = 0; k < nz; k++) {

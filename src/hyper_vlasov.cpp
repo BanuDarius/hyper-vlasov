@@ -22,7 +22,6 @@ SOFTWARE. */
 
 #include <omp.h>
 #include <cmath>
-#include <vector>
 #include <cstdlib>
 
 #include "init.hpp"

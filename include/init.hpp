@@ -29,6 +29,12 @@ SOFTWARE. */
 
 #include "sim_structs.hpp"
 
+static inline uint32_t swap_endian(float v) {
+	uint32_t data;
+	std::memcpy(&data, &v, 4);
+	return __builtin_bswap32(data);
+}
+
 template <typename T> void set_parameters(Parameters<T> &param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, T sample_position, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc);
 template <typename T> void set_woods_saxon(WoodsSaxon<T> &ws, T V0, T R12, T a);
 template <typename T> void set_skyrme(Skyrme<T> &skm, T A, T B, T C, T gamma);
@@ -42,11 +48,5 @@ template <typename T> void output_density_samples(FILE *out, const float *sample
 template <typename T> void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name);
 template <typename T> void output_vector_field(FILE *out, const VectorField<T> &field, const World<T> &world, const char *name);
 template <typename T> void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_levels, Parameters<T> &param, WoodsSaxon<T> &ws);
-
-static inline uint32_t swap_endian(float v) {
-	uint32_t data;
-	std::memcpy(&data, &v, 4);
-	return __builtin_bswap32(data);
-}
 
 #endif

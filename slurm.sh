@@ -8,6 +8,9 @@
 #SBATCH --mem=16G
 #SBATCH --time=2:00:00
 
+export OMP_PROC_BIND=true
+export OMP_PLACES=cores
+
 source $HOME/python-env/bin/activate
 
 srun python3 auto_compute.py
