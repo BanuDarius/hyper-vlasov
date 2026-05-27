@@ -22,6 +22,7 @@ SOFTWARE. */
 
 #include <omp.h>
 #include <cmath>
+#include <vector>
 #include <cstdlib>
 
 #include "init.hpp"
@@ -51,7 +52,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	VectorField<T> forces(2 * world_size), current_velocity(2 * world_size), temp_vector_field(2 * world_size);
-	ScalarField<T> coulomb(world_size), potentials(2 * world_size), density_before(2 * world_size), density(2 * world_size), temp_scalar_field(2 * world_size);
+	ScalarField<T> coulomb(2 * world_size), potentials(2 * world_size), density_before(2 * world_size), density(2 * world_size), temp_scalar_field(2 * world_size);
 	
 	distribute_volumetric_particles_cic(density, part, world);
 	compute_volumetric_densities(density, temp_scalar_field, param, world);
@@ -59,7 +60,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	compute_coulomb_boundaries(coulomb, part, world, param.z);
 	compute_volumetric_skyrme_potentials(potentials, density, skm, world);
 	compute_volumetric_coulomb_potentials_sor(coulomb, density, world);
-	add_scalar_field_single(potentials, potentials, coulomb, world);
+	potentials += coulomb;
 	compute_volumetric_forces_fdm(forces, potentials, world);
 	
 	distribute_forces_to_particles_cic(part, forces, world);
@@ -73,7 +74,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 		compute_coulomb_boundaries(coulomb, part, world, param.z);
 		compute_volumetric_skyrme_potentials(potentials, density, skm, world);
 		compute_volumetric_coulomb_potentials_sor(coulomb, density, world);
-		add_scalar_field_single(potentials, potentials, coulomb, world);
+		potentials += coulomb;
 		compute_volumetric_forces_fdm(forces, potentials, world);
 		
 		distribute_forces_to_particles_cic(part, forces, world);
@@ -106,7 +107,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			output_scalar_field(out_volume, potentials, world, "potentials");
 			output_vector_field(out_volume, current_velocity, world, "current");
 			if(excited_nucleus) {
-				sub_scalar_field_double(temp_scalar_field, density, density_before, world);
+				temp_scalar_field = density;
+				temp_scalar_field -= density_before;
 				output_scalar_field(out_volume, temp_scalar_field, world, "density_difference");
 				
 				compute_density_samples_cic(samples, temp_scalar_field, param, world);
@@ -117,7 +119,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 		if(step * dt >= param.t_exc && !excited_nucleus) {
 			excited_nucleus = true;
 			nuclear_excitation(part, param);
-			copy_scalar_field_double(density_before, density, world);
+			density_before = density;
 		}
 		if(step % reset_steps == 0)
 			center_momentum(part, world);

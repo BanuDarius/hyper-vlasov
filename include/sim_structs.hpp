@@ -23,8 +23,9 @@ SOFTWARE. */
 #ifndef SIM_STRUCTS_H
 #define SIM_STRUCTS_H
 
+#include <omp.h>
 #include <array>
-#include <vector>
+#include <memory>
 
 constexpr int is_proton = 0;
 constexpr int is_neutron = 1;
@@ -61,30 +62,102 @@ struct Parameters {
 template <typename T>
 struct TestParticles {
 	int protons, neutrons;
-	std::vector<T> energy, x, y, z, kx, ky, kz, fx, fy, fz;
+	std::unique_ptr<T[]> x, y, z, kx, ky, kz, fx, fy, fz, energy;
 	TestParticles(int p, int n) {
 		protons = p; neutrons = n;
 		int total = protons + neutrons;
-		x.resize(total); y.resize(total); z.resize(total);
-		kx.resize(total); ky.resize(total); kz.resize(total);
-		fx.resize(total); fy.resize(total); fz.resize(total);
-		energy.resize(total);
+		x = std::unique_ptr<T[]>(new T[total]); y = std::unique_ptr<T[]>(new T[total]); z = std::unique_ptr<T[]>(new T[total]);
+		kx = std::unique_ptr<T[]>(new T[total]); ky = std::unique_ptr<T[]>(new T[total]); kz = std::unique_ptr<T[]>(new T[total]);
+		fx = std::unique_ptr<T[]>(new T[total]); fy = std::unique_ptr<T[]>(new T[total]); fz = std::unique_ptr<T[]>(new T[total]);
+		energy = std::unique_ptr<T[]>(new T[total]);
+		#pragma omp parallel for simd schedule(static)
+		for(int i = 0; i < total; i++) {
+			x[i] = T(0.0); y[i] = T(0.0); z[i] = T(0.0);
+			kx[i] = T(0.0); ky[i] = T(0.0); kz[i] = T(0.0);
+			fx[i] = T(0.0); fy[i] = T(0.0); fz[i] = T(0.0);
+			energy[i] = T(0.0);
+		}
 	}
 };
 
 template <typename T>
 struct ScalarField {
-	std::vector<T> v;
+	std::size_t size;
+	std::unique_ptr<T[]> v;
 	ScalarField(int field_size) {
-		v.resize(field_size);
+		size = field_size;
+		v = std::unique_ptr<T[]>(new T[size]);
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++)
+			v[i] = T(0.0);
+	}
+	ScalarField(const ScalarField &other) {
+		size = other.size;
+		v = std::unique_ptr<T[]>(new T[size]);
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++)
+			v[i] = other.v[i];
+	}
+	ScalarField &operator=(const ScalarField &other) {
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++)
+			v[i] = other.v[i];
+		return *this;
+	}
+	ScalarField &operator+=(const ScalarField &other) {
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++)
+			v[i] += other.v[i];
+		return *this;
+	}
+	ScalarField &operator-=(const ScalarField &other) {
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++)
+			v[i] -= other.v[i];
+		return *this;
 	}
 };
 
 template <typename T>
 struct VectorField {
-	std::vector<T> x, y, z;
+	std::size_t size;
+	std::unique_ptr<T[]> x, y, z;
 	VectorField(int field_size) {
-		x.resize(field_size); y.resize(field_size); z.resize(field_size);
+		size = field_size;
+		x = std::unique_ptr<T[]>(new T[field_size]); y = std::unique_ptr<T[]>(new T[field_size]); z = std::unique_ptr<T[]>(new T[field_size]);
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++) {
+			x[i] = T(0.0); y[i] = T(0.0); z[i] = T(0.0); 
+		}
+	}
+	VectorField(const VectorField &other) {
+		size = other.size;
+		x = std::unique_ptr<T[]>(new T[size]); y = std::unique_ptr<T[]>(new T[size]); z = std::unique_ptr<T[]>(new T[size]);
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++) {
+			x[i] = other.x[i]; y[i] = other.y[i]; z[i] = other.z[i];
+		}
+	}
+	VectorField &operator=(const VectorField &other) {
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++) {
+			x[i] = other.x[i]; y[i] = other.y[i]; z[i] = other.z[i]; 
+		}
+		return *this;
+	}
+	VectorField &operator+=(const VectorField &other) {
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++) {
+			x[i] += other.x[i]; y[i] += other.y[i]; z[i] += other.z[i]; 
+		}
+		return *this;
+	}
+	VectorField &operator-=(const VectorField &other) {
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++) {
+			x[i] -= other.x[i]; y[i] -= other.y[i]; z[i] -= other.z[i]; 
+		}
+		return *this;
 	}
 };
 

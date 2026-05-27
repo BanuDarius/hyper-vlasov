@@ -206,7 +206,7 @@ void compute_volumetric_densities(ScalarField<T> &density, ScalarField<T> &densi
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
 	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
 	
-	copy_scalar_field_double(density_temp, density, world);
+	density_temp = density;
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		int offset = (i < world_size) ? 0 : world_size;
@@ -240,7 +240,7 @@ void compute_current_velocity(VectorField<T> &current_velocity, VectorField<T> &
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
 	T cutoff_squared = T(16.0) * sigma_r * sigma_r;
 	
-	copy_vector_field_double(current_velocity_temp, current_velocity, world);
+	current_velocity_temp = current_velocity;
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * world_size; i++) {
 		int offset = (i < world_size) ? 0 : world_size;

@@ -36,10 +36,6 @@ template <typename T> T mean_squared_radius(const TestParticles<T> &part, const 
 template <typename T> std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &world, int type);
 template <typename T> std::array<T, 2> chi_squared(const ScalarField<T> &density, const WoodsSaxon<T> &ws, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world);
 template <typename T> void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef);
-template <typename T> void add_scalar_field_single(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world);
-template <typename T> void sub_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world);
-template <typename T> void copy_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &field_b, const World<T> &world);
-template <typename T> void copy_vector_field_double(VectorField<T> &field_a, const VectorField<T> &field_b, const World<T> &world);
 
 template <typename T>
 static inline void world_pos_to_vector(std::array<T, 3> &v, const World<T> &world, int idx) {

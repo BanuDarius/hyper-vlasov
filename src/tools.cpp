@@ -217,41 +217,6 @@ void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef) {
 	ws.a_n = coef * ws.a_n + (T(1.0) - coef) * ws_old.a_n;
 }
 
-template <typename T>
-void add_scalar_field_single(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
-	#pragma omp parallel for
-	for(int i = 0; i < world_size; i++)
-		field_a.v[i] = field_b.v[i] + field_c.v[i];
-}
-
-template <typename T>
-void sub_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &field_b, const ScalarField<T> &field_c, const World<T> &world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
-	#pragma omp parallel for
-	for(int i = 0; i < 2 * world_size; i++)
-		field_a.v[i] = field_b.v[i] - field_c.v[i];
-}
-
-template <typename T>
-void copy_scalar_field_double(ScalarField<T> &field_a, const ScalarField<T> &field_b, const World<T> &world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
-	#pragma omp parallel for
-	for(int i = 0; i < 2 * world_size; i++)
-		field_a.v[i] = field_b.v[i];
-}
-
-template <typename T>
-void copy_vector_field_double(VectorField<T> &field_a, const VectorField<T> &field_b, const World<T> &world) {
-	int world_size = world.n[0] * world.n[1] * world.n[2];
-	#pragma omp parallel for
-	for(int i = 0; i < 2 * world_size; i++) {
-		field_a.x[i] = field_b.x[i];
-		field_a.y[i] = field_b.y[i];
-		field_a.z[i] = field_b.z[i];
-	}
-}
-
 template double compute_energy<double>(TestParticles<double> &part, const WoodsSaxon<double> &ws, double sigma_k, int z, int i);
 template void compute_particle_energies<double>(TestParticles<double> &part, const WoodsSaxon<double> &ws, const Parameters<double> &param);
 template void generate_random_particles<double>(TestParticles<double> &part, double r_max);
@@ -261,10 +226,6 @@ template double mean_squared_radius<double>(const TestParticles<double> &part, c
 template std::array<double, 3> center_of_mass<double>(const TestParticles<double> &part, const World<double> &world, int type);
 template std::array<double, 2> chi_squared<double>(const ScalarField<double> &density, const WoodsSaxon<double> &ws, const Skyrme<double> &skm, const Parameters<double> &param, const World<double> &world);
 template void relax_woods_saxon<double>(WoodsSaxon<double> &ws, const WoodsSaxon<double> &ws_old, double coef);
-template void add_scalar_field_single<double>(ScalarField<double> &field_a, const ScalarField<double> &field_b, const ScalarField<double> &field_c, const World<double> &world);
-template void sub_scalar_field_double(ScalarField<double> &field_a, const ScalarField<double> &field_b, const ScalarField<double> &field_c, const World<double> &world);
-template void copy_scalar_field_double(ScalarField<double> &field_a, const ScalarField<double> &field_b, const World<double> &world);
-template void copy_vector_field_double(VectorField<double> &field_a, const VectorField<double> &field_b, const World<double> &world);
 
 template float compute_energy<float>(TestParticles<float> &part, const WoodsSaxon<float> &ws, float sigma_k, int z, int i);
 template void compute_particle_energies<float>(TestParticles<float> &part, const WoodsSaxon<float> &ws, const Parameters<float> &param);
@@ -275,7 +236,3 @@ template float mean_squared_radius<float>(const TestParticles<float> &part, cons
 template std::array<float, 3> center_of_mass<float>(const TestParticles<float> &part, const World<float> &world, int type);
 template std::array<float, 2> chi_squared<float>(const ScalarField<float> &density, const WoodsSaxon<float> &ws, const Skyrme<float> &skm, const Parameters<float> &param, const World<float> &world);
 template void relax_woods_saxon<float>(WoodsSaxon<float> &ws, const WoodsSaxon<float> &ws_old, float coef);
-template void add_scalar_field_single<float>(ScalarField<float> &field_a, const ScalarField<float> &field_b, const ScalarField<float> &field_c, const World<float> &world);
-template void sub_scalar_field_double(ScalarField<float> &field_a, const ScalarField<float> &field_b, const ScalarField<float> &field_c, const World<float> &world);
-template void copy_scalar_field_double(ScalarField<float> &field_a, const ScalarField<float> &field_b, const World<float> &world);
-template void copy_vector_field_double(VectorField<float> &field_a, const VectorField<float> &field_b, const World<float> &world);

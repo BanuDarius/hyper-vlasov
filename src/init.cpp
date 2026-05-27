@@ -20,6 +20,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
+#include <vector>
 #include <cstdlib>
 
 #include "init.hpp"
@@ -123,14 +124,14 @@ void output_density_samples(FILE *out, const std::vector<float> &samples, const 
 
 template <typename T>
 void output_scalar_field(FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name) {
-	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
+	std::size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	std::vector<uint32_t> vtk_density_p(world_size);
 	std::vector<uint32_t> vtk_density_n(world_size);
 	std::vector<uint32_t> vtk_density_t(world_size);
 	#pragma omp parallel for collapse(3)
-	for(size_t k = 0; k < nz; k++) {
-		for(size_t j = 0; j < ny; j++) {
-			for(size_t i = 0; i < nx; i++) {
+	for(std::size_t k = 0; k < nz; k++) {
+		for(std::size_t j = 0; j < ny; j++) {
+			for(std::size_t i = 0; i < nx; i++) {
 				int idx = grid_idx(i, j, k, nx, ny, nz);
 				int write_idx = (k * ny * nx) + (j * nx) + i;
 				

@@ -47,9 +47,7 @@ void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const S
 
 template <typename T>
 int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
-	FittingData<T> *fit = (FittingData<T>*)p;
-	ScalarField<T> density = *fit->density;
-	World<T> world = *fit->world;
+	FittingData<T> *fit = static_cast<FittingData<T>*>(p);
 	T V0 = T(gsl_vector_get(x, 0)), R12 = T(gsl_vector_get(x, 1)), a = T(gsl_vector_get(x, 2));
 	
 	for(int i = 0; i < fit->total; i++) {
@@ -58,9 +56,9 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 		particle_pos_to_vector(r_vec, *fit->part, idx);
 		
 		T r = magnitude(r_vec);
-		T density_p = scatter_scalar_field_cic(density, r_vec, world, is_proton);;
-		T density_n = scatter_scalar_field_cic(density, r_vec, world, is_neutron);
-		T v_skyrme = skyrme_potential(*fit->skm, density_p, density_n, fit->type);
+		T density_p = scatter_scalar_field_cic(*(fit->density), r_vec, *(fit->world), is_proton);;
+		T density_n = scatter_scalar_field_cic(*(fit->density), r_vec, *(fit->world), is_neutron);
+		T v_skyrme = skyrme_potential(*(fit->skm), density_p, density_n, fit->type);
 		T v_woods_saxon = V0 / (T(1.0) + std::exp((r - R12) / a));
 		
 		gsl_vector_set(f, i, v_skyrme - v_woods_saxon);
@@ -70,13 +68,13 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 
 template <typename T>
 int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *j) {
-	FittingData<T> *fit = (FittingData<T>*)p;
+	FittingData<T> *fit = static_cast<FittingData<T>*>(p);
 	T V0 = T(gsl_vector_get(x, 0)), R12 = T(gsl_vector_get(x, 1)), a = T(gsl_vector_get(x, 2));
 	
 	for(int i = 0; i < fit->total; i++) {
 		int idx = fit->start + i;
 		std::array<T, 3> r_vec;
-		particle_pos_to_vector(r_vec, *fit->part, idx);
+		particle_pos_to_vector(r_vec, *(fit->part), idx);
 		
 		T r = magnitude(r_vec);
 		T exp_v = std::exp((r - R12) / a);
