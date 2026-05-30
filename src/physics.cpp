@@ -45,6 +45,7 @@ void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrm
 		compute_particle_energies(temp_part, ws, param);
 		int less_p = 0, equal_p = 0, more_p = 0;
 		int less_n = 0, equal_n = 0, more_n = 0;
+		#pragma omp parallel for reduction(+:equal_p, more_p, less_p)
 		for(int i = 0; i < max_part; i++) {
 			if(temp_part.energy[i] < fermi_levels.epsilon_p)
 				equal_p += 2;
@@ -52,12 +53,14 @@ void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrm
 				more_p += 2;
 			if(temp_part.energy[i] < fermi_levels.epsilon_p - T(0.5))
 				less_p += 2;
-			
-			if(temp_part.energy[i + max_part] < fermi_levels.epsilon_n)
+		}
+		#pragma omp parallel for reduction(+:equal_n, more_n, less_n)
+		for(int i = max_part; i < 2 * max_part; i++) {
+			if(temp_part.energy[i] < fermi_levels.epsilon_n)
 				equal_n += 2;
-			if(temp_part.energy[i + max_part] < fermi_levels.epsilon_n + T(0.5))
+			if(temp_part.energy[i] < fermi_levels.epsilon_n + T(0.5))
 				more_n += 2;
-			if(temp_part.energy[i + max_part] < fermi_levels.epsilon_n - T(0.5))
+			if(temp_part.energy[i] < fermi_levels.epsilon_n - T(0.5))
 				less_n += 2;
 		}
 		T delta_part_n = total_n - equal_n;
