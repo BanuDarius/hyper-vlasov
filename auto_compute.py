@@ -41,7 +41,7 @@ eta_exc = 0.20
 steps = 1500
 substeps = 4
 d_max_scale = 1.3
-density_samples = 128
+density_samples = 256
 sample_position = 0.0
 
 V0 = -50.0
