@@ -31,14 +31,14 @@ import scripts.plotting as plotting
 use_gpu = False
 use_floats = False
 
-num_test_part = 3000
+num_test_part = 10000
 z = 50
 n = 82
 nx = 24
-t_f = 1400.0
-t_exc = 300.0
+t_f = 1500.0
+t_exc = 200.0
 eta_exc = 0.20
-steps = 1400
+steps = 1500
 substeps = 4
 d_max_scale = 1.3
 density_samples = 128
