@@ -24,6 +24,7 @@ SOFTWARE.'''
 
 import numpy as np
 from scipy.fft import fft, fftfreq
+from scipy.signal import detrend
 import subprocess
 from pathlib import Path
 
@@ -100,7 +101,7 @@ def compute_energy_spectrum(sim_parameters):
     cm_neutrons = data[start_idx:, 4]
     
     dipole = (n * z) / (n + z) * (cm_protons - cm_neutrons)
-    dipole -= dipole[0]
+    dipole = detrend(dipole, type='linear')
     
     t0 = time[0]
     dt = t_f / steps * substeps
