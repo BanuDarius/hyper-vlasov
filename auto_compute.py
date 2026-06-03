@@ -31,10 +31,10 @@ import scripts.plotting as plotting
 use_gpu = False
 use_floats = False
 
-num_test_part = 10000
+num_test_part = 2000
 z = 50
 n = 82
-nx = 32
+nx = 16
 t_f = 1500.0
 t_exc = 200.0
 eta_exc = 0.20

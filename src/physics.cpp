@@ -124,8 +124,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 						
 						coulomb.v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb.v[idx] - phi_old);
-						if(diff > max_diff)
-							max_diff = diff;
+						max_diff = std::max(max_diff, diff);
 					}
 				}
 			}
@@ -147,8 +146,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 						
 						coulomb.v[idx] = (T(1.0) - omega) * phi_old + omega * phi_star;
 						T diff = std::abs(coulomb.v[idx] - phi_old);
-						if(diff > max_diff)
-							max_diff = diff;
+						max_diff = std::max(max_diff, diff);
 					}
 				}
 			}
