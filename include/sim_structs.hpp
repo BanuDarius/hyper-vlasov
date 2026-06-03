@@ -63,8 +63,7 @@ template <typename T>
 struct TestParticles {
 	int protons, neutrons;
 	std::unique_ptr<T[]> x, y, z, kx, ky, kz, fx, fy, fz, energy;
-	TestParticles(int protons_new, int neutrons_new) {
-		protons = protons_new; neutrons = neutrons_new;
+	TestParticles(int protons_new, int neutrons_new) : protons(protons_new), neutrons(neutrons_new) {
 		int total = protons + neutrons;
 		x = std::unique_ptr<T[]>(new T[total]); y = std::unique_ptr<T[]>(new T[total]); z = std::unique_ptr<T[]>(new T[total]);
 		kx = std::unique_ptr<T[]>(new T[total]); ky = std::unique_ptr<T[]>(new T[total]); kz = std::unique_ptr<T[]>(new T[total]);
@@ -84,8 +83,7 @@ template <typename T>
 struct ScalarField {
 	std::size_t size;
 	std::unique_ptr<T[]> v;
-	ScalarField(int field_size) {
-		size = field_size;
+	ScalarField(int field_size) : size(field_size) {
 		v = std::unique_ptr<T[]>(new T[size]);
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++)
@@ -122,8 +120,7 @@ template <typename T>
 struct VectorField {
 	std::size_t size;
 	std::unique_ptr<T[]> x, y, z;
-	VectorField(int field_size) {
-		size = field_size;
+	VectorField(int field_size) : size(field_size) {
 		x = std::unique_ptr<T[]>(new T[field_size]); y = std::unique_ptr<T[]>(new T[field_size]); z = std::unique_ptr<T[]>(new T[field_size]);
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++) {
