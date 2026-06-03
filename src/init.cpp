@@ -208,7 +208,7 @@ void read_input_file(FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_
 	T sigma_k = calc_sigma(T(k_fwhm)), sigma_r = calc_sigma(T(r_fwhm));
 	T d_max = T(d_max_scale) * nuclear_radius<T>(z + n);
 	
-	set_parameters(param, z, n, num_test_part, steps, substeps, density_samples, (bool)use_gpu, T(sample_position), T(sigma_k), T(sigma_r), T(t_f), T(t_exc), T(eta_exc));
+	set_parameters(param, z, n, num_test_part, steps, substeps, density_samples, static_cast<bool>(use_gpu), T(sample_position), T(sigma_k), T(sigma_r), T(t_f), T(t_exc), T(eta_exc));
 	world = World(nx, T(d_max));
 	skm = Skyrme(T(A), T(B), T(C), T(gamma));
 	fermi_levels = Fermi(T(epsilon_p), T(epsilon_n));

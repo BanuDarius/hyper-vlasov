@@ -112,12 +112,12 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 			for(int j = 1; j < ny - 1; j++) {
 				for(int k = 1; k < nz - 1; k++) {
 					if((i + j + k) % 2 == 0) {
-						int idx = grid_idx(i, j, k, nx, ny, nz);
-						T rho = density.v[idx];
-						
 						T phi_x = (coulomb.v[grid_idx(i + 1, j, k, nx, ny, nz)] + coulomb.v[grid_idx(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
 						T phi_y = (coulomb.v[grid_idx(i, j + 1, k, nx, ny, nz)] + coulomb.v[grid_idx(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
 						T phi_z = (coulomb.v[grid_idx(i, j, k + 1, nx, ny, nz)] + coulomb.v[grid_idx(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
+						
+						int idx = grid_idx(i, j, k, nx, ny, nz);
+						T rho = density.v[idx];
 						
 						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * rho) * inv_dx2;
 						T phi_old = coulomb.v[idx];
@@ -134,12 +134,12 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 			for(int j = 1; j < ny - 1; j++) {
 				for(int k = 1; k < nz - 1; k++) {
 					if((i + j + k) % 2 != 0) {
-						int idx = grid_idx(i, j, k, nx, ny, nz);
-						T rho = density.v[idx];
-						
 						T phi_x = (coulomb.v[grid_idx(i + 1, j, k, nx, ny, nz)] + coulomb.v[grid_idx(i - 1, j, k, nx, ny, nz)]) / (dx * dx);
 						T phi_y = (coulomb.v[grid_idx(i, j + 1, k, nx, ny, nz)] + coulomb.v[grid_idx(i, j - 1, k, nx, ny, nz)]) / (dy * dy);
 						T phi_z = (coulomb.v[grid_idx(i, j, k + 1, nx, ny, nz)] + coulomb.v[grid_idx(i, j, k - 1, nx, ny, nz)]) / (dz * dz);
+						
+						int idx = grid_idx(i, j, k, nx, ny, nz);
+						T rho = density.v[idx];
 						
 						T phi_star = (phi_x + phi_y + phi_z + T(4.0) * pi<T> * T(1.44) * rho) * inv_dx2;
 						T phi_old = coulomb.v[idx];
