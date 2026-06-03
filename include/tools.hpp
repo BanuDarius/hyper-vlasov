@@ -38,7 +38,7 @@ template <typename T> std::array<T, 2> chi_squared(const ScalarField<T> &density
 template <typename T> void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef);
 
 template <typename T>
-static inline void world_pos_to_vector(std::array<T, 3> &v, const World<T> &world, int idx) {
+inline void world_pos_to_vector(std::array<T, 3> &v, const World<T> &world, int idx) {
 	int x = world.n[0], y = world.n[1], z = world.n[2];
 	int i = idx / (y * z), j = (idx / z) % y, k = idx % z;
 	v[0] = world.d_max[0] * (T(2.0) * i / x - T(1.0));
@@ -47,28 +47,28 @@ static inline void world_pos_to_vector(std::array<T, 3> &v, const World<T> &worl
 }
 
 template <typename T>
-static inline void particle_pos_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
+inline void particle_pos_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
 	v[0] = part.x[i];
 	v[1] = part.y[i];
 	v[2] = part.z[i];
 }
 
 template <typename T>
-static inline void particle_vel_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
+inline void particle_vel_to_vector(std::array<T, 3> &v, const TestParticles<T> &part, int i) {
 	v[0] = part.kx[i];
 	v[1] = part.ky[i];
 	v[2] = part.kz[i];
 }
 
 template <typename T>
-static inline void vector_to_particle_pos(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
+inline void vector_to_particle_pos(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
 	part.x[i] = v[0];
 	part.y[i] = v[1];
 	part.z[i] = v[2];
 }
 
 template <typename T>
-static inline void vector_to_particle_vel(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
+inline void vector_to_particle_vel(TestParticles<T> &part, const std::array<T, 3> &v, int i) {
 	part.kx[i] = v[0];
 	part.ky[i] = v[1];
 	part.kz[i] = v[2];

@@ -28,43 +28,46 @@ SOFTWARE. */
 #include <random>
 
 template <typename T>
-static inline T rand_val(T min, T max) {
+inline T rand_val(T min, T max) {
 	static std::mt19937 mt(128);
 	T s = static_cast<T>(mt()) / static_cast<T>(mt.max());
 	return min + s * (max - min);
 }
 
 template <typename T>
-static inline void random_vec(std::array<T, 3> &v, T max) {
+inline void random_vec(std::array<T, 3> &v, T max) {
 	for(int i = 0; i < 3; i++)
 		v[i] = rand_val(-max, max);
 }
 
 template <typename T>
-static inline T dot(const std::array<T, 3> &a, const std::array<T, 3> &b) {
+inline T dot(const std::array<T, 3> &a, const std::array<T, 3> &b) {
 	T x = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 	return x;
 }
 
 template <typename T>
-static inline T magnitude(const std::array<T, 3> &a) {
+inline T magnitude(const std::array<T, 3> &a) {
 	T x = std::sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 	return x;
 }
 
 template <typename T>
-static inline std::array<T, 3> operator+(const std::array<T, 3> &a, const std::array<T, 3> &b) {
-	return { a[0] + b[0], a[1] + b[1], a[2] + b[2] };
+inline std::array<T, 3> operator+(const std::array<T, 3> &a, const std::array<T, 3> &b) {
+	std::array<T, 3> x = { a[0] + b[0], a[1] + b[1], a[2] + b[2] };
+	return x;
 }
 
 template <typename T>
-static inline std::array<T, 3> operator-(const std::array<T, 3> &a, const std::array<T, 3> &b) {
-	return { a[0] - b[0], a[1] - b[1], a[2] - b[2] };
+inline std::array<T, 3> operator-(const std::array<T, 3> &a, const std::array<T, 3> &b) {
+	std::array<T, 3> x = { a[0] - b[0], a[1] - b[1], a[2] - b[2] };
+	return x;
 }
 
 template <typename T>
-static inline std::array<T, 3> operator*(const std::array<T, 3> &a, T b) {
-	return { a[0] * b, a[1] * b, a[2] * b };
+inline std::array<T, 3> operator*(const std::array<T, 3> &a, T b) {
+	std::array<T, 3> x = { a[0] * b, a[1] * b, a[2] * b };
+	return x;
 }
 
 #endif

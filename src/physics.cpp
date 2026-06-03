@@ -39,7 +39,7 @@ void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrm
 	T total_delta_epsilon, relax_coef = T(0.6);
 	
 	TestParticles<T> temp_part(max_part, max_part);
-	ScalarField<T> density(2 * world_size), temp_scalar_field(2 * world_size);;
+	ScalarField<T> density(2 * world_size), temp_scalar_field(2 * world_size);
 	do {
 		generate_random_particles(temp_part, param.r_max);
 		compute_particle_energies(temp_part, ws, param);

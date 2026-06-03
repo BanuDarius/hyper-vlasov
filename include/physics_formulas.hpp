@@ -62,7 +62,7 @@ T calc_sigma(T fwhm) {
 }
 
 template <typename T>
-static inline T woods_saxon_potential(const WoodsSaxon<T> &ws, T r, int type) {
+inline T woods_saxon_potential(const WoodsSaxon<T> &ws, T r, int type) {
 	if(type == is_proton)
 		return ws.V0_p / (T(1.0) + std::exp((r - ws.R12_p) / ws.a_p));
 	else
@@ -70,7 +70,7 @@ static inline T woods_saxon_potential(const WoodsSaxon<T> &ws, T r, int type) {
 }
 
 template <typename T>
-static inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int type) {
+inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int type) {
 	T tau = (type == is_proton) ? T(-1.0) : T(+1.0);
 	T rho = rho_p + rho_n;
 	T t = rho / rho_0<T>;
@@ -78,7 +78,7 @@ static inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int typ
 }
 
 template <typename T>
-static inline T coulomb_potential(const WoodsSaxon<T> &ws, T z, T r) {
+inline T coulomb_potential(const WoodsSaxon<T> &ws, T z, T r) {
 	if(r <= ws.R12_p)
 		return T(1.44) * (z - T(1.0)) / ws.R12_p * (T(1.5) - T(0.5) * (r / ws.R12_p) * (r / ws.R12_p));
 	else

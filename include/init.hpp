@@ -29,7 +29,7 @@ SOFTWARE. */
 
 #include "sim_structs.hpp"
 
-static inline uint32_t swap_endian(float v) {
+inline uint32_t swap_endian(float v) {
 	uint32_t data;
 	std::memcpy(&data, &v, 4);
 	return __builtin_bswap32(data);
