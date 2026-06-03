@@ -21,9 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include <omp.h>
-#include <cstdio>
 #include <cstdlib>
-#include <cstring>
 
 #include "init.hpp"
 #include "physics.hpp"

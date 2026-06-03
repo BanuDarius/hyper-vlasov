@@ -23,8 +23,6 @@ SOFTWARE. */
 #ifndef TOOLS_H
 #define TOOLS_H
 
-#include <array>
-
 #include "sim_structs.hpp"
 
 template <typename T> T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i);

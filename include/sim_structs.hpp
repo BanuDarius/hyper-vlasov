@@ -23,7 +23,6 @@ SOFTWARE. */
 #ifndef SIM_STRUCTS_H
 #define SIM_STRUCTS_H
 
-#include <omp.h>
 #include <array>
 #include <memory>
 

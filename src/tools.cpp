@@ -23,7 +23,6 @@ SOFTWARE. */
 #include "tools.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
-#include "particle_in_cell.hpp"
 
 template <typename T>
 T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i) {
