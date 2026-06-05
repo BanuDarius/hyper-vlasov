@@ -88,13 +88,6 @@ struct ScalarField {
 		for(std::size_t i = 0; i < size; i++)
 			v[i] = T(0.0);
 	}
-	ScalarField(const ScalarField &other) {
-		size = other.size;
-		v = std::unique_ptr<T[]>(new T[size]);
-		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++)
-			v[i] = other.v[i];
-	}
 	ScalarField &operator=(const ScalarField &other) {
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++)
@@ -124,14 +117,6 @@ struct VectorField {
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++) {
 			x[i] = T(0.0); y[i] = T(0.0); z[i] = T(0.0); 
-		}
-	}
-	VectorField(const VectorField &other) {
-		size = other.size;
-		x = std::unique_ptr<T[]>(new T[size]); y = std::unique_ptr<T[]>(new T[size]); z = std::unique_ptr<T[]>(new T[size]);
-		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++) {
-			x[i] = other.x[i]; y[i] = other.y[i]; z[i] = other.z[i];
 		}
 	}
 	VectorField &operator=(const VectorField &other) {

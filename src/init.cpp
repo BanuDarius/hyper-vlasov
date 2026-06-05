@@ -53,7 +53,7 @@ void output_vtk_header_start(FILE *out, World<T> world) {
 	std::fprintf(out, "DATASET STRUCTURED_POINTS\n");
 	std::fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
 	std::fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
-	std::fprintf(out, "SPACING %lf %lf %lf\n", 2.0 * world.d_max[0] / world.n[0], 2.0 * world.d_max[1] / world.n[1], 2.0 * world.d_max[2] / world.n[2]);
+	std::fprintf(out, "SPACING %lf %lf %lf\n", T(2.0) * world.d_max[0] / world.n[0], T(2.0) * world.d_max[1] / world.n[1], T(2.0) * world.d_max[2] / world.n[2]);
 	std::fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
 }
 
