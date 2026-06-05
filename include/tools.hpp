@@ -25,16 +25,6 @@ SOFTWARE. */
 
 #include "sim_structs.hpp"
 
-template <typename T> T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i);
-template <typename T> void compute_particle_energies(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param);
-template <typename T> void generate_random_particles(TestParticles<T> &part, T r_max);
-template <typename T> void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param, const Fermi<T> &fermi_levels);
-template <typename T> void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> &part, const World<T> &world, int z);
-template <typename T> T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type);
-template <typename T> std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &world, int type);
-template <typename T> std::array<T, 2> chi_squared(const ScalarField<T> &density, const WoodsSaxon<T> &ws, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world);
-template <typename T> void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef);
-
 template <typename T>
 inline void world_pos_to_vector(std::array<T, 3> &v, const World<T> &world, int idx) {
 	int x = world.n[0], y = world.n[1], z = world.n[2];
@@ -71,5 +61,15 @@ inline void vector_to_particle_vel(TestParticles<T> &part, const std::array<T, 3
 	part.ky[i] = v[1];
 	part.kz[i] = v[2];
 }
+
+template <typename T> T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i);
+template <typename T> void compute_particle_energies(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param);
+template <typename T> void generate_random_particles(TestParticles<T> &part, T r_max);
+template <typename T> void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param, const Fermi<T> &fermi_levels);
+template <typename T> void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> &part, const World<T> &world, int z);
+template <typename T> T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type);
+template <typename T> std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &world, int type);
+template <typename T> std::array<T, 2> chi_squared(const ScalarField<T> &density, const WoodsSaxon<T> &ws, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world);
+template <typename T> void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef);
 
 #endif
