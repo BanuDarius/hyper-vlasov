@@ -8,8 +8,8 @@
 #SBATCH --mem=256GB
 #SBATCH --time=2:00:00
 
-export OMP_PLACES=threads
-export OMP_PROC_BIND=spread
+export OMP_PLACES=cores
+export OMP_PROC_BIND=true
 
 source $HOME/python-env/bin/activate
 
