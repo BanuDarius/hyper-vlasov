@@ -21,7 +21,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include <omp.h>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #include "init.hpp"
 #include "physics.hpp"
@@ -34,12 +36,12 @@ void run_simulation(const char *input_filename, const char *output_filename) {
 	WoodsSaxon<T> ws;
 	Parameters<T> param;
 	Fermi<T> fermi_levels;
-	FILE *in = fopen(input_filename, "r");
+	std::FILE *in = fopen(input_filename, "r");
 	if(in == nullptr) {
 		std::fprintf(stderr, "CANNOT OPEN INPUT FILE!\n"); std::exit(1);
 	}
 	read_input_file(in, skm, world, fermi_levels, param, ws);
-	fclose(in);
+	std::fclose(in);
 	
 	TestParticles<T> part(param.z * param.part_per_nucleon, param.n * param.part_per_nucleon);
 	std::printf("MAX TEST PART %i\n", param.max_test_part);

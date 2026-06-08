@@ -27,6 +27,7 @@ SOFTWARE. */
 #include "init.hpp"
 #include "tools.hpp"
 #include "physics.hpp"
+#include "vtk_output.hpp"
 #include "particle_in_cell.hpp"
 
 template <typename T>
@@ -43,9 +44,9 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	std::sprintf(density_samples_filename, "%s/%s", output_directory, "density_samples.bin");
 	std::sprintf(density_samples_diff_filename, "%s/%s", output_directory, "density_samples_diff.bin");
 	
-	FILE *out_stats = fopen(stats_filename, "w");
-	FILE *out_samples = fopen(density_samples_filename, "wb");
-	FILE *out_samples_diff = fopen(density_samples_diff_filename, "wb");
+	std::FILE *out_stats = std::fopen(stats_filename, "w");
+	std::FILE *out_samples = std::fopen(density_samples_filename, "wb");
+	std::FILE *out_samples_diff = std::fopen(density_samples_diff_filename, "wb");
 	if(out_stats == nullptr || out_samples == nullptr || out_samples_diff == nullptr) {
 		std::fprintf(stderr, "CANNOT OPEN STATS FILES!\n"); std::exit(1);
 	}
@@ -116,7 +117,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 				compute_density_samples_cic(samples.get(), temp_scalar_field, param, world);
 				output_density_samples(out_samples_diff, samples.get(), param);
 			}
-			fclose(out_volume);
+			std::fclose(out_volume);
 		}
 		if(step * dt >= param.t_exc && !excited_nucleus) {
 			excited_nucleus = true;
@@ -126,9 +127,9 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 		if(step % reset_steps == 0)
 			center_momentum(part, world);
 	}
-	fclose(out_stats);
-	fclose(out_samples);
-	fclose(out_samples_diff);
+	std::fclose(out_stats);
+	std::fclose(out_samples);
+	std::fclose(out_samples_diff);
 }
 
 template void cpu_simulate<double>(const char *output_directory, TestParticles<double> &part, const Skyrme<double> &skm, const Parameters<double> &param, const World<double> &world);

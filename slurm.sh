@@ -5,11 +5,11 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=256
-#SBATCH --mem=16G
+#SBATCH --mem=256GB
 #SBATCH --time=2:00:00
 
-export OMP_PROC_BIND=true
-export OMP_PLACES=cores
+export OMP_PLACES=threads
+export OMP_PROC_BIND=spread
 
 source $HOME/python-env/bin/activate
 
