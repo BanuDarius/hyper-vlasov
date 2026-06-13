@@ -26,35 +26,37 @@ SOFTWARE. */
 #include "vtk_output.hpp"
 
 template <typename T>
-void output_vtk_header_start(std::FILE *out, World<T> world) {
-	std::fprintf(out, "# vtk DataFile Version 3.0\n");
-	std::fprintf(out, "Volumetric data\n");
-	std::fprintf(out, "BINARY\n");
-	std::fprintf(out, "DATASET STRUCTURED_POINTS\n");
-	std::fprintf(out, "DIMENSIONS %d %d %d\n", world.n[0], world.n[1], world.n[2]);
-	std::fprintf(out, "ORIGIN %lf %lf %lf\n", -world.d_max[0], -world.d_max[1], -world.d_max[2]);
-	std::fprintf(out, "SPACING %lf %lf %lf\n", T(2.0) * world.d_max[0] / world.n[0], T(2.0) * world.d_max[1] / world.n[1], T(2.0) * world.d_max[2] / world.n[2]);
-	std::fprintf(out, "POINT_DATA %d\n", world.n[0] * world.n[1] * world.n[2]);
+void output_vtk_header_start(std::ofstream &output_file, World<T> world) {
+	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
+	T r_max_x = world.d_max[0], r_max_y = world.d_max[1], r_max_z = world.d_max[2];
+	output_file << "# vtk DataFile Version 3.0\n";
+	output_file << "Volumetric data\n";
+	output_file << "BINARY\n";
+	output_file << "DATASET STRUCTURED_POINTS\n";
+	output_file << "DIMENSIONS " << nx << " " << ny << " "  << nz << "\n";
+	output_file << "ORIGIN " << -r_max_x << " " << -r_max_y << " " <<  -r_max_z << "\n";
+	output_file << "SPACING " << T(2.0) * r_max_x / nx << " " << T(2.0) * r_max_y / ny << " " << T(2.0) * r_max_z / nz << "\n";
+	output_file << "POINT_DATA " << nx * ny * nz << "\n";
 }
 
-void output_vtk_header_scalar_next(std::FILE *out, const char *name, int type) {
+void output_vtk_header_scalar_next(std::ofstream &output_file, const char *name, int type) {
 	char tag;
 	if(type == is_proton) tag = 'p';
 	else if(type == is_neutron) tag = 'n';
 	else tag = 't';
-	std::fprintf(out, "SCALARS %s_%c float 1\n", name, tag);
-	std::fprintf(out, "LOOKUP_TABLE default\n");
+	output_file << "SCALARS " << name << "_" << tag << " float 1\n";
+	output_file << "LOOKUP_TABLE default\n";
 }
 
-void output_vtk_header_vector_next(std::FILE *out, const char *name, int type) {
+void output_vtk_header_vector_next(std::ofstream &output_file, const char *name, int type) {
 	char tag;
 	if(type == is_proton) tag = 'p';
 	else if(type == is_neutron) tag = 'n';
-	std::fprintf(out, "VECTORS %s_%c float\n", name, tag);
+	output_file << "VECTORS " << name << "_" << tag << " float\n";
 }
 
 template <typename T>
-void output_density_samples_positions(std::FILE *out, const Parameters<T> &param, const World<T> &world) {
+void output_density_samples_positions(std::ofstream &output_file, const Parameters<T> &param, const World<T> &world) {
 	T d_max_z = world.d_max[2];
 	int samples = param.density_samples;
 	std::vector<float> positions(samples);
@@ -62,16 +64,16 @@ void output_density_samples_positions(std::FILE *out, const Parameters<T> &param
 	for(int i = 0; i < samples; i++)
 		positions[i] = d_max_z * 2.0 * i / samples - d_max_z;
 	
-	std::fwrite(positions.data(), sizeof(float), samples, out);
+	output_file.write(reinterpret_cast<const char*>(positions.data()), samples * sizeof(float));
 }
 
 template <typename T>
-void output_density_samples(std::FILE *out, const float *samples_ptr, const Parameters<T> &param) {
-	std::fwrite(samples_ptr, sizeof(float), 2 * param.density_samples, out);
+void output_density_samples(std::ofstream &output_file, const float *samples_ptr, const Parameters<T> &param) {
+	output_file.write(reinterpret_cast<const char*>(samples_ptr), 2 * param.density_samples * sizeof(float));
 }
 
 template <typename T>
-void output_scalar_field(std::FILE *out, const ScalarField<T> &field, const World<T> &world, const char *name) {
+void output_scalar_field(std::ofstream &output_file, const ScalarField<T> &field, const World<T> &world, const char *name) {
 	std::size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	std::unique_ptr<uint32_t[]> vtk_scalar_p(new uint32_t[world_size]);
 	std::unique_ptr<uint32_t[]> vtk_scalar_n(new uint32_t[world_size]);
@@ -89,18 +91,18 @@ void output_scalar_field(std::FILE *out, const ScalarField<T> &field, const Worl
 			}
 		}
 	}
-	output_vtk_header_scalar_next(out, name, is_proton);
-	std::fwrite(vtk_scalar_p.get(), sizeof(uint32_t), world_size, out);
+	output_vtk_header_scalar_next(output_file, name, is_proton);
+	output_file.write(reinterpret_cast<const char*>(vtk_scalar_p.get()), world_size * sizeof(uint32_t));
 	
-	output_vtk_header_scalar_next(out, name, is_neutron);
-	std::fwrite(vtk_scalar_n.get(), sizeof(uint32_t), world_size, out);
+	output_vtk_header_scalar_next(output_file, name, is_neutron);
+	output_file.write(reinterpret_cast<const char*>(vtk_scalar_n.get()), world_size * sizeof(uint32_t));
 	
-	output_vtk_header_scalar_next(out, name, is_proton_or_neutron);
-	std::fwrite(vtk_scalar_t.get(), sizeof(uint32_t), world_size, out);
+	output_vtk_header_scalar_next(output_file, name, is_proton_or_neutron);
+	output_file.write(reinterpret_cast<const char*>(vtk_scalar_t.get()), world_size * sizeof(uint32_t));
 }
 
 template <typename T>
-void output_vector_field(std::FILE *out, const VectorField<T> &field, const World<T> &world, const char *name) {
+void output_vector_field(std::ofstream &output_file, const VectorField<T> &field, const World<T> &world, const char *name) {
 	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	std::unique_ptr<uint32_t[]> vtk_vector_p(new uint32_t[3 * world_size]);
 	std::unique_ptr<uint32_t[]> vtk_vector_n(new uint32_t[3 * world_size]);
@@ -121,21 +123,21 @@ void output_vector_field(std::FILE *out, const VectorField<T> &field, const Worl
 			}
 		}
 	}
-	output_vtk_header_vector_next(out, name, is_proton);
-	std::fwrite(vtk_vector_p.get(), sizeof(uint32_t), 3 * world_size, out);
+	output_vtk_header_vector_next(output_file, name, is_proton);
+	output_file.write(reinterpret_cast<const char*>(vtk_vector_p.get()), 3 * world_size * sizeof(uint32_t));
 	
-	output_vtk_header_vector_next(out, name, is_neutron);
-	std::fwrite(vtk_vector_n.get(), sizeof(uint32_t), 3 * world_size, out);
+	output_vtk_header_vector_next(output_file, name, is_neutron);
+	output_file.write(reinterpret_cast<const char*>(vtk_vector_n.get()), 3 * world_size * sizeof(uint32_t));
 }
 
-template void output_vtk_header_start<double>(std::FILE *out, World<double> world);
-template void output_density_samples_positions<double>(std::FILE *out, const Parameters<double> &param, const World<double> &world);
-template void output_density_samples<double>(std::FILE *out, const float *samples_ptr, const Parameters<double> &param);
-template void output_scalar_field<double>(std::FILE *out, const ScalarField<double> &field, const World<double> &world, const char *name);
-template void output_vector_field<double>(std::FILE *out, const VectorField<double> &field, const World<double> &world, const char *name);
+template void output_vtk_header_start<double>(std::ofstream &output_file, World<double> world);
+template void output_density_samples_positions<double>(std::ofstream &output_file, const Parameters<double> &param, const World<double> &world);
+template void output_density_samples<double>(std::ofstream &output_file, const float *samples_ptr, const Parameters<double> &param);
+template void output_scalar_field<double>(std::ofstream &output_file, const ScalarField<double> &field, const World<double> &world, const char *name);
+template void output_vector_field<double>(std::ofstream &output_file, const VectorField<double> &field, const World<double> &world, const char *name);
 
-template void output_vtk_header_start<float>(std::FILE *out, World<float> world);
-template void output_density_samples_positions<float>(std::FILE *out, const Parameters<float> &param, const World<float> &world);
-template void output_density_samples<float>(std::FILE *out, const float *samples_ptr, const Parameters<float> &param);
-template void output_scalar_field<float>(std::FILE *out, const ScalarField<float> &field, const World<float> &world, const char *name);
-template void output_vector_field<float>(std::FILE *out, const VectorField<float> &field, const World<float> &world, const char *name);
+template void output_vtk_header_start<float>(std::ofstream &output_file, World<float> world);
+template void output_density_samples_positions<float>(std::ofstream &output_file, const Parameters<float> &param, const World<float> &world);
+template void output_density_samples<float>(std::ofstream &output_file, const float *samples_ptr, const Parameters<float> &param);
+template void output_scalar_field<float>(std::ofstream &output_file, const ScalarField<float> &field, const World<float> &world, const char *name);
+template void output_vector_field<float>(std::ofstream &output_file, const VectorField<float> &field, const World<float> &world, const char *name);

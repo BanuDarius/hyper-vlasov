@@ -21,6 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
 #include <cmath>
+#include <fstream>
 #include <cstdlib>
 
 #include "simulation.hpp"
@@ -44,10 +45,10 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 	std::sprintf(density_samples_filename, "%s/%s", output_directory, "density_samples.bin");
 	std::sprintf(density_samples_diff_filename, "%s/%s", output_directory, "density_samples_diff.bin");
 	
-	std::FILE *out_stats = std::fopen(stats_filename, "w");
-	std::FILE *out_samples = std::fopen(density_samples_filename, "wb");
-	std::FILE *out_samples_diff = std::fopen(density_samples_diff_filename, "wb");
-	if(out_stats == nullptr || out_samples == nullptr || out_samples_diff == nullptr) {
+	std::ofstream out_stats(stats_filename);
+	std::ofstream out_samples(density_samples_filename, std::ios::binary);
+	std::ofstream out_samples_diff(density_samples_diff_filename, std::ios::binary);
+	if(!out_stats|| !out_samples || !out_samples_diff) {
 		std::fprintf(stderr, "CANNOT OPEN STATS FILES!\n"); std::exit(1);
 	}
 	output_density_samples_positions(out_samples, param, world);
@@ -89,8 +90,7 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			std::array<T, 3> x_n = center_of_mass(part, world, is_neutron);
 			T msr_p = mean_squared_radius(part, world, is_proton);
 			T msr_n = mean_squared_radius(part, world, is_neutron);
-			std::fprintf(out_stats, "%e %e %e %e %e\n",
-			step * dt, std::sqrt(msr_p), std::sqrt(msr_n), x_p[2], x_n[2]);
+			out_stats << step * dt << " " << std::sqrt(msr_p) << " " << std::sqrt(msr_n) << " " << x_p[2] << " " << x_n[2] << "\n";
 			
 			distribute_volumetric_momenta_cic(current_velocity, part, world);
 			compute_current_velocity(current_velocity, temp_vector_field, density, param, world);
@@ -100,8 +100,8 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 			
 			char volume_filename[string_size];
 			std::sprintf(volume_filename, "%s/out-%04d.vtk", output_directory, step / param.substeps);
-			FILE *out_volume = fopen(volume_filename, "wb");
-			if(out_volume == nullptr) {
+			std::ofstream out_volume(volume_filename, std::ios::binary);
+			if(!out_volume) {
 				std::fprintf(stderr, "CANNOT OPEN VOLUME FILE!\n"); std::exit(1);
 			}
 			output_vtk_header_start(out_volume, world);
@@ -117,7 +117,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 				compute_density_samples_cic(samples.get(), temp_scalar_field, param, world);
 				output_density_samples(out_samples_diff, samples.get(), param);
 			}
-			std::fclose(out_volume);
 		}
 		if(step * dt >= param.t_exc && !excited_nucleus) {
 			excited_nucleus = true;
@@ -127,9 +126,6 @@ void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Sk
 		if(step % reset_steps == 0)
 			center_momentum(part, world);
 	}
-	std::fclose(out_stats);
-	std::fclose(out_samples);
-	std::fclose(out_samples_diff);
 }
 
 template void cpu_simulate<double>(const char *output_directory, TestParticles<double> &part, const Skyrme<double> &skm, const Parameters<double> &param, const World<double> &world);
