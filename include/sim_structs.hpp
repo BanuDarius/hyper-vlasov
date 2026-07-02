@@ -25,6 +25,7 @@ SOFTWARE. */
 
 #include <array>
 #include <memory>
+#include <cassert>
 
 constexpr int is_proton = 0;
 constexpr int is_neutron = 1;
@@ -88,24 +89,37 @@ struct ScalarField {
 		for(std::size_t i = 0; i < size; i++)
 			v[i] = T(0.0);
 	}
+	ScalarField(const ScalarField &other) : size(other.size) {
+		v = std::unique_ptr<T[]>(new T[size]);
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < size; i++)
+			v[i] = other.v[i];
+	}
 	ScalarField &operator=(const ScalarField &other) {
+		if(this == &other) return *this;
+		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++)
 			v[i] = other.v[i];
 		return *this;
 	}
 	ScalarField &operator+=(const ScalarField &other) {
+		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++)
 			v[i] += other.v[i];
 		return *this;
 	}
 	ScalarField &operator-=(const ScalarField &other) {
+		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++)
 			v[i] -= other.v[i];
 		return *this;
 	}
+	ScalarField(ScalarField &&other) noexcept = default;
+	ScalarField &operator=(ScalarField &&other) noexcept = default;
+	~ScalarField() = default;
 };
 
 template <typename T>
@@ -113,13 +127,17 @@ struct VectorField {
 	std::size_t size;
 	std::unique_ptr<T[]> x, y, z;
 	VectorField(int field_size) : size(field_size) {
-		x = std::unique_ptr<T[]>(new T[field_size]); y = std::unique_ptr<T[]>(new T[field_size]); z = std::unique_ptr<T[]>(new T[field_size]);
+		x = std::unique_ptr<T[]>(new T[size]);
+		y = std::unique_ptr<T[]>(new T[size]);
+		z = std::unique_ptr<T[]>(new T[size]);
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++) {
 			x[i] = T(0.0); y[i] = T(0.0); z[i] = T(0.0); 
 		}
 	}
 	VectorField &operator=(const VectorField &other) {
+		if(this == &other) return *this;
+		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++) {
 			x[i] = other.x[i]; y[i] = other.y[i]; z[i] = other.z[i]; 
@@ -127,6 +145,7 @@ struct VectorField {
 		return *this;
 	}
 	VectorField &operator+=(const VectorField &other) {
+		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++) {
 			x[i] += other.x[i]; y[i] += other.y[i]; z[i] += other.z[i]; 
@@ -134,12 +153,16 @@ struct VectorField {
 		return *this;
 	}
 	VectorField &operator-=(const VectorField &other) {
+		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
 		for(std::size_t i = 0; i < size; i++) {
 			x[i] -= other.x[i]; y[i] -= other.y[i]; z[i] -= other.z[i]; 
 		}
 		return *this;
 	}
+	VectorField(VectorField &&other) noexcept = default;
+	VectorField &operator=(VectorField &&other) noexcept = default;
+	~VectorField() = default;
 };
 
 template <typename T>
