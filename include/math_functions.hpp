@@ -41,32 +41,38 @@ inline void random_vec(std::array<T, 3> &v, T max) noexcept {
 }
 
 template <typename T>
-inline T dot(const std::array<T, 3> &a, const std::array<T, 3> &b) noexcept {
+inline T dot(const std::array<T, 3> a, const std::array<T, 3> b) noexcept {
 	T x = a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 	return x;
 }
 
 template <typename T>
-inline T magnitude(const std::array<T, 3> &a) noexcept {
+inline T magnitude(const std::array<T, 3> a) noexcept {
 	T x = std::sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 	return x;
 }
 
 template <typename T>
-inline std::array<T, 3> operator+(const std::array<T, 3> &a, const std::array<T, 3> &b) noexcept {
-	std::array<T, 3> x = { a[0] + b[0], a[1] + b[1], a[2] + b[2] };
+inline std::array<T, 3> operator+(std::array<T, 3> lhs, const std::array<T, 3> rhs) noexcept {
+	std::array<T, 3> x = { lhs[0] + rhs[0], lhs[1] + rhs[1], lhs[2] + rhs[2] };
 	return x;
 }
 
 template <typename T>
-inline std::array<T, 3> operator-(const std::array<T, 3> &a, const std::array<T, 3> &b) noexcept {
-	std::array<T, 3> x = { a[0] - b[0], a[1] - b[1], a[2] - b[2] };
+inline std::array<T, 3> operator-(std::array<T, 3> lhs, const std::array<T, 3> rhs) noexcept {
+	std::array<T, 3> x = { lhs[0] - rhs[0], lhs[1] - rhs[1], lhs[2] - rhs[2] };
 	return x;
 }
 
 template <typename T>
-inline std::array<T, 3> operator*(const std::array<T, 3> &a, T b) noexcept {
-	std::array<T, 3> x = { a[0] * b, a[1] * b, a[2] * b };
+inline std::array<T, 3> &operator+=(std::array<T, 3> &lhs, const std::array<T, 3> &rhs) noexcept {
+	lhs[0] += rhs[0]; lhs[1] += rhs[1]; lhs[2] += rhs[2];
+	return lhs;
+}
+
+template <typename T>
+inline std::array<T, 3> operator*(std::array<T, 3> lhs, T b) noexcept {
+	std::array<T, 3> x = { lhs[0] *= b, lhs[1] *= b, lhs[2] *= b };
 	return x;
 }
 
