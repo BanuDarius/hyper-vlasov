@@ -63,10 +63,10 @@ struct TestParticles {
 	std::unique_ptr<T[]> x, y, z, kx, ky, kz, fx, fy, fz, energy;
 	TestParticles(int protons_new, int neutrons_new) : protons(protons_new), neutrons(neutrons_new) {
 		int total = protons + neutrons;
-		x = std::unique_ptr<T[]>(new T[total]); y = std::unique_ptr<T[]>(new T[total]); z = std::unique_ptr<T[]>(new T[total]);
-		kx = std::unique_ptr<T[]>(new T[total]); ky = std::unique_ptr<T[]>(new T[total]); kz = std::unique_ptr<T[]>(new T[total]);
-		fx = std::unique_ptr<T[]>(new T[total]); fy = std::unique_ptr<T[]>(new T[total]); fz = std::unique_ptr<T[]>(new T[total]);
-		energy = std::unique_ptr<T[]>(new T[total]);
+		x = std::make_unique_for_overwrite<T[]>(total); y = std::make_unique_for_overwrite<T[]>(total); z = std::make_unique_for_overwrite<T[]>(total);
+		kx = std::make_unique_for_overwrite<T[]>(total); ky = std::make_unique_for_overwrite<T[]>(total); kz = std::make_unique_for_overwrite<T[]>(total);
+		fx = std::make_unique_for_overwrite<T[]>(total); fy = std::make_unique_for_overwrite<T[]>(total); fz = std::make_unique_for_overwrite<T[]>(total);
+		energy = std::make_unique_for_overwrite<T[]>(total);
 		#pragma omp parallel for simd schedule(static)
 		for(int i = 0; i < total; i++) {
 			x[i] = T(0.0); y[i] = T(0.0); z[i] = T(0.0);
@@ -79,39 +79,39 @@ struct TestParticles {
 
 template <std::floating_point T>
 struct ScalarField {
-	std::size_t size;
+	std::size_t field_size;
 	std::unique_ptr<T[]> v;
-	ScalarField(int field_size) : size(field_size) {
-		v = std::unique_ptr<T[]>(new T[size]);
+	ScalarField(int field_size_n) : field_size(field_size_n) {
+		v = std::make_unique_for_overwrite<T[]>(field_size);
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++)
+		for(std::size_t i = 0; i < field_size; i++)
 			v[i] = T(0.0);
 	}
-	ScalarField(const ScalarField &other) : size(other.size) {
-		v = std::unique_ptr<T[]>(new T[size]);
+	ScalarField(const ScalarField &other) : field_size(other.size) {
+		v = std::make_unique_for_overwrite<T[]>(field_size);
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++)
+		for(std::size_t i = 0; i < field_size; i++)
 			v[i] = other.v[i];
 	}
 	ScalarField &operator=(const ScalarField &other) {
 		if(this == &other) return *this;
-		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
+		assert(field_size == other.field_size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++)
+		for(std::size_t i = 0; i < field_size; i++)
 			v[i] = other.v[i];
 		return *this;
 	}
 	ScalarField &operator+=(const ScalarField &other) {
-		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
+		assert(field_size == other.field_size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++)
+		for(std::size_t i = 0; i < field_size; i++)
 			v[i] += other.v[i];
 		return *this;
 	}
 	ScalarField &operator-=(const ScalarField &other) {
-		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
+		assert(field_size == other.field_size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++)
+		for(std::size_t i = 0; i < field_size; i++)
 			v[i] -= other.v[i];
 		return *this;
 	}
@@ -122,38 +122,47 @@ struct ScalarField {
 
 template <std::floating_point T>
 struct VectorField {
-	std::size_t size;
+	std::size_t field_size;
 	std::unique_ptr<T[]> x, y, z;
-	VectorField(int field_size) : size(field_size) {
-		x = std::unique_ptr<T[]>(new T[size]);
-		y = std::unique_ptr<T[]>(new T[size]);
-		z = std::unique_ptr<T[]>(new T[size]);
+	VectorField(int field_size_n) : field_size(field_size_n) {
+		x = std::make_unique_for_overwrite<T[]>(field_size);
+		y = std::make_unique_for_overwrite<T[]>(field_size);
+		z = std::make_unique_for_overwrite<T[]>(field_size);
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++) {
+		for(std::size_t i = 0; i < field_size; i++) {
 			x[i] = T(0.0); y[i] = T(0.0); z[i] = T(0.0); 
+		}
+	}
+	VectorField(const VectorField &other) : field_size(other.size) {
+		x = std::make_unique_for_overwrite<T[]>(field_size);
+		y = std::make_unique_for_overwrite<T[]>(field_size);
+		z = std::make_unique_for_overwrite<T[]>(field_size);
+		#pragma omp parallel for simd schedule(static)
+		for(std::size_t i = 0; i < field_size; i++) {
+			x[i] = other.x[i]; y[i] = other.y[i]; z[i] = other.z[i]; 
 		}
 	}
 	VectorField &operator=(const VectorField &other) {
 		if(this == &other) return *this;
-		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
+		assert(field_size == other.field_size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++) {
+		for(std::size_t i = 0; i < field_size; i++) {
 			x[i] = other.x[i]; y[i] = other.y[i]; z[i] = other.z[i]; 
 		}
 		return *this;
 	}
 	VectorField &operator+=(const VectorField &other) {
-		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
+		assert(field_size == other.field_size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++) {
+		for(std::size_t i = 0; i < field_size; i++) {
 			x[i] += other.x[i]; y[i] += other.y[i]; z[i] += other.z[i]; 
 		}
 		return *this;
 	}
 	VectorField &operator-=(const VectorField &other) {
-		assert(size == other.size && "FIELD SIZES DO NOT MATCH!");
+		assert(field_size == other.field_size && "FIELD SIZES DO NOT MATCH!");
 		#pragma omp parallel for simd schedule(static)
-		for(std::size_t i = 0; i < size; i++) {
+		for(std::size_t i = 0; i < field_size; i++) {
 			x[i] -= other.x[i]; y[i] -= other.y[i]; z[i] -= other.z[i]; 
 		}
 		return *this;
