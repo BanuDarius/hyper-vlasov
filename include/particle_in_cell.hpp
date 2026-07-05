@@ -23,9 +23,11 @@ SOFTWARE. */
 #ifndef PARTICLE_IN_CELL_H
 #define PARTICLE_IN_CELL_H
 
+#include <concepts>
+
 #include "sim_structs.hpp"
 
-template <typename T>
+template <std::floating_point T>
 inline T scatter_scalar_field_cic(const ScalarField<T> &field, std::array<T, 3> r_vec, const World<T> &world, int type) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
@@ -77,9 +79,9 @@ inline T scatter_scalar_field_cic(const ScalarField<T> &field, std::array<T, 3> 
 	return v;
 }
 
-template <typename T> void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestParticles<T> &part, const World<T> &world);
-template <typename T> void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorField<T> &forces, const World<T> &world);
-template <typename T> void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const TestParticles<T> &part, const World<T> &world);
-template <typename T> void compute_density_samples_cic(float *density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world);
+template <std::floating_point T> void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestParticles<T> &part, const World<T> &world);
+template <std::floating_point T> void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorField<T> &forces, const World<T> &world);
+template <std::floating_point T> void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const TestParticles<T> &part, const World<T> &world);
+template <std::floating_point T> void compute_density_samples_cic(float *density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world);
 
 #endif

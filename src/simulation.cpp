@@ -31,7 +31,7 @@ SOFTWARE. */
 #include "vtk_output.hpp"
 #include "particle_in_cell.hpp"
 
-template <typename T>
+template <std::floating_point T>
 void cpu_simulate(const char *output_directory, TestParticles<T> &part, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	bool excited_nucleus = false;
 	T dt = param.t_f / param.steps;

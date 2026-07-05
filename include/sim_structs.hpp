@@ -26,6 +26,9 @@ SOFTWARE. */
 #include <array>
 #include <memory>
 #include <cassert>
+#include <concepts>
+
+#include "math_functions.hpp"
 
 constexpr int is_proton = 0;
 constexpr int is_neutron = 1;
@@ -38,28 +41,23 @@ constexpr int max_sor_iterations = 512;
 constexpr int string_size = 128;
 constexpr int input_file_count = 23;
 
-constexpr int grid_idx(int i, int j, int k, int nx, int ny, int nz) noexcept {
-	(void)nx;
-	return (i * ny * nz) + (j * nz) + k;
-}
+template <std::floating_point T> constexpr T mc2 = T(935.0);
+template <std::floating_point T> constexpr T k_max = T(1.5);
+template <std::floating_point T> constexpr T rho_0 = T(0.16);
+template <std::floating_point T> constexpr T h_bar_c = T(197.33);
+template <std::floating_point T> constexpr T sor_tolerance = T(1e-4);
+template <std::floating_point T> constexpr T density_tolerance = T(0.01);
+template <std::floating_point T> constexpr T pi = T(3.14159265358979323846);
+template <std::floating_point T> constexpr T delta_epsilon_tolerance = T(0.1);
 
-template <typename T> constexpr T mc2 = T(935.0);
-template <typename T> constexpr T k_max = T(1.5);
-template <typename T> constexpr T rho_0 = T(0.16);
-template <typename T> constexpr T h_bar_c = T(197.33);
-template <typename T> constexpr T sor_tolerance = T(1e-4);
-template <typename T> constexpr T density_tolerance = T(0.01);
-template <typename T> constexpr T pi = T(3.14159265358979323846);
-template <typename T> constexpr T delta_epsilon_tolerance = T(0.1);
-
-template <typename T>
+template <std::floating_point T>
 struct Parameters {
 	bool use_gpu;
 	T sigma_k, sigma_r, r_max, t_f, t_exc, eta_exc, d_max_scale, sample_position;
 	int part_per_nucleon, max_test_part, density_samples, substeps, steps, z, n;
 };
 
-template <typename T>
+template <std::floating_point T>
 struct TestParticles {
 	int protons, neutrons;
 	std::unique_ptr<T[]> x, y, z, kx, ky, kz, fx, fy, fz, energy;
@@ -79,7 +77,7 @@ struct TestParticles {
 	}
 };
 
-template <typename T>
+template <std::floating_point T>
 struct ScalarField {
 	std::size_t size;
 	std::unique_ptr<T[]> v;
@@ -122,7 +120,7 @@ struct ScalarField {
 	~ScalarField() = default;
 };
 
-template <typename T>
+template <std::floating_point T>
 struct VectorField {
 	std::size_t size;
 	std::unique_ptr<T[]> x, y, z;
@@ -165,7 +163,7 @@ struct VectorField {
 	~VectorField() = default;
 };
 
-template <typename T>
+template <std::floating_point T>
 struct World {
 	std::array<int, 3> n;
 	std::array<T, 3> d_max;
@@ -178,7 +176,7 @@ struct World {
 	}
 };
 
-template <typename T>
+template <std::floating_point T>
 struct WoodsSaxon {
 	T V0_p, R12_p, a_p;
 	T V0_n, R12_n, a_n;
@@ -190,7 +188,7 @@ struct WoodsSaxon {
 	}
 };
 
-template <typename T>
+template <std::floating_point T>
 struct Skyrme {
 	T A, B, C, gamma;
 	Skyrme() = default;
@@ -199,7 +197,7 @@ struct Skyrme {
 	}
 };
 
-template <typename T>
+template <std::floating_point T>
 struct Fermi {
 	T epsilon_p, epsilon_n;
 	Fermi() = default;

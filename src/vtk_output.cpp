@@ -25,7 +25,7 @@ SOFTWARE. */
 
 #include "vtk_output.hpp"
 
-template <typename T>
+template <std::floating_point T>
 void output_vtk_header_start(std::ofstream &output_file, World<T> world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	T r_max_x = world.d_max[0], r_max_y = world.d_max[1], r_max_z = world.d_max[2];
@@ -55,7 +55,7 @@ void output_vtk_header_vector_next(std::ofstream &output_file, const char *name,
 	output_file << "VECTORS " << name << "_" << tag << " float\n";
 }
 
-template <typename T>
+template <std::floating_point T>
 void output_density_samples_positions(std::ofstream &output_file, const Parameters<T> &param, const World<T> &world) {
 	T d_max_z = world.d_max[2];
 	int samples = param.density_samples;
@@ -67,12 +67,12 @@ void output_density_samples_positions(std::ofstream &output_file, const Paramete
 	output_file.write(reinterpret_cast<const char*>(positions.data()), samples * sizeof(float));
 }
 
-template <typename T>
+template <std::floating_point T>
 void output_density_samples(std::ofstream &output_file, const float *samples_ptr, const Parameters<T> &param) {
 	output_file.write(reinterpret_cast<const char*>(samples_ptr), 2 * param.density_samples * sizeof(float));
 }
 
-template <typename T>
+template <std::floating_point T>
 void output_scalar_field(std::ofstream &output_file, const ScalarField<T> &field, const World<T> &world, const char *name) {
 	std::size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	std::unique_ptr<uint32_t[]> vtk_scalar_p(new uint32_t[world_size]);
@@ -101,7 +101,7 @@ void output_scalar_field(std::ofstream &output_file, const ScalarField<T> &field
 	output_file.write(reinterpret_cast<const char*>(vtk_scalar_t.get()), world_size * sizeof(uint32_t));
 }
 
-template <typename T>
+template <std::floating_point T>
 void output_vector_field(std::ofstream &output_file, const VectorField<T> &field, const World<T> &world, const char *name) {
 	size_t nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	std::unique_ptr<uint32_t[]> vtk_vector_p(new uint32_t[3 * world_size]);

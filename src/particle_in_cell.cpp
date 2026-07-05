@@ -23,7 +23,7 @@ SOFTWARE. */
 #include "particle_in_cell.hpp"
 #include "tools.hpp"
 
-template <typename T>
+template <std::floating_point T>
 void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestParticles<T> &part, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part.protons + part.neutrons;
@@ -92,7 +92,7 @@ void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestPart
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorField<T> &forces, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part.protons + part.neutrons;
@@ -163,7 +163,7 @@ void distribute_forces_to_particles_cic(TestParticles<T> &part, const VectorFiel
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const TestParticles<T> &part, const World<T> &world) {
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz, total = part.protons + part.neutrons;
@@ -275,7 +275,7 @@ void distribute_volumetric_momenta_cic(VectorField<T> &current_density, const Te
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_density_samples_cic(float *density_samples, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world) {
 	T d_max_y = world.d_max[1], d_max_z = world.d_max[2];
 	

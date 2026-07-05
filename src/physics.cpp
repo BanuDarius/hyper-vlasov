@@ -29,7 +29,7 @@ SOFTWARE. */
 #include "physics_formulas.hpp"
 #include "particle_in_cell.hpp"
 
-template <typename T>
+template <std::floating_point T>
 void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrme<T> &skm, Fermi<T> &fermi_levels, const Parameters<T> &param, const World<T> &world) {
 	int max_part = param.max_test_part, z = param.z, n = param.n, part_per_nucleon = param.part_per_nucleon;
 	int total_p = z * part_per_nucleon, total_n = n * part_per_nucleon;
@@ -98,7 +98,7 @@ void initialize_particles(TestParticles<T> &part, WoodsSaxon<T> &ws, const Skyrm
 	compute_particle_energies(part, ws, param);
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const ScalarField<T> &density, const World<T> &world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
@@ -157,7 +157,7 @@ void compute_volumetric_coulomb_potentials_sor(ScalarField<T> &coulomb, const Sc
 		std::fprintf(stderr, "SOR COULOMB DID NOT CONVERGE!\n");
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_volumetric_forces_fdm(VectorField<T> &forces, const ScalarField<T> &potentials, const World<T> &world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	T dx = T(2.0) * world.d_max[0] / nx, dy = T(2.0) * world.d_max[1] / ny, dz = T(2.0) * world.d_max[2] / nz;
@@ -202,7 +202,7 @@ void compute_volumetric_forces_fdm(VectorField<T> &forces, const ScalarField<T> 
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_volumetric_densities(ScalarField<T> &density, ScalarField<T> &density_temp, const Parameters<T> &param, const World<T> &world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
@@ -236,7 +236,7 @@ void compute_volumetric_densities(ScalarField<T> &density, ScalarField<T> &densi
 		density.v[i] *= term;
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_current_velocity(VectorField<T> &current_velocity, VectorField<T> &current_velocity_temp, const ScalarField<T> &density, const Parameters<T> &param, const World<T> &world) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2], world_size = nx * ny * nz;
 	T sigma_r = param.sigma_r, exp_term = T(1.0) / (T(2.0) * sigma_r * sigma_r);
@@ -284,7 +284,7 @@ void compute_current_velocity(VectorField<T> &current_velocity, VectorField<T> &
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void center_momentum(TestParticles<T> &part, const World<T> &world) {
 	int total = part.protons + part.neutrons, part_num = 0;
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
@@ -314,7 +314,7 @@ void center_momentum(TestParticles<T> &part, const World<T> &world) {
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void nuclear_excitation(TestParticles<T> &part, const Parameters<T> &param) {
 	int protons = part.protons, neutrons = part.neutrons;
 	T z = param.z, n = param.n, eta = param.eta_exc;
@@ -327,7 +327,7 @@ void nuclear_excitation(TestParticles<T> &part, const Parameters<T> &param) {
 		part.kz[i] -= eta * neutron_kick;
 }
 
-template <typename T>
+template <std::floating_point T>
 void update_momenta_half(TestParticles<T> &part, T dt) {
 	int total = part.protons + part.neutrons;
 	T fact = dt / (T(2.0) * h_bar_c<T>);
@@ -339,7 +339,7 @@ void update_momenta_half(TestParticles<T> &part, T dt) {
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void update_positions_full(TestParticles<T> &part, T dt) {
 	int total = part.protons + part.neutrons;
 	T fact = (dt * h_bar_c<T>) / mc2<T>;
@@ -351,7 +351,7 @@ void update_positions_full(TestParticles<T> &part, T dt) {
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_volumetric_skyrme_potentials(ScalarField<T> &potentials, const ScalarField<T> &density, const Skyrme<T> &skm, const World<T> &world) {
 	int x = world.n[0], y = world.n[1], z = world.n[2], world_size = x * y * z;
 	#pragma omp parallel for

@@ -28,7 +28,7 @@ SOFTWARE. */
 #include "physics_formulas.hpp"
 #include "particle_in_cell.hpp"
 
-template <typename T>
+template <std::floating_point T>
 void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const ScalarField<T> &density, const World<T> &world, const Skyrme<T> &skm, int type, int start, int total) {
 	fit->skm = &skm;
 	fit->type = type;
@@ -39,7 +39,7 @@ void set_fit_function(FittingData<T> *fit, const TestParticles<T> &part, const S
 	fit->density = &density;
 }
 
-template <typename T>
+template <std::floating_point T>
 int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 	FittingData<T> *fit = static_cast<FittingData<T>*>(p);
 	T V0 = T(gsl_vector_get(x, 0)), R12 = T(gsl_vector_get(x, 1)), a = T(gsl_vector_get(x, 2));
@@ -60,7 +60,7 @@ int woods_saxon_f(const gsl_vector *x, void *p, gsl_vector *f) {
 	return GSL_SUCCESS;
 }
 
-template <typename T>
+template <std::floating_point T>
 int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *j) {
 	FittingData<T> *fit = static_cast<FittingData<T>*>(p);
 	T V0 = T(gsl_vector_get(x, 0)), R12 = T(gsl_vector_get(x, 1)), a = T(gsl_vector_get(x, 2));
@@ -85,7 +85,7 @@ int woods_saxon_df(const gsl_vector *x, void *p, gsl_matrix *j) {
 	return GSL_SUCCESS;
 }
 
-template <typename T>
+template <std::floating_point T>
 void minim_woods_saxon(WoodsSaxon<T> &ws, TestParticles<T> &part, const ScalarField<T> &density, const Skyrme<T> &skm, const World<T> &world) {
 	const gsl_multifit_nlinear_type *T_MAGIC = gsl_multifit_nlinear_trust;
 	gsl_multifit_nlinear_parameters fdf_params = gsl_multifit_nlinear_default_parameters();

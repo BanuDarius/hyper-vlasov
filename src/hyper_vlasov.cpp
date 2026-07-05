@@ -24,12 +24,13 @@ SOFTWARE. */
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <concepts>
 
 #include "init.hpp"
 #include "physics.hpp"
 #include "simulation.hpp"
 
-template <typename T>
+template <std::floating_point T>
 void run_simulation(const char *input_filename, const char *output_filename) {
 	Skyrme<T> skm;
 	World<T> world;

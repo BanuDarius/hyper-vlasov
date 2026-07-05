@@ -26,7 +26,7 @@ SOFTWARE. */
 #include "init.hpp"
 #include "physics_formulas.hpp"
 
-template <typename T>
+template <std::floating_point T>
 void set_parameters(Parameters<T> &param, int z, int n, int part_per_nucleon, int steps, int substeps, int density_samples, bool use_gpu, T sample_position, T sigma_k, T sigma_r, T t_f, T t_exc, T eta_exc) {
 	param.z = z;
 	param.n = n;
@@ -45,7 +45,7 @@ void set_parameters(Parameters<T> &param, int z, int n, int part_per_nucleon, in
 	param.max_test_part = max_particles(param.r_max, k_max<T>, param.part_per_nucleon);
 }
 
-template <typename T>
+template <std::floating_point T>
 void read_input_file(std::FILE *in, Skyrme<T> &skm, World<T> &world, Fermi<T> &fermi_levels, Parameters<T> &param, WoodsSaxon<T> &ws) {
 	double V0, a, A, B, C, gamma, epsilon_p, epsilon_n, k_fwhm, r_fwhm, t_f, t_exc, eta_exc, d_max_scale, sample_position;
 	int i = 0, num_test_part, use_gpu, density_samples, substeps, steps, nx, z, n;

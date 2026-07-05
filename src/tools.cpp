@@ -20,11 +20,13 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE. */
 
+#include <array>
+
 #include "tools.hpp"
 #include "math_functions.hpp"
 #include "physics_formulas.hpp"
 
-template <typename T>
+template <std::floating_point T>
 T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int z, int i) {
 	std::array<T, 3> r_vec, k_vec;
 	particle_pos_to_vector(r_vec, part, i);
@@ -43,7 +45,7 @@ T compute_energy(TestParticles<T> &part, const WoodsSaxon<T> &ws, T sigma_k, int
 	return energy;
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_particle_energies(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param) {
 	T sigma_k = param.sigma_k, z = param.z;
 	#pragma omp parallel for
@@ -51,7 +53,7 @@ void compute_particle_energies(TestParticles<T> &part, const WoodsSaxon<T> &ws, 
 		part.energy[i] = compute_energy(part, ws, sigma_k, z, i);
 }
 
-template <typename T>
+template <std::floating_point T>
 void generate_random_particles(TestParticles<T> &part, T r_max) {
 	int total = part.protons + part.neutrons, i = 0;
 	while(i < total) {
@@ -71,7 +73,7 @@ void generate_random_particles(TestParticles<T> &part, T r_max) {
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws, const Parameters<T> &param, const Fermi<T> &fermi_levels) {
 	T r_max = param.r_max, sigma_k = param.sigma_k, z = param.z, epsilon;
 	int total = part.protons + part.neutrons, i = 0;
@@ -99,7 +101,7 @@ void generate_checking_particles(TestParticles<T> &part, const WoodsSaxon<T> &ws
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> &part, const World<T> &world, int z) {
 	int nx = world.n[0], ny = world.n[1], nz = world.n[2];
 	std::array<T, 3> cm_protons = center_of_mass(part, world, is_proton);
@@ -121,7 +123,7 @@ void compute_coulomb_boundaries(ScalarField<T> &coulomb, const TestParticles<T> 
 	}
 }
 
-template <typename T>
+template <std::floating_point T>
 T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int type) {
 	int start, end, part_num = 0;
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
@@ -146,7 +148,7 @@ T mean_squared_radius(const TestParticles<T> &part, const World<T> &world, int t
 	return r_sqr / static_cast<T>(part_num);
 }
 
-template <typename T>
+template <std::floating_point T>
 std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &world, int type) {
 	int start, end, part_num = 0;
 	T d_max_x = world.d_max[0], d_max_y = world.d_max[1], d_max_z = world.d_max[2];
@@ -174,7 +176,7 @@ std::array<T, 3> center_of_mass(const TestParticles<T> &part, const World<T> &wo
 	return center;
 }
 
-template <typename T>
+template <std::floating_point T>
 std::array<T, 2> chi_squared(const ScalarField<T> &density, const WoodsSaxon<T> &ws, const Skyrme<T> &skm, const Parameters<T> &param, const World<T> &world) {
 	int world_size = world.n[0] * world.n[1] * world.n[2];
 	T chi_squared_p = 0.0, chi_squared_n = 0.0;
@@ -206,7 +208,7 @@ std::array<T, 2> chi_squared(const ScalarField<T> &density, const WoodsSaxon<T> 
 	return std::array<T, 2> { chi_squared_p, chi_squared_n };
 }
 
-template <typename T>
+template <std::floating_point T>
 void relax_woods_saxon(WoodsSaxon<T> &ws, const WoodsSaxon<T> &ws_old, T coef) {
 	ws.V0_p = coef * ws.V0_p + (T(1.0) - coef) * ws_old.V0_p;
 	ws.V0_n = coef * ws.V0_n + (T(1.0) - coef) * ws_old.V0_n;
