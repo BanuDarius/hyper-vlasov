@@ -56,7 +56,7 @@ inline T skyrme_potential(const Skyrme<T> &skm, T rho_p, T rho_n, int type) noex
 	T tau = (type == is_proton) ? T(-1.0) : T(+1.0);
 	T rho = rho_p + rho_n;
 	T t = rho / rho_0<T>;
-	return skm.A * t + skm.B * std::pow(t, skm.gamma) + tau * skm.C * ((rho_n - rho_p) / rho_0<T>);
+	return skm.A * t + skm.B * std::pow(t, skm.gamma) + T(2.0) * tau * skm.C * ((rho_n - rho_p) / rho_0<T>);
 }
 
 template <std::floating_point T>
