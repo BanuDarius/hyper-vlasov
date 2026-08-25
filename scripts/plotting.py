@@ -1,26 +1,5 @@
-'''MIT License
-
-Copyright (c) 2026 Banu Darius-Matei
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.'''
-
-# ---------------------------------------------------------- #
+# Copyright (c) 2026 Banu Darius-Matei
+# SPDX-License-Identifier: MIT
 
 import numpy as np
 from pathlib import Path
@@ -28,14 +7,10 @@ import matplotlib.pyplot as plt
 
 plt.rcParams.update({'font.size': 12})
 
-# ---------------------------------------------------------- #
-
 MAIN_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = MAIN_DIR.parent
 OUTPUT_DIR = PROJECT_ROOT / "output"
 IMAGE_DIR = PROJECT_ROOT / "output-image"
-
-# ---------------------------------------------------------- #
 
 def plot_energy_spectrum(sim_parameters):
     if(sim_parameters.eta_exc < 1e-5):
@@ -61,8 +36,6 @@ def plot_energy_spectrum(sim_parameters):
     
     plt.close(fig)
     print(f"Created energy spectrum graph.")
-
-# ---------------------------------------------------------- #
 
 def plot_radius():
     input_file = OUTPUT_DIR / "stats.txt"
@@ -90,8 +63,6 @@ def plot_radius():
     plt.close(fig)
     print(f"Created radius graph.")
     
-# ---------------------------------------------------------- #
-
 def plot_center_of_mass():
     input_file = OUTPUT_DIR / "stats.txt"
     output_image = IMAGE_DIR / "center_of_mass.png"
@@ -118,8 +89,6 @@ def plot_center_of_mass():
     
     plt.close(fig)
     print(f"Created center of mass graph.")
-
-# ---------------------------------------------------------- #
 
 def plot_dipole(sim_parameters):
     if(sim_parameters.eta_exc < 1e-5):
@@ -150,8 +119,6 @@ def plot_dipole(sim_parameters):
     plt.close(fig)
     print(f"Created dipole graph.")
     
-# ---------------------------------------------------------- #
-
 def plot_density_samples(sim_parameters):
     samples = int(sim_parameters.density_samples)
     t_f = sim_parameters.t_f
@@ -189,8 +156,6 @@ def plot_density_samples(sim_parameters):
     save_density_plot(neutron_grid, "Neutron density", output_image_n)
     print(f"Created density sample graph.")
     
-# ---------------------------------------------------------- #
-
 def plot_density_samples_differences(sim_parameters):
     samples = int(sim_parameters.density_samples)
     t_f = sim_parameters.t_f
@@ -237,8 +202,6 @@ def plot_density_samples_differences(sim_parameters):
     save_density_plot(neutron_grid, "Neutron density differences", output_image_n)
     print(f"Created density sample difference graph.")
 
-# ---------------------------------------------------------- #
-
 def plot_density_samples_differences_lines(sim_parameters):
     samples = int(sim_parameters.density_samples)
     t_f = sim_parameters.t_f
@@ -281,5 +244,3 @@ def plot_density_samples_differences_lines(sim_parameters):
         fig.savefig(output_image, dpi=150, bbox_inches='tight')
     plt.close(fig)
     print(f"Created density sample difference line graphs.")
-
-# ---------------------------------------------------------- #
