@@ -35,37 +35,37 @@ void distribute_volumetric_particles_cic(ScalarField<T> &density, const TestPart
 		#pragma omp atomic
 		density.v[idx] += t_x * t_y * t_z;
 		
-		if (x1 < nx) {
+		if(x1 < nx) {
 			idx = grid_idx(x1, y0, z0, nx, ny, nz) + offset;
 			#pragma omp atomic
 			density.v[idx] += d_x * t_y * t_z;
 		}
-		if (y1 < ny) {
+		if(y1 < ny) {
 			idx = grid_idx(x0, y1, z0, nx, ny, nz) + offset;
 			#pragma omp atomic
 			density.v[idx] += t_x * d_y * t_z;
 		}
-		if (x1 < nx && y1 < ny) {
+		if(x1 < nx && y1 < ny) {
 			idx = grid_idx(x1, y1, z0, nx, ny, nz) + offset;
 			#pragma omp atomic
 			density.v[idx] += d_x * d_y * t_z;
 		}
-		if (z1 < nz) {
+		if(z1 < nz) {
 			idx = grid_idx(x0, y0, z1, nx, ny, nz) + offset;
 			#pragma omp atomic
 			density.v[idx] += t_x * t_y * d_z;
 		}
-		if (x1 < nx && z1 < nz) {
+		if(x1 < nx && z1 < nz) {
 			idx = grid_idx(x1, y0, z1, nx, ny, nz) + offset;
 			#pragma omp atomic
 			density.v[idx] += d_x * t_y * d_z;
 		}
-		if (y1 < ny && z1 < nz) {
+		if(y1 < ny && z1 < nz) {
 			idx = grid_idx(x0, y1, z1, nx, ny, nz) + offset;
 			#pragma omp atomic
 			density.v[idx] += t_x * d_y * d_z;
 		}
-		if (x1 < nx && y1 < ny && z1 < nz) {
+		if(x1 < nx && y1 < ny && z1 < nz) {
 			idx = grid_idx(x1, y1, z1, nx, ny, nz) + offset;
 			#pragma omp atomic
 			density.v[idx] += d_x * d_y * d_z;
@@ -263,7 +263,7 @@ void compute_density_samples_cic(float *density_samples, const ScalarField<T> &d
 	#pragma omp parallel for
 	for(int i = 0; i < 2 * param.density_samples; i++) {
 		int i_new = (i < param.density_samples) ? i : i - param.density_samples;
-		T z = 2.0 * d_max_z * i_new / param.density_samples - d_max_z;
+		T z = T(2.0) * d_max_z * i_new / param.density_samples - d_max_z;
 		T y = d_max_y * param.sample_position;
 		std::array<T, 3> r_vec = { T(0.0), y, z };
 		
